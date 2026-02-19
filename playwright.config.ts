@@ -11,6 +11,12 @@ export default defineConfig({
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
   },
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.1,
+      threshold: 0.2,
+    },
+  },
   projects: [
     {
       name: 'chromium',
