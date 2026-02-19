@@ -9,14 +9,16 @@ import { useLayoutStore } from '../../core/services/LayoutService'
 import { useThemeStore } from '../../core/services/ThemeService'
 import { useSidebarStore, ISidebarPanel } from '../../core/services/SidebarService'
 import { useChatStore, ISlashCommand } from '../../core/services/ChatService'
+import { menuRegistry, IMenuItem } from '../../core/registry/MenuRegistry'
 import { useEffect } from 'react'
 
 interface ShellLayoutProps {
   panels?: ISidebarPanel[];
   slashCommands?: ISlashCommand[];
+  menuConfig?: Record<string, IMenuItem[]>;
 }
 
-export const ShellLayout = ({ panels, slashCommands }: ShellLayoutProps) => {
+export const ShellLayout = ({ panels, slashCommands, menuConfig }: ShellLayoutProps) => {
   const { model, setModel, isTabDirty, setTabDirty } = useLayoutStore()
   const { theme } = useThemeStore()
   const { setPanels } = useSidebarStore()
@@ -33,6 +35,12 @@ export const ShellLayout = ({ panels, slashCommands }: ShellLayoutProps) => {
       setSlashCommands(slashCommands);
     }
   }, [slashCommands, setSlashCommands]);
+
+  useEffect(() => {
+    if (menuConfig) {
+      menuRegistry.setMenus(menuConfig);
+    }
+  }, [menuConfig]);
 
   const factory = (node: TabNode) => {
     try {

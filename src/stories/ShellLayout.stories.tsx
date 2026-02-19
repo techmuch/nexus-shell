@@ -55,6 +55,38 @@ export const CustomConfiguration: Story = {
   },
 };
 
+export const CustomMenus: Story = {
+  decorators: [
+    (Story) => {
+      initializeShell();
+      return <Story />;
+    },
+  ],
+  args: {
+    menuConfig: {
+      'App': [
+        { id: 'app.about', label: 'About App', commandId: 'nexus.about' },
+        { id: 'app.sep', label: '---', commandId: '' },
+        { id: 'app.quit', label: 'Quit', commandId: '' },
+      ],
+      'Project': [
+        { id: 'proj.new', label: 'New Project', commandId: 'nexus.new-tab' },
+        { 
+          id: 'proj.recent', 
+          label: 'Open Recent', 
+          submenu: [
+            { id: 'recent.1', label: 'Nexus Shell v1', commandId: 'nexus.new-tab' },
+            { id: 'recent.2', label: 'Legacy Project', commandId: 'nexus.new-tab' },
+          ]
+        }
+      ],
+      'Actions': [
+        { id: 'act.chat', label: 'Toggle Chat', commandId: 'nexus.toggle-chat' },
+      ]
+    }
+  }
+};
+
 export const CustomSlashCommands: Story = {
   decorators: [
     (Story) => {
