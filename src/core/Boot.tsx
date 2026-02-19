@@ -6,14 +6,59 @@ import { useSidebarStore } from './services/SidebarService';
 import { useRightSidebarStore } from './services/RightSidebarService';
 import { useChatStore } from './services/ChatService';
 import { useThemeStore, ThemeType } from './services/ThemeService';
+import { useStatusBarStore } from './services/StatusBarService';
 import { ExamplePlugin } from '../plugins/ExamplePlugin';
-import { Files, Search, GitGraph, Plug } from "lucide-react";
+import { Files, Search, GitGraph, Plug, GitBranch, Bell, MessageCircle } from "lucide-react";
 import { FilesSidebar } from '../components/widgets/FilesSidebar';
 
 /**
  * Initializes the shell's core commands and menus.
  */
 export const initializeShell = async () => {
+  // Register Core Status Bar Widgets
+  useStatusBarStore.getState().setWidgets([
+    {
+      id: 'git-branch',
+      label: 'main',
+      icon: GitBranch,
+      alignment: 'left',
+      priority: 100,
+    },
+    {
+      id: 'notifications',
+      label: '0',
+      icon: Bell,
+      alignment: 'left',
+      priority: 90,
+    },
+    {
+      id: 'status-text',
+      label: 'Ready',
+      alignment: 'right',
+      priority: 10,
+    },
+    {
+      id: 'chat-toggle',
+      label: 'Chat',
+      icon: MessageCircle,
+      alignment: 'right',
+      commandId: 'nexus.toggle-chat',
+      priority: 100,
+    },
+    {
+      id: 'line-col',
+      label: 'Ln 1, Col 1',
+      alignment: 'right',
+      priority: 50,
+    },
+    {
+      id: 'encoding',
+      label: 'UTF-8',
+      alignment: 'right',
+      priority: 40,
+    }
+  ]);
+
   // Register Core Sidebar Panels
   useSidebarStore.getState().setPanels([
     {

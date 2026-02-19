@@ -1,33 +1,59 @@
-import { GitBranch, Bell, MessageCircle } from "lucide-react"
-import { useRightSidebarStore } from "../../core/services/RightSidebarService"
+import { useStatusBarStore, IStatusBarWidget } from "../../core/services/StatusBarService"
+import { commandRegistry } from "../../core/registry/CommandRegistry"
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 export const StatusBar = () => {
-  const { toggleChat } = useRightSidebarStore();
+  const { widgets } = useStatusBarStore();
+
+  const leftWidgets = widgets.filter(w => w.alignment === 'left');
+  const centerWidgets = widgets.filter(w => w.alignment === 'center');
+  const rightWidgets = widgets.filter(w => w.alignment === 'right');
+
+  const renderWidget = (widget: IStatusBarWidget) => {
+    const Icon = widget.icon;
+    const isInteractive = !!(widget.commandId || widget.onClick);
+
+    const handleClick = () => {
+      if (widget.onClick) {
+        widget.onClick();
+      } else if (widget.commandId) {
+        commandRegistry.executeCommand(widget.commandId);
+      }
+    };
+
+    return (
+      <div
+        key={widget.id}
+        onClick={isInteractive ? handleClick : undefined}
+        className={cn(
+          "flex items-center space-x-1.5 px-2 py-0.5 rounded transition-colors h-full",
+          isInteractive ? "cursor-pointer hover:bg-white/10" : "cursor-default",
+          widget.className
+        )}
+      >
+        {Icon && <Icon size={12} />}
+        {widget.label && <span>{widget.label}</span>}
+      </div>
+    );
+  };
 
   return (
-    <div className="h-6 bg-primary text-primary-foreground text-xs flex items-center justify-between px-2 select-none">
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-1 cursor-pointer hover:bg-white/10 px-1 rounded">
-          <GitBranch size={12} />
-          <span>main</span>
-        </div>
-        <div className="flex items-center space-x-1 cursor-pointer hover:bg-white/10 px-1 rounded">
-          <Bell size={12} />
-          <span>0</span>
-        </div>
+    <div className="h-6 bg-primary text-primary-foreground text-[11px] flex items-center justify-between px-1 select-none shrink-0 border-t border-white/5">
+      <div className="flex items-center space-x-1 h-full">
+        {leftWidgets.map(renderWidget)}
       </div>
-      <div className="flex items-center space-x-4">
-        <div 
-          onClick={toggleChat}
-          className="flex items-center space-x-1 cursor-pointer hover:bg-white/10 px-1 rounded"
-        >
-          <MessageCircle size={12} />
-          <span>Chat</span>
-        </div>
-        <span>Ready</span>
-        <span>Ln 1, Col 1</span>
-        <span>UTF-8</span>
+      <div className="flex items-center space-x-1 h-full">
+        {centerWidgets.map(renderWidget)}
+      </div>
+      <div className="flex items-center space-x-1 h-full">
+        {rightWidgets.map(renderWidget)}
       </div>
     </div>
   )
 }
+

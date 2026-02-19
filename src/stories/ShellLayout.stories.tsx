@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { ShellLayout } from '../components/layout/ShellLayout';
 import { initializeShell } from '../core/Boot';
-import { Home, User, Bell } from 'lucide-react';
+import { Home, User, Bell, Activity, Info, RefreshCcw } from 'lucide-react';
 
 const meta: Meta<typeof ShellLayout> = {
   title: 'Layout/ShellLayout',
@@ -22,6 +22,39 @@ export const Default: Story = {
     },
   ],
   render: () => <ShellLayout />,
+};
+
+export const CustomStatusBar: Story = {
+  decorators: [
+    (Story) => {
+      initializeShell();
+      return <Story />;
+    },
+  ],
+  args: {
+    statusBarConfig: [
+      {
+        id: 'health',
+        label: 'System: OK',
+        icon: Activity,
+        alignment: 'left',
+        onClick: () => alert('System health is 100%'),
+      },
+      {
+        id: 'version',
+        label: 'v1.2.3',
+        icon: Info,
+        alignment: 'center',
+      },
+      {
+        id: 'sync',
+        label: 'Synced',
+        icon: RefreshCcw,
+        alignment: 'right',
+        className: 'text-green-400',
+      },
+    ],
+  },
 };
 
 export const CustomConfiguration: Story = {

@@ -9,6 +9,7 @@ import { useLayoutStore } from '../../core/services/LayoutService'
 import { useThemeStore } from '../../core/services/ThemeService'
 import { useSidebarStore, ISidebarPanel } from '../../core/services/SidebarService'
 import { useChatStore, ISlashCommand } from '../../core/services/ChatService'
+import { useStatusBarStore, IStatusBarWidget } from '../../core/services/StatusBarService'
 import { menuRegistry, IMenuItem } from '../../core/registry/MenuRegistry'
 import { useEffect } from 'react'
 
@@ -16,13 +17,15 @@ interface ShellLayoutProps {
   panels?: ISidebarPanel[];
   slashCommands?: ISlashCommand[];
   menuConfig?: Record<string, IMenuItem[]>;
+  statusBarConfig?: IStatusBarWidget[];
 }
 
-export const ShellLayout = ({ panels, slashCommands, menuConfig }: ShellLayoutProps) => {
+export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig }: ShellLayoutProps) => {
   const { model, setModel, isTabDirty, setTabDirty } = useLayoutStore()
   const { theme } = useThemeStore()
   const { setPanels } = useSidebarStore()
   const { setSlashCommands } = useChatStore()
+  const { setWidgets } = useStatusBarStore()
 
   useEffect(() => {
     if (panels) {
@@ -41,6 +44,12 @@ export const ShellLayout = ({ panels, slashCommands, menuConfig }: ShellLayoutPr
       menuRegistry.setMenus(menuConfig);
     }
   }, [menuConfig]);
+
+  useEffect(() => {
+    if (statusBarConfig) {
+      setWidgets(statusBarConfig);
+    }
+  }, [statusBarConfig, setWidgets]);
 
   const factory = (node: TabNode) => {
     try {
