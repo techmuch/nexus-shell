@@ -5,6 +5,7 @@ import { StatusBar } from '../widgets/StatusBar'
 import { ActivityBar } from '../widgets/ActivityBar'
 import { SidebarPane } from '../widgets/SidebarPane'
 import { ChatPane } from '../widgets/ChatPane'
+import { TerminalPane } from '../widgets/TerminalPane'
 import { useLayoutStore } from '../../core/services/LayoutService'
 import { useThemeStore } from '../../core/services/ThemeService'
 import { useSidebarStore, ISidebarPanel } from '../../core/services/SidebarService'
@@ -109,13 +110,16 @@ export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig
       <div className="flex-1 flex overflow-hidden">
         <ActivityBar />
         <SidebarPane />
-        <div className="flex-1 relative bg-card h-full w-full">
-           <Layout 
-             model={model} 
-             factory={factory} 
-             onModelChange={(model) => setModel(model)}
-             onAction={onAction}
-           />
+        <div className="flex-1 flex flex-col min-w-0 bg-card">
+           <div className="flex-1 relative h-full w-full">
+              <Layout 
+                model={model} 
+                factory={factory} 
+                onModelChange={(model) => setModel(model)}
+                onAction={onAction}
+              />
+           </div>
+           <TerminalPane />
         </div>
         <ChatPane />
       </div>

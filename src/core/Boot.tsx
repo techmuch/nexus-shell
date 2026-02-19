@@ -7,8 +7,9 @@ import { useRightSidebarStore } from './services/RightSidebarService';
 import { useChatStore } from './services/ChatService';
 import { useThemeStore, ThemeType } from './services/ThemeService';
 import { useStatusBarStore } from './services/StatusBarService';
+import { useTerminalStore } from './services/TerminalService';
 import { ExamplePlugin } from '../plugins/ExamplePlugin';
-import { Files, Search, GitGraph, Plug, GitBranch, Bell, MessageCircle } from "lucide-react";
+import { Files, Search, GitGraph, Plug, GitBranch, Bell, MessageCircle, Terminal as TerminalIcon } from "lucide-react";
 import { FilesSidebar } from '../components/widgets/FilesSidebar';
 
 /**
@@ -36,6 +37,14 @@ export const initializeShell = async () => {
       label: 'Ready',
       alignment: 'right',
       priority: 10,
+    },
+    {
+      id: 'terminal-toggle',
+      label: 'Terminal',
+      icon: TerminalIcon,
+      alignment: 'right',
+      onClick: () => useTerminalStore.getState().toggle(),
+      priority: 110,
     },
     {
       id: 'chat-toggle',

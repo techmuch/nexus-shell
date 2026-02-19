@@ -38,10 +38,10 @@ export const FilesSidebar = () => {
   return (
     <TreeWidget 
       data={sampleData} 
-      onNewFile={(id) => window.prompt('New File Name:')}
-      onNewFolder={(id) => window.prompt('New Folder Name:')}
-      onRename={(id) => window.prompt('New Name:')}
-      onDelete={(id) => window.confirm('Delete this item?')}
+      onNewFile={(_id) => window.prompt('New File Name:')}
+      onNewFolder={(_id) => window.prompt('New Folder Name:')}
+      onRename={(_id) => window.prompt('New Name:')}
+      onDelete={(_id) => window.confirm('Delete this item?')}
     />
   );
 }
