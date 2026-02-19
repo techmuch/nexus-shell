@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { ChevronRight, ChevronDown, File, Folder } from 'lucide-react';
+import { ChevronRight, ChevronDown, File, Folder, Plus, FolderPlus, Edit, Trash2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { ContextMenu, IContextMenuItem } from './ContextMenu';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -23,6 +24,7 @@ interface TreeWidgetProps {
 
 export const TreeWidget: React.FC<TreeWidgetProps> = ({ data }) => {
   const [nodes, setNodes] = useState<ITreeNode[]>(flatten(data));
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, nodeId: string } | null>(null);
 
   function flatten(items: ITreeNode[], level = 0): ITreeNode[] {
     return items.reduce<ITreeNode[]>((acc, item) => {
@@ -49,10 +51,20 @@ export const TreeWidget: React.FC<TreeWidgetProps> = ({ data }) => {
     };
 
     const newData = updateNodes(data);
-    // In a real app, 'data' would be managed in a store.
-    // For this prototype, we'll just recalculate.
     setNodes(flatten(newData));
   };
+
+  const handleContextMenu = (e: React.MouseEvent, nodeId: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, nodeId });
+  };
+
+  const contextMenuItems: IContextMenuItem[] = [
+    { label: 'New File', icon: <Plus size={14} />, onClick: () => console.log('New File in', contextMenu?.nodeId) },
+    { label: 'New Folder', icon: <FolderPlus size={14} />, onClick: () => console.log('New Folder in', contextMenu?.nodeId) },
+    { label: 'Rename', icon: <Edit size={14} />, divider: true, onClick: () => console.log('Rename', contextMenu?.nodeId) },
+    { label: 'Delete', icon: <Trash2 size={14} className="text-destructive" />, onClick: () => console.log('Delete', contextMenu?.nodeId) },
+  ];
 
   return (
     <div className="h-full w-full bg-muted/30">
@@ -69,6 +81,7 @@ export const TreeWidget: React.FC<TreeWidgetProps> = ({ data }) => {
               )}
               style={{ paddingLeft: `${(node.level || 0) * 12 + 8}px` }}
               onClick={() => node.type === 'folder' && toggleNode(node.id)}
+              onContextMenu={(e) => handleContextMenu(e, node.id)}
             >
               <div className="w-4 h-4 mr-1 flex items-center justify-center">
                 {node.type === 'folder' ? (
@@ -87,6 +100,14 @@ export const TreeWidget: React.FC<TreeWidgetProps> = ({ data }) => {
           );
         }}
       />
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 };

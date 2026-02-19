@@ -5,8 +5,11 @@ export interface IPlugin {
   deactivate: () => void;
 }
 
+export type PluginLoader = () => Promise<IPlugin>;
+
 export class PluginRegistry {
   private plugins = new Map<string, IPlugin>();
+  private loaders = new Map<string, PluginLoader>();
 
   registerPlugin(plugin: IPlugin): void {
     if (this.plugins.has(plugin.id)) {
@@ -17,8 +20,31 @@ export class PluginRegistry {
     console.log(`Plugin ${plugin.name} (${plugin.id}) registered.`);
   }
 
-  activatePlugin(id: string): void {
-    const plugin = this.plugins.get(id);
+  registerLazyPlugin(id: string, loader: PluginLoader): void {
+    if (this.loaders.has(id) || this.plugins.has(id)) {
+      console.warn(`Plugin ${id} is already registered or has a loader.`);
+      return;
+    }
+    this.loaders.set(id, loader);
+    console.log(`Lazy plugin loader for ${id} registered.`);
+  }
+
+  async activatePlugin(id: string): Promise<void> {
+    let plugin = this.plugins.get(id);
+
+    // If not found in active plugins, check loaders
+    if (!plugin && this.loaders.has(id)) {
+      try {
+        const loader = this.loaders.get(id)!;
+        plugin = await loader();
+        this.plugins.set(id, plugin);
+        console.log(`Lazy plugin ${id} loaded.`);
+      } catch (e) {
+        console.error(`Failed to load lazy plugin ${id}`, e);
+        return;
+      }
+    }
+
     if (plugin) {
       try {
         plugin.activate();

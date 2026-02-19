@@ -3,8 +3,11 @@ import { Model, IJsonModel, Actions, DockLocation } from 'flexlayout-react'
 
 interface LayoutState {
   model: Model;
+  dirtyTabs: Set<string>; // Set of tab IDs with unsaved changes
   setModel: (model: Model) => void;
   addTab: (componentName: string, title?: string) => void;
+  setTabDirty: (tabId: string, dirty: boolean) => void;
+  isTabDirty: (tabId: string) => boolean;
 }
 
 const defaultLayout: IJsonModel = {
@@ -53,10 +56,23 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
 
   return {
     model: initialModel,
+    dirtyTabs: new Set<string>(),
     setModel: (model) => {
       set({ model });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(model.toJson()));
     },
+    setTabDirty: (tabId, dirty) => {
+      set((state) => {
+        const newDirtyTabs = new Set(state.dirtyTabs);
+        if (dirty) {
+          newDirtyTabs.add(tabId);
+        } else {
+          newDirtyTabs.delete(tabId);
+        }
+        return { dirtyTabs: newDirtyTabs };
+      });
+    },
+    isTabDirty: (tabId) => get().dirtyTabs.has(tabId),
     addTab: (componentName, title) => {
       const model = get().model;
       const activeTabset = model.getActiveTabset();

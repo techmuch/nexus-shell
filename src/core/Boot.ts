@@ -8,7 +8,7 @@ import { ExamplePlugin } from '../plugins/ExamplePlugin';
 /**
  * Initializes the shell's core commands and menus.
  */
-export const initializeShell = () => {
+export const initializeShell = async () => {
   // Register Core Commands
   commandRegistry.registerCommand({
     id: 'nexus.new-tab',
@@ -44,9 +44,14 @@ export const initializeShell = () => {
     commandId: 'nexus.about',
   });
 
-  // Register and Activate Plugins
-  pluginRegistry.registerPlugin(ExamplePlugin);
-  pluginRegistry.activatePlugin('plugin-example');
+  // Demonstrate Lazy Loading
+  pluginRegistry.registerLazyPlugin('plugin-example', async () => {
+    // In a real app, this would be: return (await import('../plugins/ExamplePlugin')).ExamplePlugin;
+    return ExamplePlugin;
+  });
+
+  // Activate Plugins
+  await pluginRegistry.activatePlugin('plugin-example');
 
   console.log('Nexus Shell Core Initialized');
 };
