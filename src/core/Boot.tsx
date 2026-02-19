@@ -2,13 +2,44 @@ import { commandRegistry } from './registry/CommandRegistry';
 import { menuRegistry } from './registry/MenuRegistry';
 import { pluginRegistry } from './registry/PluginRegistry';
 import { useLayoutStore } from './services/LayoutService';
+import { useSidebarStore } from './services/SidebarService';
 import { useRightSidebarStore } from './services/RightSidebarService';
 import { ExamplePlugin } from '../plugins/ExamplePlugin';
+import { Files, Search, GitGraph, Plug } from "lucide-react";
+import { FilesSidebar } from '../components/widgets/FilesSidebar';
 
 /**
  * Initializes the shell's core commands and menus.
  */
 export const initializeShell = async () => {
+  // Register Core Sidebar Panels
+  useSidebarStore.getState().setPanels([
+    {
+      id: 'files',
+      label: 'Explorer',
+      icon: Files,
+      component: FilesSidebar,
+    },
+    {
+      id: 'search',
+      label: 'Search',
+      icon: Search,
+      component: () => <div className="p-4 text-sm italic text-muted-foreground">Search functionality coming soon...</div>,
+    },
+    {
+      id: 'git',
+      label: 'Source Control',
+      icon: GitGraph,
+      component: () => <div className="p-4 text-sm italic text-muted-foreground">Source control integration pending...</div>,
+    },
+    {
+      id: 'plugins',
+      label: 'Extensions',
+      icon: Plug,
+      component: () => <div className="p-4 text-sm italic text-muted-foreground">Extension manager view...</div>,
+    },
+  ]);
+
   // Register Core Commands
   commandRegistry.registerCommand({
     id: 'nexus.new-tab',

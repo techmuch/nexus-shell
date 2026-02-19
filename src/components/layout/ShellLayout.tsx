@@ -7,10 +7,23 @@ import { SidebarPane } from '../widgets/SidebarPane'
 import { ChatPane } from '../widgets/ChatPane'
 import { useLayoutStore } from '../../core/services/LayoutService'
 import { useThemeStore } from '../../core/services/ThemeService'
+import { useSidebarStore, ISidebarPanel } from '../../core/services/SidebarService'
+import { useEffect } from 'react'
 
-export const ShellLayout = () => {
+interface ShellLayoutProps {
+  panels?: ISidebarPanel[];
+}
+
+export const ShellLayout = ({ panels }: ShellLayoutProps) => {
   const { model, setModel, isTabDirty, setTabDirty } = useLayoutStore()
   const { theme } = useThemeStore()
+  const { setPanels } = useSidebarStore()
+
+  useEffect(() => {
+    if (panels) {
+      setPanels(panels);
+    }
+  }, [panels, setPanels]);
 
   const factory = (node: TabNode) => {
     try {

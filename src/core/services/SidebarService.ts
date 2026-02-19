@@ -1,37 +1,47 @@
 import { create } from 'zustand'
+import { LucideIcon } from 'lucide-react'
 
-export type SidebarType = 'files' | 'search' | 'git' | 'plugins' | 'settings' | null;
+export interface ISidebarPanel {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  component: React.ComponentType<any> | React.ReactNode;
+}
 
 interface SidebarState {
-  activeSidebar: SidebarType;
-  setActiveSidebar: (type: SidebarType) => void;
-  toggleSidebar: (type: SidebarType) => void;
+  activeSidebar: string | null;
+  panels: ISidebarPanel[];
+  setActiveSidebar: (id: string | null) => void;
+  toggleSidebar: (id: string) => void;
+  setPanels: (panels: ISidebarPanel[]) => void;
 }
 
 const STORAGE_KEY = 'nexus-shell-sidebar';
 
 export const useSidebarStore = create<SidebarState>((set) => {
-  const savedSidebar = localStorage.getItem(STORAGE_KEY) as SidebarType;
-  const initialSidebar = savedSidebar !== null ? savedSidebar : 'files';
+  const savedSidebar = localStorage.getItem(STORAGE_KEY);
+  const initialSidebar = savedSidebar !== null ? savedSidebar : null;
 
   return {
     activeSidebar: initialSidebar,
-    setActiveSidebar: (type) => {
-      if (type === null) {
+    panels: [],
+    setActiveSidebar: (id) => {
+      if (id === null) {
         localStorage.removeItem(STORAGE_KEY);
       } else {
-        localStorage.setItem(STORAGE_KEY, type);
+        localStorage.setItem(STORAGE_KEY, id);
       }
-      set({ activeSidebar: type });
+      set({ activeSidebar: id });
     },
-    toggleSidebar: (type) => set((state) => {
-      const nextType = state.activeSidebar === type ? null : type;
-      if (nextType === null) {
+    toggleSidebar: (id) => set((state) => {
+      const nextId = state.activeSidebar === id ? null : id;
+      if (nextId === null) {
         localStorage.removeItem(STORAGE_KEY);
       } else {
-        localStorage.setItem(STORAGE_KEY, nextType);
+        localStorage.setItem(STORAGE_KEY, nextId);
       }
-      return { activeSidebar: nextType };
+      return { activeSidebar: nextId };
     }),
+    setPanels: (panels) => set({ panels }),
   };
 })

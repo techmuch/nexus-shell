@@ -17,7 +17,7 @@ export { pluginRegistry, type IPlugin } from './core/registry/PluginRegistry';
 export { initializeShell } from './core/Boot';
 export { useLayoutStore } from './core/services/LayoutService';
 export { useThemeStore, type ThemeType } from './core/services/ThemeService';
-export { useSidebarStore, type SidebarType } from './core/services/SidebarService';
+export { useSidebarStore, type ISidebarPanel } from './core/services/SidebarService';
 export { useRightSidebarStore } from './core/services/RightSidebarService';
 export { useKeyboardShortcuts } from './core/services/KeyboardService';
 

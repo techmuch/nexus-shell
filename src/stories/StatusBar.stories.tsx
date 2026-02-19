@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { StatusBar } from '../components/widgets/StatusBar';
-import { useThemeStore } from '../core/services/ThemeService';
 
 const meta: Meta<typeof StatusBar> = {
   title: 'Widgets/StatusBar',

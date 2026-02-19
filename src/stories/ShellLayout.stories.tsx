@@ -1,0 +1,56 @@
+import type { Meta, StoryObj } from '@storybook/react';
+import { ShellLayout } from '../components/layout/ShellLayout';
+import { initializeShell } from '../core/Boot';
+import { Home, User, Bell } from 'lucide-react';
+
+const meta: Meta<typeof ShellLayout> = {
+  title: 'Layout/ShellLayout',
+  component: ShellLayout,
+  parameters: {
+    layout: 'fullscreen',
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof ShellLayout>;
+
+export const Default: Story = {
+  decorators: [
+    (Story) => {
+      initializeShell();
+      return <Story />;
+    },
+  ],
+  render: () => <ShellLayout />,
+};
+
+export const CustomConfiguration: Story = {
+  decorators: [
+    (Story) => {
+      initializeShell();
+      return <Story />;
+    },
+  ],
+  args: {
+    panels: [
+      {
+        id: 'home',
+        label: 'Home',
+        icon: Home,
+        component: () => <div className="p-4 text-sm">Welcome to your custom Home sidebar!</div>,
+      },
+      {
+        id: 'profile',
+        label: 'Profile',
+        icon: User,
+        component: () => <div className="p-4 text-sm">This is the User Profile panel.</div>,
+      },
+      {
+        id: 'notifications',
+        label: 'Alerts',
+        icon: Bell,
+        component: () => <div className="p-4 text-sm font-bold text-destructive">System Alert: All systems are operational.</div>,
+      },
+    ],
+  },
+};
