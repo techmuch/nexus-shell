@@ -5,6 +5,7 @@ export { StatusBar } from './components/widgets/StatusBar';
 export { ActivityBar } from './components/widgets/ActivityBar';
 export { SidebarPane } from './components/widgets/SidebarPane';
 export { TreeWidget } from './components/widgets/TreeWidget';
+export { SearchWidget, type ISearchResult, type SearchWidgetProps } from './components/widgets/SearchWidget';
 export { CommandPalette } from './components/widgets/CommandPalette';
 export { ChatPane } from './components/widgets/ChatPane';
 

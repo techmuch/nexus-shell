@@ -171,6 +171,19 @@ const myChatCommands = [
 ];
 ```
 
+### 5. Search Integration (`SearchWidget`)
+A reusable component for implementing project-wide search.
+```tsx
+<SearchWidget 
+  placeholder="Filter objects..."
+  onSearch={(query) => doFilter(query)}
+  results={filteredResults}
+  suggestions={['recent-1.txt', 'recent-2.txt']}
+  onSelect={(result) => openItem(result)}
+  loading={isSearching}
+/>
+```
+
 **Usage Example:**
 ```tsx
 <ShellLayout 
