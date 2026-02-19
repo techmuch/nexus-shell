@@ -160,7 +160,7 @@ export const ChatPane = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Nexus..."
+            placeholder="Ask Nexus... (Type / for commands)"
             className="w-full bg-background border rounded-md p-2 text-sm focus:ring-1 focus:ring-primary outline-none resize-none min-h-[80px]"
           />
           <button 
@@ -169,6 +169,10 @@ export const ChatPane = () => {
           >
             <Send size={14} />
           </button>
+        </div>
+        <div className="mt-1.5 flex items-center space-x-1.5 text-[10px] text-muted-foreground opacity-70">
+          <Terminal size={10} />
+          <span>Use <kbd className="bg-muted px-1 rounded border border-border/50 font-sans">/</kbd> to trigger slash commands</span>
         </div>
       </div>
     </div>
