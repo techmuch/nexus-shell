@@ -7,6 +7,7 @@ export { SidebarPane } from './components/widgets/SidebarPane';
 export { TreeWidget } from './components/widgets/TreeWidget';
 export { SearchWidget, type ISearchResult, type SearchWidgetProps } from './components/widgets/SearchWidget';
 export { CommandPalette } from './components/widgets/CommandPalette';
+export { UserProfile, type UserProfileProps } from './components/widgets/UserProfile';
 export { ChatPane } from './components/widgets/ChatPane';
 
 // Registries (Public Singleton Instances)

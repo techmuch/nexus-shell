@@ -3,7 +3,11 @@ import { menuRegistry, IMenuItem } from '../../core/registry/MenuRegistry';
 import { commandRegistry } from '../../core/registry/CommandRegistry';
 import { ChevronRight } from 'lucide-react';
 
-export const MenuBar = () => {
+interface MenuBarProps {
+  rightContent?: React.ReactNode;
+}
+
+export const MenuBar = ({ rightContent }: MenuBarProps) => {
   const [menus, setMenus] = useState<Record<string, IMenuItem[]>>(menuRegistry.getAllMenus());
 
   useEffect(() => {
@@ -64,18 +68,26 @@ export const MenuBar = () => {
   };
 
   return (
-    <div className="h-8 bg-muted border-b flex items-center px-4 select-none theme-light">
-      <div className="font-semibold mr-6 text-sm">Nexus Shell</div>
-      <div className="flex space-x-1 text-sm">
-        {Object.entries(menus).map(([name, items]) => (
-          <div key={name} className="relative group">
-            <div className="cursor-pointer hover:bg-accent hover:text-accent-foreground px-3 py-1 rounded text-xs">
-              {name}
+    <div className="h-8 bg-muted border-b flex items-center justify-between px-4 select-none theme-light shrink-0">
+      <div className="flex items-center">
+        <div className="font-semibold mr-6 text-sm">Nexus Shell</div>
+        <div className="flex space-x-1 text-sm">
+          {Object.entries(menus).map(([name, items]) => (
+            <div key={name} className="relative group">
+              <div className="cursor-pointer hover:bg-accent hover:text-accent-foreground px-3 py-1 rounded text-xs">
+                {name}
+              </div>
+              {items.length > 0 && renderMenuItems(items)}
             </div>
-            {items.length > 0 && renderMenuItems(items)}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+      
+      {rightContent && (
+        <div className="flex items-center">
+          {rightContent}
+        </div>
+      )}
     </div>
   );
 };

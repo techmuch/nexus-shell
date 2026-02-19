@@ -18,9 +18,10 @@ interface ShellLayoutProps {
   slashCommands?: ISlashCommand[];
   menuConfig?: Record<string, IMenuItem[]>;
   statusBarConfig?: IStatusBarWidget[];
+  rightMenuBarContent?: React.ReactNode;
 }
 
-export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig }: ShellLayoutProps) => {
+export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig, rightMenuBarContent }: ShellLayoutProps) => {
   const { model, setModel, isTabDirty, setTabDirty } = useLayoutStore()
   const { theme } = useThemeStore()
   const { setPanels } = useSidebarStore()
@@ -104,7 +105,7 @@ export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig
 
   return (
     <div className={`flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden theme-${theme}`}>
-      <MenuBar />
+      <MenuBar rightContent={rightMenuBarContent} />
       <div className="flex-1 flex overflow-hidden">
         <ActivityBar />
         <SidebarPane />

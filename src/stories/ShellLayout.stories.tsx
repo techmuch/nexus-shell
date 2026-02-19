@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ShellLayout } from '../components/layout/ShellLayout';
 import { initializeShell } from '../core/Boot';
 import { Home, User, Bell, Activity, Info, RefreshCcw } from 'lucide-react';
+import { UserProfile } from '../components/widgets/UserProfile';
 
 const meta: Meta<typeof ShellLayout> = {
   title: 'Layout/ShellLayout',
@@ -22,6 +23,27 @@ export const Default: Story = {
     },
   ],
   render: () => <ShellLayout />,
+};
+
+export const WithUserProfile: Story = {
+  decorators: [
+    (Story) => {
+      initializeShell();
+      return <Story />;
+    },
+  ],
+  render: () => (
+    <ShellLayout 
+      rightMenuBarContent={
+        <UserProfile 
+          name="David Tech" 
+          role="Shell Architect" 
+          avatarUrl="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
+          onClick={() => alert('Profile Clicked!')}
+        />
+      }
+    />
+  )
 };
 
 export const CustomStatusBar: Story = {
