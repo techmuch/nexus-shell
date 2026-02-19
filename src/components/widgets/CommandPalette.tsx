@@ -8,16 +8,25 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const CommandPalette = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface CommandPaletteProps {
+  commands?: ICommand[];
+  forcedOpen?: boolean;
+}
+
+export const CommandPalette = ({ commands: customCommands, forcedOpen = false }: CommandPaletteProps) => {
+  const [isOpen, setIsOpen] = useState(forcedOpen);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const commands = commandRegistry.getCommands().filter(cmd => 
+  const availableCommands = (customCommands || commandRegistry.getCommands()).filter(cmd => 
     cmd.label.toLowerCase().includes(query.toLowerCase()) ||
     cmd.id.toLowerCase().includes(query.toLowerCase())
   );
+
+  useEffect(() => {
+    setIsOpen(forcedOpen);
+  }, [forcedOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,27 +53,30 @@ export const CommandPalette = () => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % commands.length);
+      setSelectedIndex(prev => (prev + 1) % availableCommands.length);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + commands.length) % commands.length);
+      setSelectedIndex(prev => (prev - 1 + availableCommands.length) % availableCommands.length);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (commands[selectedIndex]) {
-        executeCommand(commands[selectedIndex]);
+      if (availableCommands[selectedIndex]) {
+        executeCommand(availableCommands[selectedIndex]);
       }
     }
   };
 
   const executeCommand = (command: ICommand) => {
     command.execute();
-    setIsOpen(false);
+    if (!forcedOpen) setIsOpen(false);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh] bg-black/50 backdrop-blur-sm">
+    <div className={cn(
+      "z-[100] flex items-start justify-center pt-[10vh]",
+      forcedOpen ? "relative pt-0 w-full max-w-xl" : "fixed inset-0 bg-black/50 backdrop-blur-sm"
+    )}>
       <div className="w-full max-w-xl bg-popover text-popover-foreground border shadow-2xl rounded-xl overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="flex items-center px-4 border-b">
           <Search size={18} className="text-muted-foreground mr-3" />
@@ -82,12 +94,12 @@ export const CommandPalette = () => {
           />
         </div>
         <div className="max-h-[300px] overflow-y-auto py-2">
-          {commands.length === 0 ? (
+          {availableCommands.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               No commands found matching "{query}"
             </div>
           ) : (
-            commands.map((cmd, index) => (
+            availableCommands.map((cmd, index) => (
               <div
                 key={cmd.id}
                 className={cn(
