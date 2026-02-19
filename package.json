@@ -1,20 +1,40 @@
 {
   "name": "nexus-shell",
-  "private": true,
-  "version": "0.0.0",
+  "private": false,
+  "version": "0.1.0",
   "type": "module",
+  "main": "./dist/nexus-shell.umd.js",
+  "module": "./dist/nexus-shell.es.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/nexus-shell.es.js",
+      "require": "./dist/nexus-shell.umd.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/style.css"
+  },
   "scripts": {
     "dev": "vite",
+    "dev:bg": "npm run dev:stop && (npx vite --host 0.0.0.0 --port 5173 > dev-server.log 2>&1 & echo $! > vite.pid)",
+    "dev:stop": "([ -f vite.pid ] && (kill $(cat vite.pid) || true) && rm vite.pid) || pkill -f vite || true",
+    "dev:restart": "npm run dev:stop && npm run dev:bg",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "dependencies": {
     "clsx": "^2.1.1",
     "flexlayout-react": "^0.7.15",
     "lucide-react": "^0.378.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react-virtuoso": "^4.18.1",
     "tailwind-merge": "^2.3.0",
     "zustand": "^4.5.2"
   },
@@ -34,7 +54,8 @@
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.4.5",
-    "vite": "^5.2.11"
+    "vite": "^5.2.11",
+    "vite-plugin-dts": "^3.9.1"
   },
   "overrides": {
     "react": "$react",

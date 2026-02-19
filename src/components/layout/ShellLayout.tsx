@@ -3,10 +3,14 @@ import 'flexlayout-react/style/light.css'
 import { MenuBar } from '../widgets/MenuBar'
 import { StatusBar } from '../widgets/StatusBar'
 import { ActivityBar } from '../widgets/ActivityBar'
+import { SidebarPane } from '../widgets/SidebarPane'
+import { ChatPane } from '../widgets/ChatPane'
 import { useLayoutStore } from '../../core/services/LayoutService'
+import { useThemeStore } from '../../core/services/ThemeService'
 
 export const ShellLayout = () => {
   const { model, setModel } = useLayoutStore()
+  const { theme } = useThemeStore()
 
   const factory = (node: TabNode) => {
     var component = node.getComponent();
@@ -19,14 +23,15 @@ export const ShellLayout = () => {
         </div>
       );
     }
-    return <div className="p-4">Unknown Component: {component}</div>;
+    return <div className="p-4 text-sm">Unknown Component: {component}</div>;
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden">
+    <div className={`flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden theme-${theme}`}>
       <MenuBar />
       <div className="flex-1 flex overflow-hidden">
         <ActivityBar />
+        <SidebarPane />
         <div className="flex-1 relative bg-card h-full w-full">
            <Layout 
              model={model} 
@@ -34,6 +39,7 @@ export const ShellLayout = () => {
              onModelChange={(model) => setModel(model)}
            />
         </div>
+        <ChatPane />
       </div>
       <StatusBar />
     </div>

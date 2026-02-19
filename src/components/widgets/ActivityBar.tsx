@@ -1,23 +1,45 @@
 import { Files, Search, Settings, GitGraph, Plug } from "lucide-react"
+import { useSidebarStore, SidebarType } from "../../core/services/SidebarService"
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 export const ActivityBar = () => {
+  const { activeSidebar, toggleSidebar } = useSidebarStore()
+
+  const items: { type: SidebarType, icon: any }[] = [
+    { type: 'files', icon: Files },
+    { type: 'search', icon: Search },
+    { type: 'git', icon: GitGraph },
+    { type: 'plugins', icon: Plug },
+  ]
+
   return (
     <div className="w-12 h-full bg-muted border-r flex flex-col items-center py-2 select-none">
       <div className="flex-1 flex flex-col space-y-4">
-        <div className="p-2 cursor-pointer hover:bg-accent rounded text-muted-foreground hover:text-foreground">
-          <Files size={24} />
-        </div>
-        <div className="p-2 cursor-pointer hover:bg-accent rounded text-muted-foreground hover:text-foreground">
-          <Search size={24} />
-        </div>
-        <div className="p-2 cursor-pointer hover:bg-accent rounded text-muted-foreground hover:text-foreground">
-          <GitGraph size={24} />
-        </div>
-        <div className="p-2 cursor-pointer hover:bg-accent rounded text-muted-foreground hover:text-foreground">
-          <Plug size={24} />
-        </div>
+        {items.map(({ type, icon: Icon }) => (
+          <div
+            key={type}
+            onClick={() => toggleSidebar(type)}
+            className={cn(
+              "p-2 cursor-pointer rounded text-muted-foreground hover:text-foreground transition-colors",
+              activeSidebar === type && "text-foreground border-l-2 border-primary rounded-none"
+            )}
+          >
+            <Icon size={24} />
+          </div>
+        ))}
       </div>
-      <div className="p-2 cursor-pointer hover:bg-accent rounded text-muted-foreground hover:text-foreground">
+      <div 
+        onClick={() => toggleSidebar('settings')}
+        className={cn(
+          "p-2 cursor-pointer rounded text-muted-foreground hover:text-foreground transition-colors",
+          activeSidebar === 'settings' && "text-foreground border-l-2 border-primary rounded-none"
+        )}
+      >
         <Settings size={24} />
       </div>
     </div>
