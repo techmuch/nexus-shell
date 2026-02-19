@@ -35,5 +35,13 @@ const sampleData: ITreeNode[] = [
 ]
 
 export const FilesSidebar = () => {
-  return <TreeWidget data={sampleData} />;
+  return (
+    <TreeWidget 
+      data={sampleData} 
+      onNewFile={(id) => window.prompt('New File Name:')}
+      onNewFolder={(id) => window.prompt('New Folder Name:')}
+      onRename={(id) => window.prompt('New Name:')}
+      onDelete={(id) => window.confirm('Delete this item?')}
+    />
+  );
 }

@@ -21,11 +21,22 @@ export interface ITreeNode {
 export interface TreeWidgetProps {
   data: ITreeNode[];
   onMoveNode?: (draggedId: string, targetId: string) => void;
+  onNewFile?: (parentId: string) => void;
+  onNewFolder?: (parentId: string) => void;
+  onRename?: (nodeId: string) => void;
+  onDelete?: (nodeId: string) => void;
 }
 
-export const TreeWidget: React.FC<TreeWidgetProps> = ({ data, onMoveNode }) => {
+export const TreeWidget: React.FC<TreeWidgetProps> = ({ 
+  data, 
+  onMoveNode,
+  onNewFile,
+  onNewFolder,
+  onRename,
+  onDelete
+}) => {
   const [nodes, setNodes] = useState<ITreeNode[]>(flatten(data));
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, nodeId: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, nodeId: string, type: 'file' | 'folder' } | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,8 +55,6 @@ export const TreeWidget: React.FC<TreeWidgetProps> = ({ data, onMoveNode }) => {
   }
 
   const toggleNode = (nodeId: string) => {
-    // In a real app, this would be handled by the parent state
-    // For the widget itself, we assume external data updates will trigger re-flattening
     const updateNodes = (items: ITreeNode[]): ITreeNode[] => {
       return items.map((item) => {
         if (item.id === nodeId) {
@@ -87,16 +96,33 @@ export const TreeWidget: React.FC<TreeWidgetProps> = ({ data, onMoveNode }) => {
     }
   };
 
-  const handleContextMenu = (e: React.MouseEvent, nodeId: string) => {
+  const handleContextMenu = (e: React.MouseEvent, node: ITreeNode) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, nodeId });
+    setContextMenu({ x: e.clientX, y: e.clientY, nodeId: node.id, type: node.type });
   };
 
   const contextMenuItems: IContextMenuItem[] = [
-    { label: 'New File', icon: <Plus size={14} />, onClick: () => console.log('New File in', contextMenu?.nodeId) },
-    { label: 'New Folder', icon: <FolderPlus size={14} />, onClick: () => console.log('New Folder in', contextMenu?.nodeId) },
-    { label: 'Rename', icon: <Edit size={14} />, divider: true, onClick: () => console.log('Rename', contextMenu?.nodeId) },
-    { label: 'Delete', icon: <Trash2 size={14} className="text-destructive" />, onClick: () => console.log('Delete', contextMenu?.nodeId) },
+    { 
+      label: 'New File', 
+      icon: <Plus size={14} />, 
+      onClick: () => contextMenu && onNewFile?.(contextMenu.nodeId) 
+    },
+    { 
+      label: 'New Folder', 
+      icon: <FolderPlus size={14} />, 
+      onClick: () => contextMenu && onNewFolder?.(contextMenu.nodeId) 
+    },
+    { 
+      label: 'Rename', 
+      icon: <Edit size={14} />, 
+      divider: true, 
+      onClick: () => contextMenu && onRename?.(contextMenu.nodeId) 
+    },
+    { 
+      label: 'Delete', 
+      icon: <Trash2 size={14} className="text-destructive" />, 
+      onClick: () => contextMenu && onDelete?.(contextMenu.nodeId) 
+    },
   ];
 
   return (
@@ -120,7 +146,7 @@ export const TreeWidget: React.FC<TreeWidgetProps> = ({ data, onMoveNode }) => {
               )}
               style={{ paddingLeft: `${(node.level || 0) * 12 + 8}px` }}
               onClick={() => node.type === 'folder' && toggleNode(node.id)}
-              onContextMenu={(e) => handleContextMenu(e, node.id)}
+              onContextMenu={(e) => handleContextMenu(e, node)}
             >
               <div className="w-4 h-4 mr-1 flex items-center justify-center">
                 {node.type === 'folder' ? (
