@@ -19,8 +19,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:bg": "npm run dev:stop && (npx vite --host 0.0.0.0 --port 5173 > dev-server.log 2>&1 & echo $! > vite.pid)",
-    "dev:stop": "([ -f vite.pid ] && (kill $(cat vite.pid) || true) && rm vite.pid) || pkill -f vite || true",
+    "dev:bg": "npm run dev:stop && (npx vite --host 0.0.0.0 --port 5173 > dev-server.log 2>&1 & echo $! > vite.pid) && (npx storybook dev -p 6006 --ci > storybook.log 2>&1 & echo $! > storybook.pid)",
+    "dev:stop": "([ -f vite.pid ] && (kill $(cat vite.pid) || true) && rm vite.pid) || pkill -f vite || true; ([ -f storybook.pid ] && (kill $(cat storybook.pid) || true) && rm storybook.pid) || pkill -f storybook || true",
     "dev:restart": "npm run dev:stop && npm run dev:bg",
     "build": "tsc && vite build",
     "storybook": "storybook dev -p 6006",
