@@ -54,3 +54,27 @@ export const CustomConfiguration: Story = {
     ],
   },
 };
+
+export const CustomSlashCommands: Story = {
+  decorators: [
+    (Story) => {
+      initializeShell();
+      return <Story />;
+    },
+  ],
+  args: {
+    slashCommands: [
+      {
+        command: 'ping',
+        description: 'Test the application response',
+        execute: () => alert('Custom Pong!'),
+      },
+      {
+        command: 'echo',
+        description: 'Repeat back what you type',
+        execute: (args) => alert(`Echo: ${args.join(' ')}`),
+      },
+    ],
+  },
+};
+

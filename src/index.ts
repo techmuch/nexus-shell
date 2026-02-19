@@ -19,6 +19,7 @@ export { useLayoutStore } from './core/services/LayoutService';
 export { useThemeStore, type ThemeType } from './core/services/ThemeService';
 export { useSidebarStore, type ISidebarPanel } from './core/services/SidebarService';
 export { useRightSidebarStore } from './core/services/RightSidebarService';
+export { useChatStore, type ISlashCommand } from './core/services/ChatService';
 export { useKeyboardShortcuts } from './core/services/KeyboardService';
 
 // Styles (Import this in your app to get the theme/base styles)

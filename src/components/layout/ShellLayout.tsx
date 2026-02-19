@@ -8,22 +8,31 @@ import { ChatPane } from '../widgets/ChatPane'
 import { useLayoutStore } from '../../core/services/LayoutService'
 import { useThemeStore } from '../../core/services/ThemeService'
 import { useSidebarStore, ISidebarPanel } from '../../core/services/SidebarService'
+import { useChatStore, ISlashCommand } from '../../core/services/ChatService'
 import { useEffect } from 'react'
 
 interface ShellLayoutProps {
   panels?: ISidebarPanel[];
+  slashCommands?: ISlashCommand[];
 }
 
-export const ShellLayout = ({ panels }: ShellLayoutProps) => {
+export const ShellLayout = ({ panels, slashCommands }: ShellLayoutProps) => {
   const { model, setModel, isTabDirty, setTabDirty } = useLayoutStore()
   const { theme } = useThemeStore()
   const { setPanels } = useSidebarStore()
+  const { setSlashCommands } = useChatStore()
 
   useEffect(() => {
     if (panels) {
       setPanels(panels);
     }
   }, [panels, setPanels]);
+
+  useEffect(() => {
+    if (slashCommands) {
+      setSlashCommands(slashCommands);
+    }
+  }, [slashCommands, setSlashCommands]);
 
   const factory = (node: TabNode) => {
     try {

@@ -4,6 +4,8 @@ import { pluginRegistry } from './registry/PluginRegistry';
 import { useLayoutStore } from './services/LayoutService';
 import { useSidebarStore } from './services/SidebarService';
 import { useRightSidebarStore } from './services/RightSidebarService';
+import { useChatStore } from './services/ChatService';
+import { useThemeStore, ThemeType } from './services/ThemeService';
 import { ExamplePlugin } from '../plugins/ExamplePlugin';
 import { Files, Search, GitGraph, Plug } from "lucide-react";
 import { FilesSidebar } from '../components/widgets/FilesSidebar';
@@ -37,6 +39,36 @@ export const initializeShell = async () => {
       label: 'Extensions',
       icon: Plug,
       component: () => <div className="p-4 text-sm italic text-muted-foreground">Extension manager view...</div>,
+    },
+  ]);
+
+  // Register Core Slash Commands
+  useChatStore.getState().setSlashCommands([
+    {
+      command: 'help',
+      description: 'Show available commands',
+      execute: () => alert('Available commands: /help, /clear, /theme [light|dark|gt]'),
+    },
+    {
+      command: 'clear',
+      description: 'Clear chat history',
+      execute: () => {
+        // In a real app, we'd clear messages in the ChatPane state.
+        // For now, this is a placeholder for the logic.
+        console.log('Chat clear triggered');
+      },
+    },
+    {
+      command: 'theme',
+      description: 'Change the application theme',
+      execute: (args) => {
+        const theme = args[0] as ThemeType;
+        if (['light', 'dark', 'gt'].includes(theme)) {
+          useThemeStore.getState().setTheme(theme);
+        } else {
+          alert('Usage: /theme [light|dark|gt]');
+        }
+      },
     },
   ]);
 
