@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { MenuBar } from '../components/widgets/MenuBar';
 import { initializeShell } from '../core/Boot';
+import { menuRegistry } from '../core/registry/MenuRegistry';
 
 // Initialize core for the story
 initializeShell();
@@ -22,6 +23,32 @@ export const Default: Story = {
       <MenuBar />
     </div>
   ),
+};
+
+export const CustomConfiguration: Story = {
+  render: () => {
+    menuRegistry.setMenus({
+      'File': [
+        { id: 'f.new', label: 'New Project', commandId: 'nexus.new-tab' },
+        { id: 'f.save', label: 'Save', keybinding: 'Control+S' },
+      ],
+      'Plugins': [
+        { 
+          id: 'p.manage', 
+          label: 'Extension Manager', 
+          submenu: [
+            { id: 'p.1', label: 'Theme Store' },
+            { id: 'p.2', label: 'Icon Packs' },
+          ]
+        },
+      ]
+    });
+    return (
+      <div className="theme-light bg-background text-foreground h-16">
+        <MenuBar />
+      </div>
+    );
+  },
 };
 
 export const Dark: Story = {

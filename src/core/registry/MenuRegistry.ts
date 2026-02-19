@@ -2,6 +2,7 @@ export interface IMenuItem {
   id: string;
   label: string;
   commandId?: string;
+  keybinding?: string;
   submenu?: IMenuItem[];
 }
 

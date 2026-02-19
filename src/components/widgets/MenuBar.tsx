@@ -9,14 +9,22 @@ export const MenuBar = () => {
   useEffect(() => {
     // Initial sync
     setMenus(menuRegistry.getAllMenus());
-    
-    // In a full implementation, we would add a listener here to the registry
   }, []);
 
   const handleCommand = (commandId?: string) => {
     if (commandId) {
       commandRegistry.executeCommand(commandId);
     }
+  };
+
+  const renderKeybinding = (item: IMenuItem) => {
+    const binding = item.keybinding || (item.commandId && commandRegistry.getCommand(item.commandId)?.keybinding);
+    if (!binding) return null;
+    return (
+      <span className="text-[10px] text-muted-foreground opacity-60 ml-4">
+        {binding}
+      </span>
+    );
   };
 
   const renderMenuItems = (items: IMenuItem[]) => {
@@ -30,11 +38,7 @@ export const MenuBar = () => {
             >
               <span>{item.label}</span>
               <div className="flex items-center space-x-2">
-                {item.commandId && commandRegistry.getCommand(item.commandId)?.keybinding && (
-                  <span className="text-[10px] text-muted-foreground opacity-60">
-                    {commandRegistry.getCommand(item.commandId)?.keybinding}
-                  </span>
-                )}
+                {renderKeybinding(item)}
                 {item.submenu && <ChevronRight size={10} />}
               </div>
             </div>
@@ -48,11 +52,7 @@ export const MenuBar = () => {
                     onClick={() => handleCommand(subItem.commandId)}
                   >
                     <span>{subItem.label}</span>
-                    {subItem.commandId && commandRegistry.getCommand(subItem.commandId)?.keybinding && (
-                      <span className="text-[10px] text-muted-foreground opacity-60">
-                        {commandRegistry.getCommand(subItem.commandId)?.keybinding}
-                      </span>
-                    )}
+                    {renderKeybinding(subItem)}
                   </div>
                 ))}
               </div>
@@ -64,7 +64,7 @@ export const MenuBar = () => {
   };
 
   return (
-    <div className="h-8 bg-muted border-b flex items-center px-4 select-none">
+    <div className="h-8 bg-muted border-b flex items-center px-4 select-none theme-light">
       <div className="font-semibold mr-6 text-sm">Nexus Shell</div>
       <div className="flex space-x-1 text-sm">
         {Object.entries(menus).map(([name, items]) => (

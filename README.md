@@ -125,6 +125,64 @@ useThemeStore.getState().setTheme('gt'); // Go Jackets!
 
 ---
 
+## 🎨 Customization API
+
+Nexus-Shell is highly configurable via props on the `ShellLayout` component. This allows you to repurpose the workbench for different application needs.
+
+### 1. Menu Bar Configuration (`menuConfig`)
+Define hierarchical menus with nested submenus and commands.
+```tsx
+const myMenus = {
+  'File': [
+    { id: 'new', label: 'New File', commandId: 'nexus.new-tab' },
+    { id: 'recent', label: 'Open Recent', submenu: [
+      { id: 'r1', label: 'Project Alpha' },
+      { id: 'r2', label: 'Project Beta' }
+    ]}
+  ]
+};
+```
+
+### 2. Status Bar Widgets (`statusBarConfig`)
+Add info widgets to the bottom bar with specific alignments.
+```tsx
+const myStatusBar = [
+  { id: 'info', label: 'System OK', alignment: 'left', icon: Activity },
+  { id: 'v', label: 'v1.0.0', alignment: 'center' },
+  { id: 'user', label: 'Admin', alignment: 'right', onClick: () => alert('Admin Clicked') }
+];
+```
+
+### 3. Sidebar Panels (`panels`)
+Inject custom tools into the left Activity Bar.
+```tsx
+const myPanels = [
+  { id: 'home', label: 'Home', icon: Home, component: MyHomeComponent },
+  { id: 'db', label: 'Database', icon: Database, component: <DbExplorer /> }
+];
+```
+
+### 4. Chat Slash Commands (`slashCommands`)
+Extend the chat interface with custom functional commands.
+```tsx
+const myChatCommands = [
+  { command: 'ping', description: 'Test latency', execute: () => console.log('Pong!') },
+  { command: 'clear', description: 'Reset chat', execute: (args) => resetLogic() }
+];
+```
+
+**Usage Example:**
+```tsx
+<ShellLayout 
+  menuConfig={myMenus}
+  statusBarConfig={myStatusBar}
+  panels={myPanels}
+  slashCommands={myChatCommands}
+/>
+```
+
+---
+
 ## 📂 Project Structure (Library)
 
 ```text
