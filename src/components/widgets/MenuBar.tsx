@@ -68,7 +68,7 @@ export const MenuBar = ({ rightContent }: MenuBarProps) => {
   };
 
   return (
-    <div className="h-8 bg-muted border-b flex items-center justify-between px-4 select-none theme-light shrink-0">
+    <div className="h-8 bg-muted border-b flex items-center justify-between px-4 select-none shrink-0">
       <div className="flex items-center">
         <div className="font-semibold mr-6 text-sm">Nexus Shell</div>
         <div className="flex space-x-1 text-sm">

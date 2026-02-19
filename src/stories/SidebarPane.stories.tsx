@@ -29,7 +29,7 @@ const SidebarPaneWrapper = ({ theme }: { theme: string }) => {
   }, []);
 
   return (
-    <div className={`${theme} h-[600px] border flex`}>
+    <div className={`${theme} bg-background text-foreground h-[600px] border flex`}>
       <SidebarPane />
     </div>
   );
