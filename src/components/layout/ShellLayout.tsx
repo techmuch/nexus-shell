@@ -12,6 +12,7 @@ import { useSidebarStore, ISidebarPanel } from '../../core/services/SidebarServi
 import { useChatStore, ISlashCommand } from '../../core/services/ChatService'
 import { useStatusBarStore, IStatusBarWidget } from '../../core/services/StatusBarService'
 import { menuRegistry, IMenuItem } from '../../core/registry/MenuRegistry'
+import { componentRegistry } from '../../core/registry/ComponentRegistry'
 import { useEffect } from 'react'
 
 interface ShellLayoutProps {
@@ -55,11 +56,11 @@ export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig
 
   const factory = (node: TabNode) => {
     try {
-      var component = node.getComponent();
+      var componentId = node.getComponent();
       const nodeId = node.getId();
       const dirty = isTabDirty(nodeId);
 
-      if (component === "welcome") {
+      if (componentId === "welcome") {
         return (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4 p-8">
               <h1 className="text-4xl font-bold text-primary">Nexus Shell</h1>
@@ -80,8 +81,13 @@ export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig
         );
       }
       
-      // Future: Plugin-contributed components would be checked here
-      return <div className="p-4 text-sm">Unknown Component: {component}</div>;
+      // Check the Component Registry for dynamic components
+      const RegisteredComponent = componentId ? componentRegistry.get(componentId) : undefined;
+      if (RegisteredComponent) {
+        return <RegisteredComponent node={node} />;
+      }
+
+      return <div className="p-4 text-sm">Unknown Component: {componentId}</div>;
     } catch (e) {
       console.error("Error in component factory:", e);
       return <div className="p-8 text-destructive bg-destructive/10 border border-destructive/20 h-full flex items-center justify-center">

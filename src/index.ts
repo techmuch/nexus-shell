@@ -15,6 +15,7 @@ export { TerminalPane } from './components/widgets/TerminalPane';
 export { commandRegistry, type ICommand } from './core/registry/CommandRegistry';
 export { menuRegistry, type IMenuItem } from './core/registry/MenuRegistry';
 export { pluginRegistry, type IPlugin } from './core/registry/PluginRegistry';
+export { componentRegistry, type ComponentConstructor } from './core/registry/ComponentRegistry';
 
 // Services & Hooks
 export { initializeShell } from './core/Boot';
