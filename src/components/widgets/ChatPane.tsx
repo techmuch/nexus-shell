@@ -161,11 +161,11 @@ export const ChatPane = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask Nexus... (Type / for commands)"
-            className="w-full bg-background border rounded-md p-2 text-sm focus:ring-1 focus:ring-primary outline-none resize-none min-h-[80px]"
+            className="w-full bg-secondary/50 border border-border rounded-md p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none min-h-[80px]"
           />
           <button 
             onClick={handleSend}
-            className="absolute right-2 bottom-2 p-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            className="absolute right-3 bottom-3 inline-flex items-center justify-center p-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-colors"
           >
             <Send size={14} />
           </button>

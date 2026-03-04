@@ -84,7 +84,7 @@ export const CommandPalette = ({ commands: customCommands, forcedOpen = false }:
             ref={inputRef}
             type="text"
             placeholder="Type a command to run..."
-            className="flex-1 h-12 bg-transparent outline-none text-sm"
+            className="flex-1 h-14 bg-transparent outline-none text-base text-foreground placeholder:text-muted-foreground"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);

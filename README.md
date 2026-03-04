@@ -8,7 +8,8 @@ Nexus-Shell is a professional-grade, library-first frontend framework for buildi
 - **Modular Registry System:** Decouple commands, menus, and plugins from the core UI.
 - **Persistence:** Automatic workspace restoration via `localStorage`.
 - **Command Palette:** `Ctrl+Shift+P` searchable command interface.
-- **Theming:** First-class support for Light, Dark, and custom themes (includes a Georgia Tech theme).
+- **Theming:** First-class support for Light, Dark, and custom themes (includes a Georgia Tech theme), optimized for high accessibility and reduced eye strain.
+- **Accessible Components:** Input fields and buttons follow strict UI/UX guidelines for contrast, sizing, and focus states.
 - **Library Ready:** ESM and UMD bundles with full TypeScript type definitions.
 
 ---

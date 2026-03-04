@@ -71,7 +71,7 @@ export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig
                 <p className="text-xs mb-2">Tab Persistence & Lifecycle Test:</p>
                 <button 
                   onClick={() => setTabDirty(nodeId, !dirty)}
-                  className={`px-3 py-1 text-xs rounded border ${dirty ? 'bg-destructive text-destructive-foreground' : 'bg-secondary text-secondary-foreground'}`}
+                  className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background ${dirty ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
                 >
                   {dirty ? "Mark as Saved (Clear Dirty)" : "Mark as Dirty (Unsaved Changes)"}
                 </button>

@@ -30,25 +30,40 @@
   }
 
   .theme-dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 12%; /* Darker than background for sidebar depth */
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 25%; /* Lighter than muted for hover contrast */
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 20%;
-    --input: 217.2 32.6% 20%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Backgrounds: Shifted to soothing dark grays (#18181B base) */
+    --background: 240 5% 10%; 
+    --foreground: 240 5% 85%; /* Softer white to prevent text glare */
+    
+    /* Cards & Popovers: Slightly elevated from background (#1E1E24) */
+    --card: 240 5% 13%;
+    --card-foreground: 240 5% 85%;
+    --popover: 240 5% 13%;
+    --popover-foreground: 240 5% 85%;
+    
+    /* Primary: Changed from glaring white to a readable, muted Indigo/Blue (#6366F1) */
+    --primary: 234 89% 65%;
+    --primary-foreground: 0 0% 100%; /* Pure white text is safe ON a colored button */
+    
+    /* Secondary: Muted interactive elements */
+    --secondary: 240 5% 20%;
+    --secondary-foreground: 240 5% 85%;
+    
+    /* Muted: For sidebars and inactive areas (#27272A) */
+    --muted: 240 5% 16%;
+    --muted-foreground: 240 5% 65%;
+    
+    /* Accent: Hover states - needs to be distinct from muted */
+    --accent: 240 5% 24%;
+    --accent-foreground: 240 5% 96%;
+    
+    /* Destructive: Muted red to prevent bleeding (#DC2626) */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Inputs & Borders: Distinct enough to see, soft enough to blend */
+    --border: 240 5% 26%;
+    --input: 240 5% 22%; /* Slightly lighter than background to fill input fields */
+    --ring: 234 89% 65%; /* Matches primary for focus states */
   }
 
   /* Georgia Tech Theme: Buzz Gold (#EAAA00) and Tech Tower White */
