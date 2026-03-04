@@ -1,4 +1,5 @@
 import { Layout, TabNode, Actions, Action } from 'flexlayout-react'
+import 'flexlayout-react/style/light.css'
 import '../../styles/flexlayout-theme.css'
 import { MenuBar } from '../widgets/MenuBar'
 import { StatusBar } from '../widgets/StatusBar'
