@@ -32,6 +32,13 @@ Nexus-Shell is a professional-grade frontend framework built with React and Type
 *   **Tree Widget:**
     *   A high-performance, virtualized tree for file/data navigation.
     *   Support for custom icons, context menus, and drag-and-drop.
+*   **Agent Manager:**
+    *   A visual node-based editor (ReactFlow) for orchestrating LLM agents.
+    *   A grid-based dashboard for managing AI agents via customizable callbacks.
+*   **Geospatial & Wargaming Analytics (Wargame Map):**
+    *   **Base Layer:** `react-map-gl` and MapLibre for offline vector tiles and custom terrain.
+    *   **Analytical Layer:** `deck.gl` to render heatmaps, connection lines (ArcLayer), and high-performance hexagonal grids using `h3-js`.
+    *   **Tactical Layer:** Dynamic rendering of standard NATO military symbols (MIL-STD-2525) using `milsymbol` and `deck.gl` IconLayer for large-scale unit rendering.
 
 ### 3.3 Plugin System
 *   **Registration:** A central Registry that handles plugin initialization.

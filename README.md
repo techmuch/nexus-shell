@@ -185,6 +185,30 @@ A reusable component for implementing project-wide search.
 />
 ```
 
+### 6. AI Agent Management (`AgentManager`)
+A visually rich component for defining and orchestrating LLM agents using React Flow.
+```tsx
+<AgentManager 
+  agents={agentList}
+  onFetchAgents={fetchAgents}
+  onSaveAgent={saveAgent}
+  onDeleteAgent={deleteAgent}
+  title="My Agents"
+  subtitle="Manage and visually build your custom AI workflows"
+/>
+```
+
+### 7. Geospatial & Wargaming Analytics (`WargameMap`)
+A high-performance mapping component combining `react-map-gl`, `deck.gl`, and `milsymbol` for interactive wargaming, modeling, and simulation. Features H3 hex grids, attack vectors, and dynamically generated NATO military icons.
+```tsx
+<WargameMap 
+  units={mockUnits}
+  attacks={mockAttacks}
+  terrainHexes={terrainHexes}
+  mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+/>
+```
+
 **Usage Example:**
 ```tsx
 <ShellLayout 

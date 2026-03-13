@@ -10,6 +10,8 @@ export { CommandPalette } from './components/widgets/CommandPalette';
 export { UserProfile, type UserProfileProps } from './components/widgets/UserProfile';
 export { ChatPane } from './components/widgets/ChatPane';
 export { TerminalPane } from './components/widgets/TerminalPane';
+export { AgentManager, type Agent, type AgentManagerProps } from './components/widgets/AgentManager';
+export { WargameMap, type WargameMapProps, type UnitData, type AttackData, type TerrainHexData } from './components/widgets/WargameMap';
 
 // Registries (Public Singleton Instances)
 export { commandRegistry, type ICommand } from './core/registry/CommandRegistry';
