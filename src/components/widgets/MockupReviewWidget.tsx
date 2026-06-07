@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import ReactFlow, { Background, Controls, MiniMap, Connection, addEdge, applyNodeChanges, applyEdgeChanges, type Node as FlowNode } from 'reactflow';
+import ReactFlow, { Background, Controls, MiniMap, Connection, addEdge, applyNodeChanges, applyEdgeChanges, type Node as FlowNode, type Edge as FlowEdge } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { 
   Eye, 
@@ -382,7 +382,15 @@ export const MockupReviewWidget: React.FC = () => {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      updateWorkflow(nodes, addEdge({ ...params, style: { stroke: '#38bdf8' } }, edges));
+      const label = window.prompt("Enter transition label (optional):") || "";
+      const newEdge = {
+        ...params,
+        label,
+        style: { stroke: '#38bdf8' },
+        labelStyle: { fill: '#f8fafc', fontWeight: 600, fontSize: 10 },
+        labelBgStyle: { fill: '#1e293b' }
+      };
+      updateWorkflow(nodes, addEdge(newEdge, edges));
     },
     [nodes, edges, updateWorkflow]
   );
@@ -391,6 +399,25 @@ export const MockupReviewWidget: React.FC = () => {
     setActiveViewId(node.id);
     setActiveTab('review');
   };
+
+  const handleEdgeDoubleClick = useCallback(
+    (_event: React.MouseEvent, edge: FlowEdge) => {
+      const newLabel = window.prompt("Edit Transition Label:", (edge.label as string) || "");
+      if (newLabel !== null) {
+        const updatedEdges = edges.map((e) => {
+          if (e.id === edge.id) {
+            return {
+              ...e,
+              label: newLabel,
+            };
+          }
+          return e;
+        });
+        updateWorkflow(nodes, updatedEdges);
+      }
+    },
+    [nodes, edges, updateWorkflow]
+  );
 
   // 6. Custom Screen Node Addition
   const handleAddScreen = () => {
@@ -1031,6 +1058,7 @@ export const MockupReviewWidget: React.FC = () => {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={handleNodeClick}
+            onEdgeDoubleClick={handleEdgeDoubleClick}
             fitView
           >
             <Background color="#334155" gap={16} />
