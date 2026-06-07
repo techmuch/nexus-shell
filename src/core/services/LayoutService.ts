@@ -79,7 +79,12 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
       
       let targetId = activeTabset?.getId();
       if (!targetId) {
-          // Fallback or find logic
+        try {
+          const firstTabSet = model.getFirstTabSet();
+          targetId = firstTabSet?.getId();
+        } catch (e) {
+          console.warn("Failed to get first tabset fallback", e);
+        }
       }
   
       if (targetId) {

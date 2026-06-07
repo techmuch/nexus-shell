@@ -41,6 +41,7 @@ interface MockupReviewState {
   setActiveVersionId: (viewId: string, versionId: string) => void;
   setCompareVersionId: (versionId: string | null) => void;
   addAnnotation: (viewId: string, versionId: string, annotation: Omit<IMockupAnnotation, 'versionId'>) => void;
+  undoAnnotation: (viewId: string, versionId: string) => void;
   deleteAnnotation: (viewId: string, versionId: string, annotationId: string) => void;
   updateAnnotationText: (viewId: string, versionId: string, annotationId: string, text: string) => void;
   addMockupView: (name: string, description?: string, htmlContent?: string) => string;
@@ -379,6 +380,28 @@ export const useMockupReviewStore = create<MockupReviewState>((set, get) => ({
                 return {
                   ...v,
                   annotations: [...v.annotations, { ...annotation, versionId }]
+                };
+              }
+              return v;
+            })
+          };
+        }
+        return view;
+      })
+    }));
+  },
+
+  undoAnnotation: (viewId, versionId) => {
+    set((state) => ({
+      views: state.views.map((view) => {
+        if (view.id === viewId) {
+          return {
+            ...view,
+            versions: view.versions.map((v) => {
+              if (v.id === versionId) {
+                return {
+                  ...v,
+                  annotations: v.annotations.slice(0, -1)
                 };
               }
               return v;

@@ -16,7 +16,9 @@ import {
   Check, 
   X,
   History,
-  Copy
+  Copy,
+  Undo,
+  Eraser
 } from 'lucide-react';
 import { useMockupReviewStore, IMockupAnnotation } from '../../core/services/MockupReviewService';
 import { clsx, type ClassValue } from 'clsx';
@@ -170,6 +172,7 @@ export const MockupReviewWidget: React.FC = () => {
     setActiveVersionId,
     setCompareVersionId,
     addAnnotation,
+    undoAnnotation,
     deleteAnnotation,
     updateAnnotationText,
     addMockupView,
@@ -179,7 +182,7 @@ export const MockupReviewWidget: React.FC = () => {
   } = useMockupReviewStore();
 
   const [activeTab, setActiveTab] = useState<'review' | 'workflow'>('review');
-  const [tool, setTool] = useState<'select' | 'pen' | 'rect' | 'circle' | 'arrow' | 'comment'>('select');
+  const [tool, setTool] = useState<'select' | 'pen' | 'rect' | 'circle' | 'arrow' | 'comment' | 'eraser'>('select');
   const [color, setColor] = useState<string>('#ef4444'); // Red default
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState<{ x: number; y: number }[]>([]);
@@ -191,6 +194,7 @@ export const MockupReviewWidget: React.FC = () => {
   const [pendingComment, setPendingComment] = useState<{ x: number; y: number; selector?: string } | null>(null);
   const [commentText, setCommentText] = useState('');
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   
   // Custom screen name helpers
   const [showAddScreen, setShowAddScreen] = useState(false);
@@ -261,6 +265,48 @@ export const MockupReviewWidget: React.FC = () => {
     };
   }, [activeVersion, compareVersion, updateTetheredPositions]);
 
+  // Reset selection when changing screen, version, or tool
+  useEffect(() => {
+    setSelectedAnnotationId(null);
+  }, [activeViewId, activeVersion?.id, tool]);
+
+  // Global Keyboard Shortcuts (Delete/Backspace and Ctrl+Z/Cmd+Z)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (activeView && activeVersion && activeVersion.annotations.length > 0) {
+          e.preventDefault();
+          undoAnnotation(activeView.id, activeVersion.id);
+          setSelectedAnnotationId(null);
+        }
+      }
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedAnnotationId && activeView && activeVersion) {
+          e.preventDefault();
+          deleteAnnotation(activeView.id, activeVersion.id, selectedAnnotationId);
+          setSelectedAnnotationId(null);
+        } else if (activeCommentId && activeView && activeVersion) {
+          e.preventDefault();
+          deleteAnnotation(activeView.id, activeVersion.id, activeCommentId);
+          setActiveCommentId(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedAnnotationId, activeCommentId, activeView, activeVersion, undoAnnotation, deleteAnnotation]);
+
   // 2. Intercept click to add element-tethered comment
   const handleElementClick = (selector: string, clientX: number, clientY: number) => {
     if (tool !== 'comment' || !shadowHostRef.current) return;
@@ -281,7 +327,7 @@ export const MockupReviewWidget: React.FC = () => {
   };
 
   const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (tool === 'select') return;
+    if (tool === 'select' || tool === 'eraser') return;
     e.preventDefault();
 
     const coords = getCanvasCoords(e);
@@ -667,6 +713,7 @@ export const MockupReviewWidget: React.FC = () => {
                   { id: 'circle', icon: <Circle size={14} />, label: 'Circle' },
                   { id: 'arrow', icon: <MoveRight size={14} />, label: 'Arrow' },
                   { id: 'comment', icon: <MessageSquare size={14} />, label: 'Comment' },
+                  { id: 'eraser', icon: <Eraser size={14} />, label: 'Eraser' },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -686,7 +733,7 @@ export const MockupReviewWidget: React.FC = () => {
 
               {/* Color Picker & Draw States */}
               <div className="flex items-center space-x-3">
-                {tool !== 'select' && (
+                {tool !== 'select' && tool !== 'eraser' && (
                   <div className="flex items-center space-x-1 border rounded px-1.5 py-1 bg-muted/10">
                     {['#ef4444', '#eab308', '#22c55e', '#3b82f6'].map((c) => (
                       <button
@@ -702,18 +749,57 @@ export const MockupReviewWidget: React.FC = () => {
                   </div>
                 )}
                 {activeView && activeVersion && (
-                  <button
-                    onClick={() => {
-                      if (window.confirm("Clear all drawings from this revision?")) {
-                        activeVersion.annotations
-                          .filter((a) => a.type !== 'comment')
-                          .forEach((a) => deleteAnnotation(activeView.id, activeVersion.id, a.id));
-                      }
-                    }}
-                    className="p-1 rounded hover:bg-destructive/10 text-destructive text-[11px] font-semibold border border-transparent"
-                  >
-                    Clear Canvas
-                  </button>
+                  <>
+                    {/* Clear Canvas */}
+                    <button
+                      onClick={() => {
+                        if (window.confirm("Clear all drawings from this revision?")) {
+                          activeVersion.annotations
+                            .filter((a) => a.type !== 'comment')
+                            .forEach((a) => deleteAnnotation(activeView.id, activeVersion.id, a.id));
+                          setSelectedAnnotationId(null);
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-destructive/10 text-destructive text-[11px] font-semibold border border-transparent"
+                    >
+                      Clear Canvas
+                    </button>
+
+                    {/* Selection and Undo tools */}
+                    <div className="flex items-center space-x-1 border-l pl-3 border-border">
+                      {selectedAnnotationId && (
+                        <button
+                          onClick={() => {
+                            deleteAnnotation(activeView.id, activeVersion.id, selectedAnnotationId);
+                            setSelectedAnnotationId(null);
+                          }}
+                          className="p-1.5 rounded hover:bg-destructive/10 text-destructive text-[11px] font-semibold flex items-center gap-1 border border-transparent transition-colors"
+                          title="Delete selected markup (Delete / Backspace)"
+                        >
+                          <Trash2 size={13} />
+                          <span className="hidden sm:inline">Delete Markup</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          undoAnnotation(activeView.id, activeVersion.id);
+                          setSelectedAnnotationId(null);
+                        }}
+                        disabled={activeVersion.annotations.length === 0}
+                        className={cn(
+                          "p-1.5 rounded text-[11px] font-semibold flex items-center gap-1 border border-transparent transition-colors",
+                          activeVersion.annotations.length === 0
+                            ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                            : "hover:bg-accent text-foreground"
+                        )}
+                        title="Undo last annotation (Control+Z)"
+                      >
+                        <Undo size={13} />
+                        <span className="hidden sm:inline">Undo</span>
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -734,11 +820,13 @@ export const MockupReviewWidget: React.FC = () => {
                   <svg
                     className={cn(
                       "absolute inset-0 w-full h-full z-20 pointer-events-auto",
-                      tool === 'select' ? "pointer-events-none" : "cursor-crosshair"
+                      (tool === 'select' || tool === 'eraser') ? "pointer-events-none" : "cursor-crosshair"
                     )}
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
                   >
                     <defs>
                       {renderArrowHeadMarker('arrowhead-red', '#ef4444')}
@@ -749,45 +837,172 @@ export const MockupReviewWidget: React.FC = () => {
 
                     {/* Rendering Active Drawing Annotations */}
                     {activeVersion.annotations.map((ann) => {
+                      const isSelected = ann.id === selectedAnnotationId;
+
+                      const handleShapeClick = (e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        if (tool === 'select') {
+                          setSelectedAnnotationId(isSelected ? null : ann.id);
+                        } else if (tool === 'eraser') {
+                          deleteAnnotation(activeView.id, activeVersion.id, ann.id);
+                        }
+                      };
+
+                      const shapeClass = cn(
+                        (tool === 'select' || tool === 'eraser') ? "pointer-events-auto cursor-pointer" : "pointer-events-none"
+                      );
+
                       if (ann.type === 'stroke' && ann.points) {
                         return (
-                          <path
-                            key={ann.id}
-                            d={generateSvgPath(ann.points)}
-                            fill="none"
-                            stroke={ann.color}
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                          <g key={ann.id} className="group">
+                            <path
+                              key="hover-highlight"
+                              d={generateSvgPath(ann.points)}
+                              fill="none"
+                              stroke="#ef4444"
+                              strokeWidth="6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              vectorEffect="non-scaling-stroke"
+                              opacity="0.5"
+                              className={cn(
+                                "pointer-events-none hidden",
+                                tool === 'eraser' && "group-hover:block"
+                              )}
+                              pointerEvents="none"
+                            />
+                            {isSelected && (
+                              <path
+                                key="select-highlight"
+                                d={generateSvgPath(ann.points)}
+                                fill="none"
+                                stroke="#3b82f6"
+                                strokeWidth="6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                vectorEffect="non-scaling-stroke"
+                                opacity="0.5"
+                                className="pointer-events-none"
+                                pointerEvents="none"
+                              />
+                            )}
+                            <path
+                              key="actual"
+                              d={generateSvgPath(ann.points)}
+                              fill="none"
+                              stroke={ann.color}
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              vectorEffect="non-scaling-stroke"
+                              className={shapeClass}
+                              onClick={handleShapeClick}
+                            />
+                          </g>
                         );
                       }
                       if (ann.type === 'rect' && ann.x !== undefined && ann.y !== undefined && ann.width && ann.height) {
                         return (
-                          <rect
-                            key={ann.id}
-                            x={`${ann.x}%`}
-                            y={`${ann.y}%`}
-                            width={`${ann.width}%`}
-                            height={`${ann.height}%`}
-                            fill="none"
-                            stroke={ann.color}
-                            strokeWidth="2.5"
-                          />
+                          <g key={ann.id} className="group">
+                            <rect
+                              key="hover-highlight"
+                              x={ann.x}
+                              y={ann.y}
+                              width={ann.width}
+                              height={ann.height}
+                              fill="none"
+                              stroke="#ef4444"
+                              strokeWidth="6"
+                              vectorEffect="non-scaling-stroke"
+                              opacity="0.5"
+                              className={cn(
+                                "pointer-events-none hidden",
+                                tool === 'eraser' && "group-hover:block"
+                              )}
+                              pointerEvents="none"
+                            />
+                            {isSelected && (
+                              <rect
+                                key="select-highlight"
+                                x={ann.x}
+                                y={ann.y}
+                                width={ann.width}
+                                height={ann.height}
+                                fill="none"
+                                stroke="#3b82f6"
+                                strokeWidth="6"
+                                vectorEffect="non-scaling-stroke"
+                                opacity="0.5"
+                                className="pointer-events-none"
+                                pointerEvents="none"
+                              />
+                            )}
+                            <rect
+                              key="actual"
+                              x={ann.x}
+                              y={ann.y}
+                              width={ann.width}
+                              height={ann.height}
+                              fill="none"
+                              stroke={ann.color}
+                              strokeWidth="2.5"
+                              vectorEffect="non-scaling-stroke"
+                              className={shapeClass}
+                              onClick={handleShapeClick}
+                            />
+                          </g>
                         );
                       }
                       if (ann.type === 'circle' && ann.x !== undefined && ann.y !== undefined && ann.width) {
                         return (
-                          <ellipse
-                            key={ann.id}
-                            cx={`${ann.x + ann.width / 2}%`}
-                            cy={`${ann.y + ann.height! / 2}%`}
-                            rx={`${ann.width / 2}%`}
-                            ry={`${ann.height! / 2}%`}
-                            fill="none"
-                            stroke={ann.color}
-                            strokeWidth="2.5"
-                          />
+                          <g key={ann.id} className="group">
+                            <ellipse
+                              key="hover-highlight"
+                              cx={ann.x + ann.width / 2}
+                              cy={ann.y + ann.height! / 2}
+                              rx={ann.width / 2}
+                              ry={ann.height! / 2}
+                              fill="none"
+                              stroke="#ef4444"
+                              strokeWidth="6"
+                              vectorEffect="non-scaling-stroke"
+                              opacity="0.5"
+                              className={cn(
+                                "pointer-events-none hidden",
+                                tool === 'eraser' && "group-hover:block"
+                              )}
+                              pointerEvents="none"
+                            />
+                            {isSelected && (
+                              <ellipse
+                                key="select-highlight"
+                                cx={ann.x + ann.width / 2}
+                                cy={ann.y + ann.height! / 2}
+                                rx={ann.width / 2}
+                                ry={ann.height! / 2}
+                                fill="none"
+                                stroke="#3b82f6"
+                                strokeWidth="6"
+                                vectorEffect="non-scaling-stroke"
+                                opacity="0.5"
+                                className="pointer-events-none"
+                                pointerEvents="none"
+                              />
+                            )}
+                            <ellipse
+                              key="actual"
+                              cx={ann.x + ann.width / 2}
+                              cy={ann.y + ann.height! / 2}
+                              rx={ann.width / 2}
+                              ry={ann.height! / 2}
+                              fill="none"
+                              stroke={ann.color}
+                              strokeWidth="2.5"
+                              vectorEffect="non-scaling-stroke"
+                              className={shapeClass}
+                              onClick={handleShapeClick}
+                            />
+                          </g>
                         );
                       }
                       if (ann.type === 'arrow' && ann.points && ann.points.length >= 2) {
@@ -795,16 +1010,52 @@ export const MockupReviewWidget: React.FC = () => {
                                      ann.color === '#eab308' ? 'arrowhead-yellow' : 
                                      ann.color === '#22c55e' ? 'arrowhead-green' : 'arrowhead-blue';
                         return (
-                          <line
-                            key={ann.id}
-                            x1={`${ann.points[0].x}%`}
-                            y1={`${ann.points[0].y}%`}
-                            x2={`${ann.points[1].x}%`}
-                            y2={`${ann.points[1].y}%`}
-                            stroke={ann.color}
-                            strokeWidth="2.5"
-                            markerEnd={`url(#${mId})`}
-                          />
+                          <g key={ann.id} className="group">
+                            <line
+                              key="hover-highlight"
+                              x1={ann.points[0].x}
+                              y1={ann.points[0].y}
+                              x2={ann.points[1].x}
+                              y2={ann.points[1].y}
+                              stroke="#ef4444"
+                              strokeWidth="6"
+                              vectorEffect="non-scaling-stroke"
+                              opacity="0.5"
+                              className={cn(
+                                "pointer-events-none hidden",
+                                tool === 'eraser' && "group-hover:block"
+                              )}
+                              pointerEvents="none"
+                            />
+                            {isSelected && (
+                              <line
+                                key="select-highlight"
+                                x1={ann.points[0].x}
+                                y1={ann.points[0].y}
+                                x2={ann.points[1].x}
+                                y2={ann.points[1].y}
+                                stroke="#3b82f6"
+                                strokeWidth="6"
+                                vectorEffect="non-scaling-stroke"
+                                opacity="0.5"
+                                className="pointer-events-none"
+                                pointerEvents="none"
+                              />
+                            )}
+                            <line
+                              key="actual"
+                              x1={ann.points[0].x}
+                              y1={ann.points[0].y}
+                              x2={ann.points[1].x}
+                              y2={ann.points[1].y}
+                              stroke={ann.color}
+                              strokeWidth="2.5"
+                              markerEnd={`url(#${mId})`}
+                              vectorEffect="non-scaling-stroke"
+                              className={shapeClass}
+                              onClick={handleShapeClick}
+                            />
+                          </g>
                         );
                       }
                       return null;
@@ -822,6 +1073,7 @@ export const MockupReviewWidget: React.FC = () => {
                             strokeWidth="2"
                             strokeDasharray="4"
                             opacity="0.4"
+                            vectorEffect="non-scaling-stroke"
                           />
                         );
                       }
@@ -829,15 +1081,16 @@ export const MockupReviewWidget: React.FC = () => {
                         return (
                           <rect
                             key={`comp-${ann.id}`}
-                            x={`${ann.x}%`}
-                            y={`${ann.y}%`}
-                            width={`${ann.width}%`}
-                            height={`${ann.height}%`}
+                            x={ann.x}
+                            y={ann.y}
+                            width={ann.width}
+                            height={ann.height}
                             fill="none"
                             stroke={ann.color}
                             strokeWidth="2"
                             strokeDasharray="4"
                             opacity="0.4"
+                            vectorEffect="non-scaling-stroke"
                           />
                         );
                       }
@@ -845,15 +1098,16 @@ export const MockupReviewWidget: React.FC = () => {
                         return (
                           <ellipse
                             key={`comp-${ann.id}`}
-                            cx={`${ann.x + ann.width / 2}%`}
-                            cy={`${ann.y + ann.height! / 2}%`}
-                            rx={`${ann.width / 2}%`}
-                            ry={`${ann.height! / 2}%`}
+                            cx={ann.x + ann.width / 2}
+                            cy={ann.y + ann.height! / 2}
+                            rx={ann.width / 2}
+                            ry={ann.height! / 2}
                             fill="none"
                             stroke={ann.color}
                             strokeWidth="2"
                             strokeDasharray="4"
                             opacity="0.4"
+                            vectorEffect="non-scaling-stroke"
                           />
                         );
                       }
@@ -861,41 +1115,55 @@ export const MockupReviewWidget: React.FC = () => {
                     })}
 
                     {/* Temporary Rendering Shape when Drag-Drawing */}
-                    {isDrawing && tempShape && (
+                    {isDrawing && (
                       <>
-                        {tool === 'rect' && (
-                          <rect
-                            x={`${tempShape.x}%`}
-                            y={`${tempShape.y}%`}
-                            width={`${tempShape.w}%`}
-                            height={`${tempShape.h}%`}
+                        {tool === 'pen' && currentStroke.length > 1 && (
+                          <path
+                            d={generateSvgPath(currentStroke)}
                             fill="none"
                             stroke={color}
                             strokeWidth="2"
-                            strokeDasharray="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            vectorEffect="non-scaling-stroke"
                           />
                         )}
-                        {tool === 'circle' && (
-                          <ellipse
-                            cx={`${tempShape.x + tempShape.w / 2}%`}
-                            cy={`${tempShape.y + tempShape.h / 2}%`}
-                            rx={`${tempShape.w / 2}%`}
-                            ry={`${tempShape.h / 2}%`}
+                        {tool === 'rect' && tempShape && (
+                          <rect
+                            x={tempShape.x}
+                            y={tempShape.y}
+                            width={tempShape.w}
+                            height={tempShape.h}
                             fill="none"
                             stroke={color}
                             strokeWidth="2"
                             strokeDasharray="2"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                        )}
+                        {tool === 'circle' && tempShape && (
+                          <ellipse
+                            cx={tempShape.x + tempShape.w / 2}
+                            cy={tempShape.y + tempShape.h / 2}
+                            rx={tempShape.w / 2}
+                            ry={tempShape.h / 2}
+                            fill="none"
+                            stroke={color}
+                            strokeWidth="2"
+                            strokeDasharray="2"
+                            vectorEffect="non-scaling-stroke"
                           />
                         )}
                         {tool === 'arrow' && drawStartPos && currentCoords && (
                           <line
-                            x1={`${drawStartPos.x}%`}
-                            y1={`${drawStartPos.y}%`}
-                            x2={`${currentCoords.x}%`}
-                            y2={`${currentCoords.y}%`}
+                            x1={drawStartPos.x}
+                            y1={drawStartPos.y}
+                            x2={currentCoords.x}
+                            y2={currentCoords.y}
                             stroke={color}
                             strokeWidth="2"
                             strokeDasharray="2"
+                            vectorEffect="non-scaling-stroke"
                           />
                         )}
                       </>
@@ -908,18 +1176,25 @@ export const MockupReviewWidget: React.FC = () => {
                     return (
                       <div
                         key={ann.id}
-                        onClick={() => setActiveCommentId(ann.id === activeCommentId ? null : ann.id)}
+                        onClick={() => {
+                          if (tool === 'eraser') {
+                            deleteAnnotation(activeView.id, activeVersion.id, ann.id);
+                          } else {
+                            setActiveCommentId(ann.id === activeCommentId ? null : ann.id);
+                          }
+                        }}
                         className={cn(
                           "absolute w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs cursor-pointer z-30 shadow hover:scale-110 transition-transform -translate-x-1/2 -translate-y-1/2",
-                          ann.id === activeCommentId ? "ring-2 ring-white scale-110" : ""
+                          ann.id === activeCommentId ? "ring-2 ring-white scale-110" : "",
+                          tool === 'eraser' ? "hover:bg-destructive hover:scale-110 border border-destructive" : ""
                         )}
                         style={{
                           left: `${pos.x}%`,
                           top: `${pos.y}%`,
-                          backgroundColor: ann.color,
+                          backgroundColor: tool === 'eraser' ? '#ef4444' : ann.color,
                           color: '#fff',
                         }}
-                        title="View comment details"
+                        title={tool === 'eraser' ? "Click to erase comment" : "View comment details"}
                       >
                         {idx + 1}
                       </div>
