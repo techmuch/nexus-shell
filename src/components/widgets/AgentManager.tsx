@@ -11,7 +11,9 @@ import ReactFlow, {
   type Connection,
   ReactFlowProvider,
   Handle,
-  Position
+  Position,
+  type NodeProps,
+  type ReactFlowInstance
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Plus, Trash2, Edit2, ArrowLeft, Save, GripVertical, X } from 'lucide-react';
@@ -112,10 +114,10 @@ const Sidebar = () => {
   );
 };
 
-const SettingsPanel = ({ selectedNode, updateNodeData, closePanel }: { selectedNode: Node, updateNodeData: (id: string, data: any) => void, closePanel: () => void }) => {
+const SettingsPanel = ({ selectedNode, updateNodeData, closePanel }: { selectedNode: Node, updateNodeData: (id: string, data: Node['data']) => void, closePanel: () => void }) => {
   if (!selectedNode) return null;
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string | number | boolean) => {
     updateNodeData(selectedNode.id, {
       ...selectedNode.data,
       settings: {
@@ -228,7 +230,7 @@ const SettingsPanel = ({ selectedNode, updateNodeData, closePanel }: { selectedN
   );
 };
 
-const CustomNode = ({ data, selected }: any) => {
+const CustomNode = ({ data, selected }: NodeProps) => {
   let bgClass = "bg-card";
   let borderClass = selected ? "border-primary shadow-[0_0_0_1px_rgba(var(--primary),0.5)]" : "border-border";
   
@@ -260,10 +262,19 @@ const nodeTypes = {
   custom: CustomNode,
 };
 
-const FlowEditor = ({ initialNodes, initialEdges, onSave, onBack, currentAgent, setCurrentAgent }: any) => {
+interface FlowEditorProps {
+  initialNodes: Node[];
+  initialEdges: Edge[];
+  onSave: (nodes: Node[], edges: Edge[]) => void;
+  onBack: () => void;
+  currentAgent: Agent | null;
+  setCurrentAgent: React.Dispatch<React.SetStateAction<Agent | null>>;
+}
+
+const FlowEditor = ({ initialNodes, initialEdges, onSave, onBack, currentAgent, setCurrentAgent }: FlowEditorProps) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes || []);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges || []);
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const onConnect = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
@@ -280,7 +291,7 @@ const FlowEditor = ({ initialNodes, initialEdges, onSave, onBack, currentAgent, 
       const type = event.dataTransfer.getData('application/reactflow');
       const label = event.dataTransfer.getData('application/reactflow-label');
 
-      if (typeof type === 'undefined' || !type) {
+      if (typeof type === 'undefined' || !type || !reactFlowInstance) {
         return;
       }
 
@@ -295,24 +306,27 @@ const FlowEditor = ({ initialNodes, initialEdges, onSave, onBack, currentAgent, 
         data: { label: label, type: type, settings: {} },
       };
 
-      setNodes((nds: any) => nds.concat(newNode));
+      setNodes((nds) => nds.concat(newNode));
       setSelectedNodeId(newNode.id);
     },
     [reactFlowInstance, setNodes]
   );
 
-  const updateNodeData = (id: string, data: any) => {
-    setNodes((nds: any) =>
-      nds.map((node: any) => {
+  const updateNodeData = (id: string, data: Node['data']) => {
+    setNodes((nds) =>
+      nds.map((node) => {
         if (node.id === id) {
-          node.data = data;
+          return {
+            ...node,
+            data
+          };
         }
         return node;
       })
     );
   };
 
-  const selectedNode = nodes.find((n: any) => n.id === selectedNodeId) || null;
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground animate-in fade-in duration-200">
@@ -325,13 +339,13 @@ const FlowEditor = ({ initialNodes, initialEdges, onSave, onBack, currentAgent, 
             <input 
               type="text" 
               value={currentAgent?.name || ''} 
-              onChange={(e) => setCurrentAgent({ ...currentAgent, name: e.target.value })}
+              onChange={(e) => setCurrentAgent(prev => prev ? { ...prev, name: e.target.value } : null)}
               className="bg-transparent font-bold outline-none text-sm text-foreground" 
             />
             <input 
               type="text" 
               value={currentAgent?.description || ''} 
-              onChange={(e) => setCurrentAgent({ ...currentAgent, description: e.target.value })}
+              onChange={(e) => setCurrentAgent(prev => prev ? { ...prev, description: e.target.value } : null)}
               className="bg-transparent text-xs text-muted-foreground outline-none w-64" 
             />
           </div>
@@ -381,7 +395,7 @@ export const AgentManager: React.FC<AgentManagerProps> = ({
   className
 }) => {
   const [view, setView] = useState<'list' | 'edit'>('list');
-  const [currentAgent, setCurrentAgent] = useState<any>(null);
+  const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [initialNodes, setInitialNodes] = useState<Node[]>([]);
   const [initialEdges, setInitialEdges] = useState<Edge[]>([]);
 
@@ -392,7 +406,12 @@ export const AgentManager: React.FC<AgentManagerProps> = ({
   }, [view, onFetchAgents]);
 
   const handleCreateNew = () => {
-    setCurrentAgent({ name: 'New Agent', description: 'A new AI agent' });
+    setCurrentAgent({
+      id: `agent_${new Date().getTime()}`,
+      name: 'New Agent',
+      description: 'A new AI agent',
+      schemaJson: '{"nodes":[],"edges":[]}'
+    });
     setInitialNodes([{ id: 'start', position: { x: 100, y: 200 }, data: { label: 'START', type: 'START', settings: {} }, type: 'custom' }]);
     setInitialEdges([]);
     setView('edit');

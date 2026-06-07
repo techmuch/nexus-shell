@@ -11,11 +11,17 @@ import { useTerminalStore } from './services/TerminalService';
 import { ExamplePlugin } from '../plugins/ExamplePlugin';
 import { Files, Search, GitGraph, Plug, GitBranch, Bell, MessageCircle, Terminal as TerminalIcon } from "lucide-react";
 import { FilesSidebar } from '../components/widgets/FilesSidebar';
+import { componentRegistry } from './registry/ComponentRegistry';
+import { WelcomeTab } from '../components/widgets/WelcomeTab';
+import { DataGrid } from '../components/widgets/DataGrid';
 
 /**
  * Initializes the shell's core commands and menus.
  */
 export const initializeShell = async () => {
+  // Register Core Tab Components
+  componentRegistry.register('welcome', WelcomeTab);
+  componentRegistry.register('datagrid', DataGrid);
   // Register Core Status Bar Widgets
   useStatusBarStore.getState().setWidgets([
     {

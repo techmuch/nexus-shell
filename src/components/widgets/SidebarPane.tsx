@@ -59,12 +59,13 @@ export const SidebarPane = () => {
   }
 
   return (
-    <div className="w-[300px] h-full bg-muted border-r flex flex-col select-none">
+    <aside role="tabpanel" aria-label={`${getTitle()} Panel`} className="w-[300px] h-full bg-muted border-r flex flex-col select-none">
       <div className="h-10 flex items-center justify-between px-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
         <span>{getTitle()}</span>
         <button 
           onClick={() => setActiveSidebar(null)}
-          className="p-1 hover:bg-accent hover:text-foreground rounded transition-colors"
+          aria-label="Close Panel"
+          className="p-1 hover:bg-accent hover:text-foreground rounded transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <X size={14} />
         </button>
@@ -72,6 +73,6 @@ export const SidebarPane = () => {
       <div className="flex-1 overflow-auto border-t border-border/50 bg-background/50">
         {renderContent()}
       </div>
-    </div>
+    </aside>
   )
 }

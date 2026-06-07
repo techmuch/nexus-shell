@@ -68,10 +68,10 @@ export const MenuBar = ({ rightContent }: MenuBarProps) => {
   };
 
   return (
-    <div className="h-8 bg-muted border-b flex items-center justify-between px-4 select-none shrink-0">
+    <header role="banner" aria-label="Application Header" className="h-8 bg-muted border-b flex items-center justify-between px-4 select-none shrink-0">
       <div className="flex items-center">
         <div className="font-semibold mr-6 text-sm">Nexus Shell</div>
-        <div className="flex space-x-1 text-sm">
+        <nav role="navigation" aria-label="Main Menu" className="flex space-x-1 text-sm">
           {Object.entries(menus).map(([name, items]) => (
             <div key={name} className="relative group">
               <div className="cursor-pointer hover:bg-accent hover:text-accent-foreground px-3 py-1 rounded text-xs">
@@ -80,7 +80,7 @@ export const MenuBar = ({ rightContent }: MenuBarProps) => {
               {items.length > 0 && renderMenuItems(items)}
             </div>
           ))}
-        </div>
+        </nav>
       </div>
       
       {rightContent && (
@@ -88,6 +88,6 @@ export const MenuBar = ({ rightContent }: MenuBarProps) => {
           {rightContent}
         </div>
       )}
-    </div>
+    </header>
   );
 };

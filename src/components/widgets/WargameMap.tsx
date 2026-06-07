@@ -13,15 +13,24 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
+// File-level cache to store canvas data URLs for milsymbol icons
+const iconCache: Record<string, string> = {};
+
 // Helper to generate a data URL from milsymbol
 const generateUnitIcon = (sidc: string) => {
-  // Try to create the symbol, fallback to a default if invalid
+  const cached = iconCache[sidc];
+  if (cached) return cached;
+
   try {
-    const symbol = new ms.Symbol(sidc, { size: 30 });
-    return symbol.asCanvas().toDataURL();
+    const symbol = new (ms as any).Symbol(sidc, { size: 30 });
+    const dataUrl = symbol.asCanvas().toDataURL();
+    iconCache[sidc] = dataUrl;
+    return dataUrl;
   } catch (e) {
     console.error("Invalid SIDC code for milsymbol:", sidc);
-    return new ms.Symbol("SUGPE---------", { size: 30 }).asCanvas().toDataURL();
+    const fallback = new (ms as any).Symbol("SUGPE---------", { size: 30 }).asCanvas().toDataURL();
+    iconCache[sidc] = fallback;
+    return fallback;
   }
 };
 
@@ -72,8 +81,8 @@ export const WargameMap: React.FC<WargameMapProps> = ({
     new H3HexagonLayer({
       id: 'grid-layer',
       data: terrainHexes,
-      getHexagon: (d: any) => d.h3Index,
-      getFillColor: (d: any) => {
+      getHexagon: (d: TerrainHexData) => d.h3Index,
+      getFillColor: (d: TerrainHexData) => {
         if (d.owner === 'friendly') return [0, 0, 255, 80];
         if (d.owner === 'hostile') return [255, 0, 0, 80];
         return [128, 128, 128, 80];
@@ -88,8 +97,8 @@ export const WargameMap: React.FC<WargameMapProps> = ({
     new ArcLayer({
       id: 'attack-lines',
       data: attacks,
-      getSourcePosition: (d: any) => d.origin,
-      getTargetPosition: (d: any) => d.target,
+      getSourcePosition: (d: AttackData) => d.origin,
+      getTargetPosition: (d: AttackData) => d.target,
       getSourceColor: [0, 255, 0],
       getTargetColor: [255, 0, 0],
       getWidth: 4,
@@ -100,7 +109,7 @@ export const WargameMap: React.FC<WargameMapProps> = ({
     new IconLayer({
       id: 'unit-layer',
       data: units,
-      getIcon: (d: any) => ({
+      getIcon: (d: UnitData) => ({
         url: generateUnitIcon(d.sidc),
         width: 128,
         height: 128,
@@ -108,7 +117,7 @@ export const WargameMap: React.FC<WargameMapProps> = ({
         anchorX: 64
       }),
       getSize: 50,
-      getPosition: (d: any) => d.coordinates,
+      getPosition: (d: UnitData) => d.coordinates,
       pickable: true
     })
   ], [terrainHexes, attacks, units]);

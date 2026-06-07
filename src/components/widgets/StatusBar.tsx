@@ -30,9 +30,17 @@ export const StatusBar = () => {
       <div
         key={widget.id}
         onClick={isInteractive ? handleClick : undefined}
+        onKeyDown={isInteractive ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick();
+          }
+        } : undefined}
+        role={isInteractive ? "button" : undefined}
+        tabIndex={isInteractive ? 0 : undefined}
         className={cn(
-          "flex items-center space-x-1.5 px-2 py-0.5 rounded transition-colors h-full",
-          isInteractive ? "cursor-pointer hover:bg-white/10" : "cursor-default",
+          "flex items-center space-x-1.5 px-2 py-0.5 rounded transition-colors h-full focus:outline-none",
+          isInteractive ? "cursor-pointer hover:bg-white/10 focus:ring-1 focus:ring-white" : "cursor-default",
           widget.className
         )}
       >
@@ -43,7 +51,7 @@ export const StatusBar = () => {
   };
 
   return (
-    <div className="h-6 bg-primary text-primary-foreground text-[11px] flex items-center justify-between px-1 select-none shrink-0 border-t border-white/5">
+    <footer role="status" aria-label="Status Bar" className="h-6 bg-primary text-primary-foreground text-[11px] flex items-center justify-between px-1 select-none shrink-0 border-t border-white/5">
       <div className="flex items-center space-x-1 h-full">
         {leftWidgets.map(renderWidget)}
       </div>
@@ -53,7 +61,7 @@ export const StatusBar = () => {
       <div className="flex items-center space-x-1 h-full">
         {rightWidgets.map(renderWidget)}
       </div>
-    </div>
+    </footer>
   )
 }
 

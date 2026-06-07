@@ -22,6 +22,8 @@
     "dev:bg": "npm run dev:stop && (npx vite --host 0.0.0.0 --port 5173 > dev-server.log 2>&1 & echo $! > vite.pid) && (npx storybook dev -p 6006 --ci > storybook.log 2>&1 & echo $! > storybook.pid)",
     "dev:stop": "([ -f vite.pid ] && (kill $(cat vite.pid) || true) && rm vite.pid) || pkill -f vite || true; ([ -f storybook.pid ] && (kill $(cat storybook.pid) || true) && rm storybook.pid) || pkill -f storybook || true",
     "dev:restart": "npm run dev:stop && npm run dev:bg",
+    "dev:open": "open http://localhost:5173 && open http://localhost:6006",
+    "dev:all": "npm run dev:bg && sleep 3 && npm run dev:open",
     "build": "tsc && vite build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

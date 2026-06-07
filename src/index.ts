@@ -12,11 +12,12 @@ export { ChatPane } from './components/widgets/ChatPane';
 export { TerminalPane } from './components/widgets/TerminalPane';
 export { AgentManager, type Agent, type AgentManagerProps } from './components/widgets/AgentManager';
 export { WargameMap, type WargameMapProps, type UnitData, type AttackData, type TerrainHexData } from './components/widgets/WargameMap';
+export { DataGrid, type DataGridProps, type IDataGridColumn } from './components/widgets/DataGrid';
 
 // Registries (Public Singleton Instances)
 export { commandRegistry, type ICommand } from './core/registry/CommandRegistry';
 export { menuRegistry, type IMenuItem } from './core/registry/MenuRegistry';
-export { pluginRegistry, type IPlugin } from './core/registry/PluginRegistry';
+export { pluginRegistry, type IPlugin, type PluginStatus } from './core/registry/PluginRegistry';
 export { componentRegistry, type ComponentConstructor } from './core/registry/ComponentRegistry';
 
 // Services & Hooks
