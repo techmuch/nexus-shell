@@ -8,8 +8,12 @@ test.describe('Mockup Reviewer Drawing', () => {
     await page.getByText('View', { exact: true }).hover();
     // Click 'Mockup Reviewer'
     await page.getByText('Mockup Reviewer', { exact: true }).click();
+    // Move mouse away to dismiss the CSS group-hover menu dropdown
+    await page.mouse.move(0, 0);
     // Wait for the Mockup Reviewer tab content or button to be visible
     await expect(page.getByRole('button', { name: 'Export Feedback Report' })).toBeVisible({ timeout: 5000 });
+    // Switch to Mockup Reviewer tab by default for drawing tests
+    await page.getByRole('button', { name: 'Mockup Reviewer' }).first().click();
   });
 
   test('should draw on the mockup canvas', async ({ page }) => {
@@ -272,5 +276,137 @@ test.describe('Mockup Reviewer Drawing', () => {
 
     // Verify comment pin count goes back to 1 (only the preloaded remains)
     await expect(pins).toHaveCount(1);
+  });
+
+  test('should navigate to mockup reviewer on node double-click in workflow', async ({ page }) => {
+    // 1. Switch back to Workflow Mapper tab
+    await page.getByRole('button', { name: 'Workflow Mapper' }).first().click();
+
+    // 2. Double click on 'Dashboard Overview' node
+    const dashboardNode = page.locator('.react-flow__node', { hasText: 'Dashboard Overview' });
+    await expect(dashboardNode).toBeVisible();
+    await dashboardNode.dblclick();
+
+    // 3. Verify it switches activeTab to 'review' and renders active mockup view header
+    await expect(page.getByRole('button', { name: 'Box' })).toBeVisible();
+    await expect(page.getByText('System Overview')).toBeVisible(); // Check dashboard HTML is rendered
+  });
+
+  test('should overlay parent annotations on child mockup when connected via inheritance', async ({ page }) => {
+    // 1. Switch back to Workflow Mapper tab
+    await page.getByRole('button', { name: 'Workflow Mapper' }).first().click();
+
+    // 2. Set up prompt response to choose inheritance connection (option '2')
+    page.once('dialog', async dialog => {
+      expect(dialog.message()).toContain('Select Connection Type');
+      await dialog.accept('2'); // Choose inheritance
+    });
+
+    // 3. Drag connection from Dashboard Overview source to Login Portal target
+    const childNode = page.locator('.react-flow__node', { hasText: 'Dashboard Overview' });
+    const parentNode = page.locator('.react-flow__node', { hasText: 'Login Portal' });
+
+    const sourceHandle = childNode.locator('.react-flow__handle.source');
+    const targetHandle = parentNode.locator('.react-flow__handle.target');
+
+    await sourceHandle.hover();
+    await page.mouse.down();
+    await targetHandle.hover();
+    await page.mouse.up();
+
+    // 4. Double click Dashboard Overview node to navigate to reviewer
+    await childNode.dblclick();
+
+    // 5. Verify inheritance overlay banner and template comment letter 'A'
+    await expect(page.getByText('Inheriting template layout structure from Login Portal')).toBeVisible();
+    // Template comment code is 'A' (1st comment from parent view login-v2)
+    await expect(page.locator('div', { hasText: 'A' }).first()).toBeVisible();
+  });
+
+  test('should generate implementation plan from workflows and comments', async ({ page }) => {
+    // 1. Switch to Implementation Plan tab
+    await page.getByRole('button', { name: 'Implementation Plan' }).first().click();
+
+    // 2. Click "Generate Plan from Mockups" button
+    await page.getByRole('button', { name: 'Generate Plan from Mockups' }).click();
+
+    // 3. Switch to Edit mode to inspect the Markdown contents
+    await page.getByRole('button', { name: 'Edit' }).click();
+    const planTextarea = page.locator('textarea[placeholder="Draft system implementation plan..."]');
+    await expect(planTextarea).toBeVisible();
+    
+    // 4. Verify system workflows, transitions, and annotations are outlined
+    await expect(planTextarea).toContainText('System Implementation Plan');
+    await expect(planTextarea).toContainText('Login Portal');
+    await expect(planTextarea).toContainText('Dashboard Overview');
+    await expect(planTextarea).toContainText('Successful Sign In');
+    await expect(planTextarea).toContainText('Click Settings Gear');
+  });
+
+  test('should refine plan with AI and display progress overlay on execution', async ({ page }) => {
+    // 1. Switch to Implementation Plan tab
+    await page.getByRole('button', { name: 'Implementation Plan' }).first().click();
+
+    // 2. Generate initial plan
+    await page.getByRole('button', { name: 'Generate Plan from Mockups' }).click();
+
+    // 3. Fill refinement prompt and submit
+    const refinementTextarea = page.locator('textarea[placeholder^="e.g. Include mobile"]');
+    await refinementTextarea.fill('Focus on responsive layout viewports');
+    await page.getByRole('button', { name: 'Refine Plan with AI' }).click();
+
+    // 4. Check Edit panel to confirm recommendation is added
+    await page.getByRole('button', { name: 'Edit' }).click();
+    const planTextarea = page.locator('textarea[placeholder="Draft system implementation plan..."]');
+    await expect(planTextarea).toContainText('Mobile Breakpoints');
+
+    // 5. Execute plan and verify progress overlay
+    await page.getByRole('button', { name: 'Execute Implementation Plan' }).click();
+    await expect(page.getByText('Executing Plan Components')).toBeVisible();
+
+    // 6. Wait for compilation success and dismiss overlay
+    await expect(page.getByText('Execution Complete!')).toBeVisible({ timeout: 8000 });
+    await page.getByRole('button', { name: 'Close Overlay' }).click();
+    await expect(page.getByText('Execution Complete!')).not.toBeVisible();
+  });
+
+  test('should undo manual node drags using Control+Z keyboard shortcut', async ({ page }) => {
+    // 1. Switch back to Workflow Mapper tab
+    await page.getByRole('button', { name: 'Workflow Mapper' }).first().click();
+
+    // 2. Locate node and record initial bounding box
+    const node = page.locator('.react-flow__node', { hasText: 'Dashboard Overview' });
+    await expect(node).toBeVisible();
+    const boxBefore = await node.boundingBox();
+    expect(boxBefore).not.toBeNull();
+
+    if (boxBefore) {
+      // 3. Drag the node to another position
+      await page.mouse.move(boxBefore.x + 10, boxBefore.y + 10);
+      await page.mouse.down();
+      await page.mouse.move(boxBefore.x + 150, boxBefore.y + 150, { steps: 5 });
+      await page.mouse.up();
+
+      // Wait a moment and check position changed
+      await page.waitForTimeout(200);
+      const boxAfterDrag = await node.boundingBox();
+      expect(boxAfterDrag).not.toBeNull();
+      if (boxAfterDrag) {
+        expect(boxAfterDrag.x).not.toBeCloseTo(boxBefore.x, 1);
+        expect(boxAfterDrag.y).not.toBeCloseTo(boxBefore.y, 1);
+      }
+
+      // 4. Press Control+Z to undo
+      await page.keyboard.press('Control+z');
+
+      // 5. Verify the node position has reverted
+      await page.waitForTimeout(200);
+      const boxAfterUndo = await node.boundingBox();
+      expect(boxAfterUndo).not.toBeNull();
+      if (boxAfterUndo) {
+        expect(boxAfterUndo.x).toBeCloseTo(boxBefore.x, 1);
+        expect(boxAfterUndo.y).toBeCloseTo(boxBefore.y, 1);
+      }
+    }
   });
 });

@@ -29,6 +29,7 @@ export interface IMockupView {
   description?: string;
   activeVersionId: string;
   versions: IMockupVersion[];
+  parentId?: string | null;
 }
 
 interface MockupReviewState {
@@ -37,9 +38,11 @@ interface MockupReviewState {
   compareVersionId: string | null;
   nodes: Node[];
   edges: Edge[];
+  implementationPlan: string;
   setActiveViewId: (id: string | null) => void;
   setActiveVersionId: (viewId: string, versionId: string) => void;
   setCompareVersionId: (versionId: string | null) => void;
+  setViewParentId: (viewId: string, parentId: string | null) => void;
   addAnnotation: (viewId: string, versionId: string, annotation: Omit<IMockupAnnotation, 'versionId'>) => void;
   undoAnnotation: (viewId: string, versionId: string) => void;
   deleteAnnotation: (viewId: string, versionId: string, annotationId: string) => void;
@@ -47,8 +50,19 @@ interface MockupReviewState {
   addMockupView: (name: string, description?: string, htmlContent?: string) => string;
   addMockupVersion: (viewId: string, label: string, htmlContent: string) => string;
   updateWorkflow: (nodes: Node[], edges: Edge[]) => void;
+  setImplementationPlan: (plan: string) => void;
+  generateImplementationPlanAction: () => void;
+  refineImplementationPlanAction: (refinementPrompt: string) => void;
   exportHistoryJson: () => string;
 }
+
+const defaultImplementationPlan = `# System Implementation Plan
+
+This plan is dynamically generated from the mapped workflows and mockups.
+
+## 1. System Workflows & Transitions
+Select **Generate Plan from Mockups** in the right panel to compile active screen transitions, generalization hierarchies, and annotated usability adjustments.
+`;
 
 // Pre-loaded high-fidelity mockups
 const defaultLoginHtmlV1 = `
@@ -340,6 +354,7 @@ export const useMockupReviewStore = create<MockupReviewState>((set, get) => ({
   compareVersionId: null,
   nodes: initialNodes,
   edges: initialEdges,
+  implementationPlan: defaultImplementationPlan,
 
   setActiveViewId: (id) => {
     set({
@@ -368,6 +383,12 @@ export const useMockupReviewStore = create<MockupReviewState>((set, get) => ({
   },
 
   setCompareVersionId: (versionId) => set({ compareVersionId: versionId }),
+  
+  setViewParentId: (viewId, parentId) => {
+    set((state) => ({
+      views: state.views.map((v) => (v.id === viewId ? { ...v, parentId } : v))
+    }));
+  },
 
   addAnnotation: (viewId, versionId, annotation) => {
     set((state) => ({
@@ -528,6 +549,111 @@ export const useMockupReviewStore = create<MockupReviewState>((set, get) => ({
   },
 
   updateWorkflow: (nodes, edges) => set({ nodes, edges }),
+  
+  setImplementationPlan: (plan) => set({ implementationPlan: plan }),
+
+  generateImplementationPlanAction: () => {
+    const { views, edges } = get();
+    
+    let md = `# System Implementation Plan\n\n`;
+    md += `Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}\n\n`;
+    
+    md += `## 1. System Architecture & Workflow mapping\n\n`;
+    md += `### Workflow Screen Views\n`;
+    views.forEach((view) => {
+      const parentName = view.parentId ? (views.find((v) => v.id === view.parentId)?.name || 'Unknown Base') : null;
+      md += `- **${view.name}** (ID: \`${view.id}\`)${parentName ? ` *inherits layout template from **${parentName}***` : ''}\n`;
+      if (view.description) {
+        md += `  *Description: ${view.description}*\n`;
+      }
+    });
+    md += `\n`;
+
+    md += `### Navigation Transitions\n`;
+    const transitions = edges.filter((e) => !e.id.includes('inherit'));
+    if (transitions.length === 0) {
+      md += `*No screen transitions mapped yet.*\n`;
+    } else {
+      transitions.forEach((edge) => {
+        const src = views.find((v) => v.id === edge.source)?.name || edge.source;
+        const tgt = views.find((v) => v.id === edge.target)?.name || edge.target;
+        md += `- **${src}** → **${tgt}** ${edge.label ? `via "*${edge.label}*"` : ''}\n`;
+      });
+    }
+    md += `\n`;
+
+    md += `### Screen Template Inheritance\n`;
+    const inheritances = views.filter((v) => v.parentId);
+    if (inheritances.length === 0) {
+      md += `*No layout template inheritances declared.*\n`;
+    } else {
+      inheritances.forEach((view) => {
+        const parent = views.find((v) => v.id === view.parentId);
+        md += `- **${view.name}** inherits structure from template **${parent?.name || 'Base View'}**\n`;
+      });
+    }
+    md += `\n`;
+
+    md += `## 2. Component Design & Review Annotations\n\n`;
+    views.forEach((view) => {
+      md += `### Screen: ${view.name}\n`;
+      const activeVer = view.versions.find((v) => v.id === view.activeVersionId);
+      if (!activeVer) {
+        md += `*No revision version exists.*\n\n`;
+        return;
+      }
+      md += `- **Active Version**: \`${activeVer.label}\`\n`;
+      
+      const comments = activeVer.annotations.filter((a) => a.type === 'comment');
+      const drawings = activeVer.annotations.filter((a) => a.type !== 'comment');
+      
+      if (comments.length === 0 && drawings.length === 0) {
+        md += `- **Status**: Clean. No review annotations recorded on canvas.\n\n`;
+      } else {
+        if (comments.length > 0) {
+          md += `- **Usability & Style Feedback Items**:\n`;
+          comments.forEach((c, idx) => {
+            md += `  - [ ] **Item #${idx + 1}**: "${c.text}" ${c.elementSelector ? `*(Tethered CSS Selector: \`${c.elementSelector}\`)*` : ''}\n`;
+          });
+        }
+        if (drawings.length > 0) {
+          md += `- **Visual Mockup Overlay Drawings**: ${drawings.length} graphical markup overlays exist.\n`;
+        }
+        md += `\n`;
+      }
+    });
+
+    md += `## 3. Automated Code-Gen Recommendations\n\n`;
+    md += `- **Decoupled Registries**: Register all workflow screens in \`componentRegistry.ts\` and navigation paths in \`commandRegistry.ts\`.\n`;
+    md += `- **State Synchronization**: Integrate layout nodes with global state variables in \`useLayoutStore.ts\`.\n`;
+    md += `- **Theme Integrity**: Match all interactive components with tailwind color system (HlS custom variables).\n`;
+
+    set({ implementationPlan: md });
+  },
+
+  refineImplementationPlanAction: (refinementPrompt) => {
+    let currentPlan = get().implementationPlan;
+    
+    // Custom simulated AI response based on keywords
+    let recommendation = '';
+    const cleanPrompt = refinementPrompt.toLowerCase();
+    
+    if (cleanPrompt.includes('test') || cleanPrompt.includes('qa')) {
+      recommendation = `### Copilot Requirement Integration: Testing & QA\n- [ ] **Playwright Test coverage**: Write E2E and visual tests in \`tests/mockup-reviewer.spec.ts\` verifying navigation paths, and visual regressions across simulated viewports.\n`;
+    } else if (cleanPrompt.includes('responsive') || cleanPrompt.includes('mobile') || cleanPrompt.includes('viewport')) {
+      recommendation = `### Copilot Requirement Integration: Responsiveness\n- [ ] **Mobile Breakpoints**: Verify layout wrapping under 768px viewports. Enable flex wrapping on header elements and collapse sidebar navigation into hamburger dropdowns.\n`;
+    } else if (cleanPrompt.includes('security') || cleanPrompt.includes('xss') || cleanPrompt.includes('sanitize')) {
+      recommendation = `### Copilot Requirement Integration: Security compliance\n- [ ] **XSS Sanitization**: Inject DOMPurify boundaries inside the HTML shadow DOM component and verify iframe sandboxing limits execute correctly.\n`;
+    } else if (cleanPrompt.includes('auth') || cleanPrompt.includes('login') || cleanPrompt.includes('token')) {
+      recommendation = `### Copilot Requirement Integration: Authentication Flow\n- [ ] **Auth Token storage**: Bind login fields to secure cookie sessions. Support OAuth redirections and session timeout intervals (15-min idle).\n`;
+    } else {
+      recommendation = `### Copilot Requirement Integration: Custom Spec\n- [ ] **AI Recommendation**: Refined plan with: "*${refinementPrompt}*". Ensure compliance with active Tailwind tokens and decouple service controllers.\n`;
+    }
+    
+    set({
+      implementationPlan: currentPlan + `\n` + recommendation
+    });
+  },
 
   exportHistoryJson: () => {
     const historyData = get().views.map((view) => ({
