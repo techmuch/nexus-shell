@@ -66,3 +66,7 @@ Always run the following commands to test and verify your changes:
 - **State Management:** Use Zustand stores (`useLayoutStore`, `useThemeStore`, `useSidebarStore`, `useChatStore`, `useStatusBarStore`) for lightweight global state. Keep stores focused and decoupled.
 - **Error Boundaries & Fallbacks:** Always handle runtime errors gracefully. Provide user-friendly visual feedback inside factories and widgets in case of failures.
 - **Dirty State Lifecycle:** Tabs that contain unsaved changes must set the dirty flag and prompt the user on closing to confirm.
+- **Template Literal Escapes Safeguard:** When editing/creating files using AI writing tools, inspect string interpolation blocks. Ensure backslashes (`\`) have not been incorrectly prepended to dollar signs (e.g. producing `\${value}` instead of `${value}`), which breaks JS variable references. Confirm syntax by running `npx tsc --noEmit` and fixing "unused variable" errors immediately.
+- **Playwright Fallback Screenshotting:** If the browser agent's native screenshot tools fail or are restricted in the workspace shell, capture visual snapshots by writing a temporary Playwright spec (e.g. `tests/screenshot-helper.spec.ts`), running it, outputting screenshots to the artifacts folder, and removing the temporary spec file.
+- **Scoped Interactive Listeners:** When decomposing monolithic widgets into smaller tabbed sub-components, scope all keyboard shortcuts and event listeners (e.g. Delete, Cmd+Z) to fire only when their respective tab pane is active.
+
