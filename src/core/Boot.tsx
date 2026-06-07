@@ -14,6 +14,7 @@ import { FilesSidebar } from '../components/widgets/FilesSidebar';
 import { componentRegistry } from './registry/ComponentRegistry';
 import { WelcomeTab } from '../components/widgets/WelcomeTab';
 import { DataGrid } from '../components/widgets/DataGrid';
+import { MockupReviewWidget } from '../components/widgets/MockupReviewWidget';
 
 /**
  * Initializes the shell's core commands and menus.
@@ -22,6 +23,7 @@ export const initializeShell = async () => {
   // Register Core Tab Components
   componentRegistry.register('welcome', WelcomeTab);
   componentRegistry.register('datagrid', DataGrid);
+  componentRegistry.register('mockup-review', MockupReviewWidget);
   // Register Core Status Bar Widgets
   useStatusBarStore.getState().setWidgets([
     {
@@ -148,6 +150,13 @@ export const initializeShell = async () => {
   });
 
   commandRegistry.registerCommand({
+    id: 'nexus.open-mockup-review',
+    label: 'Open Mockup Reviewer',
+    keybinding: 'Control+M',
+    execute: () => useLayoutStore.getState().addTab('mockup-review', 'Mockup Reviewer'),
+  });
+
+  commandRegistry.registerCommand({
     id: 'nexus.about',
     label: 'About Nexus Shell',
     keybinding: 'Control+H',
@@ -159,6 +168,12 @@ export const initializeShell = async () => {
     id: 'file.new-tab',
     label: 'New Welcome Tab',
     commandId: 'nexus.new-tab',
+  });
+
+  menuRegistry.registerMenu('View', {
+    id: 'view.mockup-review',
+    label: 'Mockup Reviewer',
+    commandId: 'nexus.open-mockup-review',
   });
 
   menuRegistry.registerMenu('Help', {

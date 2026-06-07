@@ -13,6 +13,8 @@ export { TerminalPane } from './components/widgets/TerminalPane';
 export { AgentManager, type Agent, type AgentManagerProps } from './components/widgets/AgentManager';
 export { WargameMap, type WargameMapProps, type UnitData, type AttackData, type TerrainHexData } from './components/widgets/WargameMap';
 export { DataGrid, type DataGridProps, type IDataGridColumn } from './components/widgets/DataGrid';
+export { MockupReviewWidget } from './components/widgets/MockupReviewWidget';
+export { useMockupReviewStore, type IMockupAnnotation, type IMockupVersion, type IMockupView } from './core/services/MockupReviewService';
 
 // Registries (Public Singleton Instances)
 export { commandRegistry, type ICommand } from './core/registry/CommandRegistry';
