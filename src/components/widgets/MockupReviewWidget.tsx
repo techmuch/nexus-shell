@@ -185,6 +185,7 @@ export const MockupReviewWidget: React.FC = () => {
   const [currentStroke, setCurrentStroke] = useState<{ x: number; y: number }[]>([]);
   const [drawStartPos, setDrawStartPos] = useState<{ x: number; y: number } | null>(null);
   const [tempShape, setTempShape] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [currentCoords, setCurrentCoords] = useState<{ x: number; y: number } | null>(null);
   
   // Comment placement helpers
   const [pendingComment, setPendingComment] = useState<{ x: number; y: number; selector?: string } | null>(null);
@@ -286,6 +287,13 @@ export const MockupReviewWidget: React.FC = () => {
     const coords = getCanvasCoords(e);
     setIsDrawing(true);
     setDrawStartPos(coords);
+    setCurrentCoords(coords);
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch (err) {
+      console.warn("setPointerCapture failed", err);
+    }
 
     if (tool === 'pen') {
       setCurrentStroke([coords]);
@@ -299,12 +307,14 @@ export const MockupReviewWidget: React.FC = () => {
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!isDrawing || !drawStartPos) return;
+    e.preventDefault();
 
     const coords = getCanvasCoords(e);
+    setCurrentCoords(coords);
 
     if (tool === 'pen') {
       setCurrentStroke((prev) => [...prev, coords]);
-    } else if (['rect', 'circle', 'arrow'].includes(tool) && tempShape) {
+    } else if (['rect', 'circle', 'arrow'].includes(tool)) {
       setTempShape({
         x: Math.min(drawStartPos.x, coords.x),
         y: Math.min(drawStartPos.y, coords.y),
@@ -314,9 +324,15 @@ export const MockupReviewWidget: React.FC = () => {
     }
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!isDrawing || !activeView || !activeVersion) return;
     setIsDrawing(false);
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch (err) {
+      console.warn("releasePointerCapture failed", err);
+    }
 
     const annotationId = `ann-${Math.floor(Math.random() * 100000)}`;
 
@@ -328,7 +344,7 @@ export const MockupReviewWidget: React.FC = () => {
         points: currentStroke,
       });
     } else if (['rect', 'circle', 'arrow'].includes(tool) && tempShape && drawStartPos) {
-      const lastPoint = currentStroke[currentStroke.length - 1];
+      const endPoint = currentCoords || drawStartPos;
       addAnnotation(activeView.id, activeVersion.id, {
         id: annotationId,
         type: tool as any,
@@ -337,13 +353,14 @@ export const MockupReviewWidget: React.FC = () => {
         y: tempShape.y,
         width: tempShape.w,
         height: tempShape.h,
-        points: tool === 'arrow' ? [drawStartPos, lastPoint || drawStartPos] : undefined
+        points: tool === 'arrow' ? [drawStartPos, endPoint] : undefined
       });
     }
 
     setCurrentStroke([]);
     setTempShape(null);
     setDrawStartPos(null);
+    setCurrentCoords(null);
   };
 
   // 4. Save comment pin
@@ -704,7 +721,7 @@ export const MockupReviewWidget: React.FC = () => {
             {/* Mockup Render Workspace */}
             {activeView && activeVersion ? (
               <div className="flex-1 p-6 flex justify-center items-start overflow-auto">
-                <div className="relative border border-border shadow-lg bg-card rounded-lg overflow-hidden max-w-4xl w-full min-h-[400px]">
+                <div className="relative border border-border shadow-lg bg-card rounded-lg overflow-hidden max-w-4xl w-full min-h-[400px] select-none">
                   
                   {/* Safe HTML Content (Encapsulated inside DOM) */}
                   <HtmlShadowRenderer
@@ -870,12 +887,12 @@ export const MockupReviewWidget: React.FC = () => {
                             strokeDasharray="2"
                           />
                         )}
-                        {tool === 'arrow' && drawStartPos && (
+                        {tool === 'arrow' && drawStartPos && currentCoords && (
                           <line
                             x1={`${drawStartPos.x}%`}
                             y1={`${drawStartPos.y}%`}
-                            x2={`${currentStroke[currentStroke.length - 1]?.x || drawStartPos.x}%`}
-                            y2={`${currentStroke[currentStroke.length - 1]?.y || drawStartPos.y}%`}
+                            x2={`${currentCoords.x}%`}
+                            y2={`${currentCoords.y}%`}
                             stroke={color}
                             strokeWidth="2"
                             strokeDasharray="2"
