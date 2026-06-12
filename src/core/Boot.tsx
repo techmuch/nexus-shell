@@ -15,6 +15,7 @@ import { componentRegistry } from './registry/ComponentRegistry';
 import { WelcomeTab } from '../components/widgets/WelcomeTab';
 import { DataGrid } from '../components/widgets/DataGrid';
 import { MockupReviewWidget } from '../components/widgets/MockupReviewWidget';
+import { DialogueMappingWidget } from '../components/widgets/DialogueMappingWidget';
 
 /**
  * Initializes the shell's core commands and menus.
@@ -24,6 +25,7 @@ export const initializeShell = async () => {
   componentRegistry.register('welcome', WelcomeTab);
   componentRegistry.register('datagrid', DataGrid);
   componentRegistry.register('mockup-review', MockupReviewWidget);
+  componentRegistry.register('dialogue-map', DialogueMappingWidget);
   // Register Core Status Bar Widgets
   useStatusBarStore.getState().setWidgets([
     {
@@ -157,6 +159,13 @@ export const initializeShell = async () => {
   });
 
   commandRegistry.registerCommand({
+    id: 'nexus.open-dialogue-map',
+    label: 'Open Dialogue Map',
+    keybinding: 'Control+D',
+    execute: () => useLayoutStore.getState().addTab('dialogue-map', 'Dialogue Map'),
+  });
+
+  commandRegistry.registerCommand({
     id: 'nexus.about',
     label: 'About Nexus Shell',
     keybinding: 'Control+H',
@@ -174,6 +183,12 @@ export const initializeShell = async () => {
     id: 'view.mockup-review',
     label: 'Mockup Reviewer',
     commandId: 'nexus.open-mockup-review',
+  });
+
+  menuRegistry.registerMenu('View', {
+    id: 'view.dialogue-map',
+    label: 'Dialogue Map',
+    commandId: 'nexus.open-dialogue-map',
   });
 
   menuRegistry.registerMenu('Help', {

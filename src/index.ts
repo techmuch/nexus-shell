@@ -15,6 +15,9 @@ export { WargameMap, type WargameMapProps, type UnitData, type AttackData, type 
 export { DataGrid, type DataGridProps, type IDataGridColumn } from './components/widgets/DataGrid';
 export { MockupReviewWidget } from './components/widgets/MockupReviewWidget';
 export { useMockupReviewStore, type IMockupAnnotation, type IMockupVersion, type IMockupView } from './core/services/MockupReviewService';
+export { DialogueMappingWidget } from './components/widgets/DialogueMappingWidget';
+export { DialogueMappingShell } from './components/layout/DialogueMappingShell';
+export { useDialogueMappingStore, type IDialogueNodeData, type IbisNodeType } from './core/services/DialogueMappingService';
 
 // Registries (Public Singleton Instances)
 export { commandRegistry, type ICommand } from './core/registry/CommandRegistry';
