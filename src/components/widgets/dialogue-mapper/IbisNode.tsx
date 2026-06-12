@@ -7,8 +7,12 @@ import {
   Minus, 
   FileText, 
   Check, 
-  User 
+  User,
+  Link2,
+  Image as ImageIcon,
+  ExternalLink
 } from 'lucide-react';
+import sampleDiagram from './sample_diagram.png';
 import { useDialogueMappingStore, IDialogueNodeData, IbisNodeType } from '../../../core/services/DialogueMappingService';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -105,6 +109,18 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
       bgClass: 'bg-yellow-500/10',
       label: 'Decision',
     },
+    link: {
+      colorClass: 'border-teal-500 text-teal-400 shadow-teal-500/10',
+      icon: <Link2 size={16} className="text-teal-400" />,
+      bgClass: 'bg-teal-500/5',
+      label: 'Link',
+    },
+    image: {
+      colorClass: 'border-pink-500 text-pink-400 shadow-pink-500/10',
+      icon: <ImageIcon size={16} className="text-pink-400" />,
+      bgClass: 'bg-pink-500/5',
+      label: 'Image',
+    },
   };
 
   const config = nodeConfigs[data.type] || nodeConfigs.note;
@@ -167,6 +183,30 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
           </h4>
         )}
       </div>
+
+      {/* Link / Image Content */}
+      {data.type === 'link' && data.url && (
+        <div className="mt-2 text-[10px] text-teal-400 hover:text-teal-300 truncate">
+          <a
+            href={data.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 hover:underline"
+          >
+            <ExternalLink size={10} className="shrink-0" />
+            <span className="truncate">{data.url}</span>
+          </a>
+        </div>
+      )}
+
+      {data.type === 'image' && (
+        <img
+          className="w-full h-24 object-cover rounded mt-2 select-none pointer-events-none"
+          src={data.imageUrl || sampleDiagram}
+          alt={data.title || 'Image Embed'}
+        />
+      )}
 
       {/* Node Metadata Tags */}
       {data.tags && data.tags.length > 0 && (

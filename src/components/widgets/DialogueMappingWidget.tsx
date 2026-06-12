@@ -24,7 +24,9 @@ import {
   Check,
   AlertCircle,
   Tag,
-  Maximize2
+  Maximize2,
+  Link2,
+  Image as ImageIcon
 } from 'lucide-react';
 
 import { useDialogueMappingStore, IbisNodeType } from '../../core/services/DialogueMappingService';
@@ -71,7 +73,7 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
   const [showLibrary, setShowLibrary] = useState(true);
   const [showInspector, setShowInspector] = useState(true);
 
-  // Scoped keydown listener for layout undos
+  // Scoped keydown listener for layout undos and Compendium shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check if this tab is active
@@ -88,17 +90,40 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
         return;
       }
 
+      // Cmd/Ctrl + Z -> Undo Layout
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         if (layoutHistory.length > 0) {
           e.preventDefault();
           undoLayout();
         }
+        return;
+      }
+
+      // Ignore shortcut key combos with modifiers like Cmd/Ctrl/Alt
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+      }
+
+      let type: IbisNodeType | null = null;
+      if (e.key === 'q' || e.key === '?') type = 'question';
+      else if (e.key === 'a' || e.key === '!') type = 'idea';
+      else if (e.key === 'p' || e.key === '+') type = 'pro';
+      else if (e.key === 'c' || e.key === '-') type = 'con';
+      else if (e.key === 'n') type = 'note';
+      else if (e.key === 'd') type = 'decision';
+      else if (e.key === 'l') type = 'link';
+      else if (e.key === 'i') type = 'image';
+
+      if (type) {
+        e.preventDefault();
+        const offset = Math.random() * 50;
+        addNode(type, { x: 350 + offset, y: 150 + offset });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [node, layoutHistory, undoLayout]);
+  }, [node, layoutHistory, undoLayout, addNode]);
 
   // Connection warning auto-clear
   useEffect(() => {
@@ -261,6 +286,8 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
                 { type: 'con', label: 'Con Argument', desc: 'Argument opposing an idea', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/15', icon: <Minus size={14} /> },
                 { type: 'note', label: 'Note / Evidence', desc: 'Background fact, URL, or note', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/15', icon: <FileText size={14} /> },
                 { type: 'decision', label: 'Decision / Resolve', desc: 'The resolved position / choice', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/15', icon: <Check size={14} /> },
+                { type: 'link', label: 'Link / Reference', desc: 'Clickable URL reference card', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30 hover:bg-teal-500/15', icon: <Link2 size={14} /> },
+                { type: 'image', label: 'Image / Diagram', desc: 'Embedded image thumbnail card', color: 'bg-pink-500/10 text-pink-400 border-pink-500/30 hover:bg-pink-500/15', icon: <ImageIcon size={14} /> },
               ].map((item) => (
                 <button
                   key={item.type}
@@ -442,6 +469,8 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
                     <option value="con">Con Argument</option>
                     <option value="note">Note / Evidence</option>
                     <option value="decision">Decision / Resolve</option>
+                    <option value="link">Link / Reference</option>
+                    <option value="image">Image / Diagram</option>
                   </select>
                 </div>
 
@@ -471,6 +500,34 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
                     placeholder="Provide details, facts, URLs, or evidence context..."
                   />
                 </div>
+
+                {/* Link URL (Conditional) */}
+                {activeNode.data.type === 'link' && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Link URL</label>
+                    <input
+                      type="text"
+                      value={activeNode.data.url || ''}
+                      onChange={(e) => updateNodeData(activeNode.id, { url: e.target.value })}
+                      className="w-full bg-secondary border border-border rounded-lg p-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring select-text"
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                )}
+
+                {/* Image URL (Conditional) */}
+                {activeNode.data.type === 'image' && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Image URL</label>
+                    <input
+                      type="text"
+                      value={activeNode.data.imageUrl || ''}
+                      onChange={(e) => updateNodeData(activeNode.id, { imageUrl: e.target.value })}
+                      className="w-full bg-secondary border border-border rounded-lg p-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring select-text"
+                      placeholder="Image URL or local path..."
+                    />
+                  </div>
+                )}
 
                 {/* 5. Tag Editor */}
                 <div className="space-y-1.5">

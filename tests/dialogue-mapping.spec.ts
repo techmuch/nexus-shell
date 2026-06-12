@@ -193,4 +193,63 @@ test.describe('Dialogue Mapping Workstation', () => {
       expect(boxUndone.y).toBeCloseTo(boxBefore.y, 2);
     }
   });
+
+  test('should display preloaded Link and Image nodes', async ({ page }) => {
+    // Check that preloaded link is visible and contains its anchor URL
+    const linkNode = page.getByText('IBIS Methodology Reference');
+    await expect(linkNode).toBeVisible();
+    
+    const urlAnchor = page.locator('a[href="https://en.wikipedia.org/wiki/Issue-Based_Information_System"]');
+    await expect(urlAnchor).toBeVisible();
+    await expect(urlAnchor).toHaveText('https://en.wikipedia.org/wiki/Issue-Based_Information_System');
+
+    // Check that preloaded image is visible
+    const imageNode = page.getByText('Architecture Network Diagram');
+    await expect(imageNode).toBeVisible();
+
+    const imageTag = page.locator('img[alt="Architecture Network Diagram"]');
+    await expect(imageTag).toBeVisible();
+  });
+
+  test('should support adding Link and Image nodes from library', async ({ page }) => {
+    // Add Link node
+    await page.getByRole('button', { name: 'Link / Reference' }).click();
+    await expect(page.getByText('New Link')).toBeVisible();
+
+    // Select new Link node and check inspector URL input
+    await page.getByText('New Link').first().click();
+    const linkInput = page.locator('input[placeholder="https://example.com"]');
+    await expect(linkInput).toBeVisible();
+    await linkInput.fill('https://google.com');
+    await linkInput.press('Enter');
+
+    // Check link node on canvas has the updated link URL
+    await expect(page.locator('a[href="https://google.com"]')).toBeVisible();
+
+    // Add Image node
+    await page.getByRole('button', { name: 'Image / Diagram' }).click();
+    await expect(page.getByText('New Image')).toBeVisible();
+
+    // Select new Image node and check inspector Image URL input
+    await page.getByText('New Image').first().click();
+    const imageInput = page.locator('input[placeholder="Image URL or local path..."]');
+    await expect(imageInput).toBeVisible();
+  });
+
+  test('should support Compendium keyboard shortcuts for node creation', async ({ page }) => {
+    // Click on canvas background to ensure no inputs are focused
+    await page.locator('.react-flow').click();
+
+    // Press 'l' -> Create Link
+    await page.keyboard.press('l');
+    await expect(page.getByText('New Link')).toBeVisible();
+
+    // Press 'i' -> Create Image
+    await page.keyboard.press('i');
+    await expect(page.getByText('New Image')).toBeVisible();
+
+    // Press 'q' -> Create Question
+    await page.keyboard.press('q');
+    await expect(page.getByText('New Question')).toBeVisible();
+  });
 });

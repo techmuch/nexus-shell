@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Node, Edge, Connection } from 'reactflow';
 
-export type IbisNodeType = 'question' | 'idea' | 'pro' | 'con' | 'note' | 'decision';
+export type IbisNodeType = 'question' | 'idea' | 'pro' | 'con' | 'note' | 'decision' | 'link' | 'image';
 
 export interface IDialogueNodeData {
   id: string;
@@ -12,6 +12,8 @@ export interface IDialogueNodeData {
   author?: string;
   timestamp: string;
   status?: 'pending' | 'accepted' | 'rejected';
+  url?: string;
+  imageUrl?: string;
 }
 
 interface DialogueMappingState {
@@ -41,7 +43,7 @@ const initialNodes: Node<IDialogueNodeData>[] = [
   {
     id: 'node-1',
     type: 'ibisNode',
-    position: { x: 400, y: 50 },
+    position: { x: 500, y: 50 },
     width: 240,
     height: 182,
     data: {
@@ -58,7 +60,7 @@ const initialNodes: Node<IDialogueNodeData>[] = [
   {
     id: 'node-2',
     type: 'ibisNode',
-    position: { x: 200, y: 200 },
+    position: { x: 200, y: 250 },
     width: 240,
     height: 182,
     data: {
@@ -75,7 +77,7 @@ const initialNodes: Node<IDialogueNodeData>[] = [
   {
     id: 'node-3',
     type: 'ibisNode',
-    position: { x: 80, y: 350 },
+    position: { x: 50, y: 450 },
     width: 240,
     height: 182,
     data: {
@@ -91,7 +93,7 @@ const initialNodes: Node<IDialogueNodeData>[] = [
   {
     id: 'node-4',
     type: 'ibisNode',
-    position: { x: 260, y: 350 },
+    position: { x: 350, y: 450 },
     width: 240,
     height: 182,
     data: {
@@ -107,7 +109,7 @@ const initialNodes: Node<IDialogueNodeData>[] = [
   {
     id: 'node-5',
     type: 'ibisNode',
-    position: { x: 600, y: 200 },
+    position: { x: 800, y: 250 },
     width: 240,
     height: 182,
     data: {
@@ -124,7 +126,7 @@ const initialNodes: Node<IDialogueNodeData>[] = [
   {
     id: 'node-6',
     type: 'ibisNode',
-    position: { x: 480, y: 350 },
+    position: { x: 650, y: 450 },
     width: 240,
     height: 182,
     data: {
@@ -140,7 +142,7 @@ const initialNodes: Node<IDialogueNodeData>[] = [
   {
     id: 'node-7',
     type: 'ibisNode',
-    position: { x: 680, y: 350 },
+    position: { x: 950, y: 450 },
     width: 240,
     height: 182,
     data: {
@@ -153,6 +155,39 @@ const initialNodes: Node<IDialogueNodeData>[] = [
       timestamp: new Date().toLocaleString(),
     },
   },
+  {
+    id: 'node-8',
+    type: 'ibisNode',
+    position: { x: 1250, y: 450 },
+    width: 240,
+    height: 182,
+    data: {
+      id: 'node-8',
+      type: 'link',
+      title: 'IBIS Methodology Reference',
+      description: 'Wikipedia overview of Issue-Based Information Systems (IBIS) dialogue mapping.',
+      tags: ['methodology', 'reference'],
+      author: 'admin',
+      timestamp: new Date().toLocaleString(),
+      url: 'https://en.wikipedia.org/wiki/Issue-Based_Information_System',
+    },
+  },
+  {
+    id: 'node-9',
+    type: 'ibisNode',
+    position: { x: 1100, y: 250 },
+    width: 240,
+    height: 182,
+    data: {
+      id: 'node-9',
+      type: 'image',
+      title: 'Architecture Network Diagram',
+      description: 'High-tech topology visual reference for workbench systems.',
+      tags: ['architecture', 'visual'],
+      author: 'architect',
+      timestamp: new Date().toLocaleString(),
+    },
+  },
 ];
 
 const initialEdges: Edge[] = [
@@ -162,6 +197,8 @@ const initialEdges: Edge[] = [
   { id: 'edge-1-5', source: 'node-1', target: 'node-5', type: 'smoothstep', style: { stroke: '#818cf8', strokeWidth: 2 } },
   { id: 'edge-5-6', source: 'node-5', target: 'node-6', type: 'smoothstep', style: { stroke: '#4ade80', strokeWidth: 2 } },
   { id: 'edge-5-7', source: 'node-5', target: 'node-7', type: 'smoothstep', style: { stroke: '#fbbf24', strokeWidth: 2 } },
+  { id: 'edge-1-8', source: 'node-1', target: 'node-8', type: 'smoothstep', style: { stroke: '#14b8a6', strokeWidth: 2 } },
+  { id: 'edge-5-9', source: 'node-5', target: 'node-9', type: 'smoothstep', style: { stroke: '#ec4899', strokeWidth: 2 } },
 ];
 
 export const useDialogueMappingStore = create<DialogueMappingState>((set, get) => ({
@@ -288,6 +325,8 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
     if (sourceNode?.data.type === 'pro') strokeColor = '#4ade80'; // green
     if (sourceNode?.data.type === 'con') strokeColor = '#f87171'; // red
     if (sourceNode?.data.type === 'note') strokeColor = '#fbbf24'; // amber
+    if (sourceNode?.data.type === 'link') strokeColor = '#14b8a6'; // teal
+    if (sourceNode?.data.type === 'image') strokeColor = '#ec4899'; // pink
 
     const edgeId = `edge-${source}-${target}-${Date.now()}`;
     const newEdge: Edge = {
@@ -363,8 +402,8 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
     });
 
     // Calculate layout coordinates
-    const spacingX = 260;
-    const spacingY = 150;
+    const spacingX = 320;
+    const spacingY = 250;
 
     const newNodes = nodes.map((node) => {
       const lvl = levels[node.id] !== undefined ? levels[node.id] : 0;
