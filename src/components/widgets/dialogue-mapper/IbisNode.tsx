@@ -26,7 +26,9 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
   const selectedNodeId = useDialogueMappingStore((state) => state.selectedNodeId);
   const setSelectedNodeId = useDialogueMappingStore((state) => state.setSelectedNodeId);
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(() => {
+    return !!data.autoEdit;
+  });
   const [editTitle, setEditTitle] = useState(data.title);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -40,6 +42,12 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
       inputRef.current.select();
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    if (data.autoEdit) {
+      updateNodeData(data.id, { autoEdit: false });
+    }
+  }, [data.autoEdit, data.id, updateNodeData]);
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();

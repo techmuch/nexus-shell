@@ -74,6 +74,9 @@ test.describe('Dialogue Mapping Workstation', () => {
     // Click 'Question / Issue' button in the node library
     await page.getByRole('button', { name: 'Question / Issue' }).click();
     
+    // The node starts in edit mode, commit it by pressing Enter
+    await page.locator('.react-flow__node-ibisNode input').press('Enter');
+
     // A new question node should be visible
     await expect(page.getByText('New Question')).toBeVisible();
 
@@ -214,6 +217,9 @@ test.describe('Dialogue Mapping Workstation', () => {
   test('should support adding Link and Image nodes from library', async ({ page }) => {
     // Add Link node
     await page.getByRole('button', { name: 'Link / Reference' }).click();
+    
+    // Node starts in edit mode, commit it
+    await page.locator('.react-flow__node-ibisNode input').press('Enter');
     await expect(page.getByText('New Link')).toBeVisible();
 
     // Select new Link node and check inspector URL input
@@ -228,6 +234,9 @@ test.describe('Dialogue Mapping Workstation', () => {
 
     // Add Image node
     await page.getByRole('button', { name: 'Image / Diagram' }).click();
+    
+    // Node starts in edit mode, commit it
+    await page.locator('.react-flow__node-ibisNode input').press('Enter');
     await expect(page.getByText('New Image')).toBeVisible();
 
     // Select new Image node and check inspector Image URL input
@@ -242,14 +251,52 @@ test.describe('Dialogue Mapping Workstation', () => {
 
     // Press 'l' -> Create Link
     await page.keyboard.press('l');
+    await page.locator('.react-flow__node-ibisNode input').press('Enter');
     await expect(page.getByText('New Link')).toBeVisible();
 
     // Press 'i' -> Create Image
     await page.keyboard.press('i');
+    await page.locator('.react-flow__node-ibisNode input').press('Enter');
     await expect(page.getByText('New Image')).toBeVisible();
 
     // Press 'q' -> Create Question
     await page.keyboard.press('q');
+    await page.locator('.react-flow__node-ibisNode input').press('Enter');
     await expect(page.getByText('New Question')).toBeVisible();
+  });
+
+  test('should support linked node creation from selected node via shortcuts', async ({ page }) => {
+    // 1. Click on the preloaded Question node (node-1) to select it
+    await page.getByText('Which communication model should we use for real-time state sync?').click();
+
+    // 2. Press 'a' to create a new linked Idea node below it
+    await page.keyboard.press('a');
+
+    // 3. Verify that the connection edge was generated
+    const hasEdge = await page.evaluate(() => {
+      const store = (window as any).useDialogueMappingStore?.getState();
+      if (store) {
+        const newIdea = store.nodes.find((n: any) => n.data.title.includes('New Idea'));
+        if (newIdea) {
+          return store.edges.some((e: any) => 
+            (e.source === 'node-1' && e.target === newIdea.id) ||
+            (e.source === newIdea.id && e.target === 'node-1')
+          );
+        }
+      }
+      return false;
+    });
+    expect(hasEdge).toBe(true);
+
+    // 4. The new node should immediately be in edit mode
+    const inlineInput = page.locator('.react-flow__node-ibisNode input');
+    await expect(inlineInput).toBeVisible();
+
+    // 5. Type to change the title
+    await inlineInput.fill('Idea created by shortcut linking');
+    await inlineInput.press('Enter');
+
+    // Verify updated title is rendered
+    await expect(page.getByText('Idea created by shortcut linking')).toBeVisible();
   });
 });

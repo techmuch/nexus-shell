@@ -134,6 +134,20 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
 
       if (type) {
         e.preventDefault();
+        // If a node is selected, position new node below it and link them
+        if (selectedNodeId) {
+          const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+          if (selectedNode) {
+            const xOffset = (Math.random() - 0.5) * 40;
+            const newPos = {
+              x: selectedNode.position.x + xOffset,
+              y: selectedNode.position.y + 250,
+            };
+            addNode(type, newPos, selectedNodeId);
+            return;
+          }
+        }
+        // Otherwise position near center
         const offset = Math.random() * 50;
         addNode(type, { x: 350 + offset, y: 150 + offset });
       }
@@ -141,7 +155,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [node, layoutHistory, undoLayout, addNode]);
+  }, [node, layoutHistory, undoLayout, addNode, selectedNodeId, nodes]);
 
   // Connection warning auto-clear
   useEffect(() => {

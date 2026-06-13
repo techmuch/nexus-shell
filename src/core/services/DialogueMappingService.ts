@@ -14,6 +14,7 @@ export interface IDialogueNodeData {
   status?: 'pending' | 'accepted' | 'rejected';
   url?: string;
   imageUrl?: string;
+  autoEdit?: boolean;
 }
 
 interface DialogueMappingState {
@@ -24,7 +25,7 @@ interface DialogueMappingState {
   setNodes: (nodes: Node<IDialogueNodeData>[]) => void;
   setEdges: (edges: Edge[]) => void;
   setSelectedNodeId: (id: string | null) => void;
-  addNode: (type: IbisNodeType, position: { x: number; y: number }) => void;
+  addNode: (type: IbisNodeType, position: { x: number; y: number }, parentNodeId?: string | null) => void;
   updateNodeData: (id: string, updates: Partial<IDialogueNodeData>) => void;
   deleteNode: (id: string) => void;
   connectNodes: (connection: Connection) => boolean;
@@ -219,7 +220,7 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
     }));
   },
 
-  addNode: (type, position) => {
+  addNode: (type, position, parentNodeId) => {
     const id = `node-${Date.now()}`;
     const newNode: Node<IDialogueNodeData> = {
       id,
@@ -236,12 +237,100 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
         author: 'user',
         timestamp: new Date().toLocaleString(),
         status: type === 'question' || type === 'idea' ? 'pending' : undefined,
+        autoEdit: true,
       },
     };
-    set((state) => ({
-      nodes: [...state.nodes, newNode],
-      selectedNodeId: id,
-    }));
+    set((state) => {
+      const nextNodes = [...state.nodes, newNode];
+      const nextEdges = [...state.edges];
+
+      if (parentNodeId) {
+        // Find if parent exists
+        const parentNode = state.nodes.find((n) => n.id === parentNodeId);
+        if (parentNode) {
+          // Determine edge direction using local semantics to avoid store get() sync delays
+          let isValid = false;
+          let source = id;
+          let target = parentNodeId;
+
+          const sourceType = type;
+          const targetType = parentNode.data.type;
+
+          // Try New -> Parent
+          if (sourceType === 'pro' || sourceType === 'con') {
+            if (targetType === 'idea' || targetType === 'decision') {
+              isValid = true;
+            }
+          } else if (sourceType === 'idea') {
+            if (targetType === 'question' || targetType === 'idea') {
+              isValid = true;
+            }
+          } else if (sourceType === 'decision') {
+            if (targetType === 'question') {
+              isValid = true;
+            }
+          } else {
+            // neutral types (note, link, image) can connect to anything
+            isValid = true;
+          }
+
+          if (!isValid) {
+            // Try Parent -> New
+            if (targetType === 'pro' || targetType === 'con') {
+              if (sourceType === 'idea' || sourceType === 'decision') {
+                source = parentNodeId;
+                target = id;
+                isValid = true;
+              }
+            } else if (targetType === 'idea') {
+              if (sourceType === 'question' || sourceType === 'idea') {
+                source = parentNodeId;
+                target = id;
+                isValid = true;
+              }
+            } else if (targetType === 'decision') {
+              if (sourceType === 'question') {
+                source = parentNodeId;
+                target = id;
+                isValid = true;
+              }
+            } else {
+              source = parentNodeId;
+              target = id;
+              isValid = true;
+            }
+          }
+
+          if (isValid) {
+            let strokeColor = '#818cf8'; // default purple/indigo
+            const sourceNode = source === id ? newNode : parentNode;
+            const sourceType = sourceNode.data.type;
+            
+            if (sourceType === 'pro') strokeColor = '#4ade80';
+            else if (sourceType === 'con') strokeColor = '#f87171';
+            else if (sourceType === 'note') strokeColor = '#fbbf24';
+            else if (sourceType === 'link') strokeColor = '#14b8a6';
+            else if (sourceType === 'image') strokeColor = '#ec4899';
+
+            const edgeId = `edge-${source}-${target}-${Date.now()}`;
+            nextEdges.push({
+              id: edgeId,
+              source,
+              target,
+              type: 'smoothstep',
+              style: { stroke: strokeColor, strokeWidth: 2 },
+              markerEnd: { type: MarkerType.ArrowClosed, color: strokeColor },
+            });
+          }
+        }
+      }
+
+      return {
+        nodes: nextNodes,
+        edges: nextEdges,
+        selectedNodeId: id,
+      };
+    });
   },
 
   updateNodeData: (id, updates) => {
