@@ -96,6 +96,72 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
 
   // Scoped keydown listener for layout undos and Compendium shortcuts
   useEffect(() => {
+    const focusAndScrollToNode = (targetNodeId: string) => {
+      setSelectedNodeId(targetNodeId);
+      setNodes(
+        nodes.map((n) => ({
+          ...n,
+          selected: n.id === targetNodeId,
+        }))
+      );
+
+      const targetNode = nodes.find((n) => n.id === targetNodeId);
+      if (targetNode && containerRef.current) {
+        const { x: vx, y: vy, zoom: vz } = reactFlowInstance.getViewport();
+        const containerWidth = containerRef.current.clientWidth;
+        const containerHeight = containerRef.current.clientHeight;
+
+        const nx = targetNode.position.x;
+        const ny = targetNode.position.y;
+        
+        const nodeWidth = targetNode.width || 240;
+        const nodeHeight = targetNode.height || 182;
+
+        const nodeLeft = nx * vz + vx;
+        const nodeRight = (nx + nodeWidth) * vz + vx;
+        const nodeTop = ny * vz + vy;
+        const nodeBottom = (ny + nodeHeight) * vz + vy;
+
+        const margin = 80;
+        const isFullyVisible = (
+          nodeLeft >= margin &&
+          nodeRight <= containerWidth - margin &&
+          nodeTop >= margin &&
+          nodeBottom <= containerHeight - margin
+        );
+
+        if (!isFullyVisible) {
+          const isPartiallyVisible = (
+            nodeRight >= 0 &&
+            nodeLeft <= containerWidth &&
+            nodeBottom >= 0 &&
+            nodeTop <= containerHeight
+          );
+
+          if (isPartiallyVisible) {
+            let newVx = vx;
+            let newVy = vy;
+
+            if (nodeLeft < margin) {
+              newVx = vx + (margin - nodeLeft);
+            } else if (nodeRight > containerWidth - margin) {
+              newVx = vx - (nodeRight - (containerWidth - margin));
+            }
+
+            if (nodeTop < margin) {
+              newVy = vy + (margin - nodeTop);
+            } else if (nodeBottom > containerHeight - margin) {
+              newVy = vy - (nodeBottom - (containerHeight - margin));
+            }
+
+            reactFlowInstance.setViewport({ x: newVx, y: newVy, zoom: vz }, { duration: 200 });
+          } else {
+            reactFlowInstance.setCenter(nx + nodeWidth / 2, ny + nodeHeight / 2, { zoom: vz, duration: 200 });
+          }
+        }
+      }
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check if this tab is active
       if (node && !node.isVisible()) {
@@ -173,26 +239,13 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
             });
             
             if (bestNodeId) {
-              setSelectedNodeId(bestNodeId);
-              setNodes(
-                nodes.map((n) => ({
-                  ...n,
-                  selected: n.id === bestNodeId,
-                }))
-              );
+              focusAndScrollToNode(bestNodeId);
             }
           }
         } else {
           // Fallback: select first node
           if (nodes.length > 0) {
-            const fallbackId = nodes[0].id;
-            setSelectedNodeId(fallbackId);
-            setNodes(
-              nodes.map((n) => ({
-                ...n,
-                selected: n.id === fallbackId,
-              }))
-            );
+            focusAndScrollToNode(nodes[0].id);
           }
         }
         return;
