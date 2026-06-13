@@ -81,60 +81,70 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
     icon: React.ReactNode;
     bgClass: string;
     label: string;
+    selectedClass: string;
   }> = {
     question: {
       colorClass: 'border-sky-500 text-sky-400 shadow-sky-500/10',
       icon: <HelpCircle size={16} className="text-sky-400" />,
       bgClass: 'bg-sky-500/5',
       label: 'Question',
+      selectedClass: 'border-sky-400 ring-4 ring-sky-500/35 scale-[1.04] shadow-sky-500/40 z-50 text-sky-400',
     },
     idea: {
       colorClass: 'border-yellow-500 text-yellow-400 shadow-yellow-500/10',
       icon: <Lightbulb size={16} className="text-yellow-400" />,
       bgClass: 'bg-yellow-500/5',
       label: 'Idea',
+      selectedClass: 'border-yellow-400 ring-4 ring-yellow-500/35 scale-[1.04] shadow-yellow-500/40 z-50 text-yellow-400',
     },
     pro: {
       colorClass: 'border-emerald-500 text-emerald-400 shadow-emerald-500/10',
       icon: <Plus size={16} className="text-emerald-400" />,
       bgClass: 'bg-emerald-500/5',
       label: 'Pro',
+      selectedClass: 'border-emerald-400 ring-4 ring-emerald-500/35 scale-[1.04] shadow-emerald-500/40 z-50 text-emerald-400',
     },
     con: {
       colorClass: 'border-rose-500 text-rose-400 shadow-rose-500/10',
       icon: <Minus size={16} className="text-rose-400" />,
       bgClass: 'bg-rose-500/5',
       label: 'Con',
+      selectedClass: 'border-rose-400 ring-4 ring-rose-500/35 scale-[1.04] shadow-rose-500/40 z-50 text-rose-400',
     },
     note: {
       colorClass: 'border-amber-500 text-amber-400 shadow-amber-500/10',
       icon: <FileText size={16} className="text-amber-400" />,
       bgClass: 'bg-amber-500/5',
       label: 'Note',
+      selectedClass: 'border-amber-400 ring-4 ring-amber-500/35 scale-[1.04] shadow-amber-500/40 z-50 text-amber-400',
     },
     decision: {
       colorClass: 'border-purple-500 text-purple-400 shadow-purple-500/20 ring-1 ring-purple-500/30',
       icon: <Check size={16} className="text-purple-400" />,
       bgClass: 'bg-purple-500/10',
       label: 'Decision',
+      selectedClass: 'border-purple-400 ring-4 ring-purple-500/40 scale-[1.04] shadow-purple-500/50 z-50 text-purple-400',
     },
     link: {
       colorClass: 'border-teal-500 text-teal-400 shadow-teal-500/10',
       icon: <Link2 size={16} className="text-teal-400" />,
       bgClass: 'bg-teal-500/5',
       label: 'Link',
+      selectedClass: 'border-teal-400 ring-4 ring-teal-500/35 scale-[1.04] shadow-teal-500/40 z-50 text-teal-400',
     },
     image: {
       colorClass: 'border-pink-500 text-pink-400 shadow-pink-500/10',
       icon: <ImageIcon size={16} className="text-pink-400" />,
       bgClass: 'bg-pink-500/5',
       label: 'Image',
+      selectedClass: 'border-pink-400 ring-4 ring-pink-500/35 scale-[1.04] shadow-pink-500/40 z-50 text-pink-400',
     },
     map: {
       colorClass: 'border-indigo-500 text-indigo-400 shadow-indigo-500/10',
       icon: <Folder size={16} className="text-indigo-400" />,
       bgClass: 'bg-indigo-500/5',
       label: 'Map',
+      selectedClass: 'border-indigo-400 ring-4 ring-indigo-500/35 scale-[1.04] shadow-indigo-500/40 z-50 text-indigo-400',
     },
   };
 
@@ -148,8 +158,7 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
       onClick={handleNodeClick}
       className={cn(
         "px-4 py-3 border rounded-xl shadow-lg w-[240px] transition-all select-none bg-card/90 backdrop-blur-sm relative",
-        config.colorClass,
-        (selected || isStoreSelected) ? "ring-2 ring-primary scale-[1.02] shadow-primary/10 border-primary" : "hover:border-border/80 hover:shadow-xl"
+        (selected || isStoreSelected) ? config.selectedClass : cn(config.colorClass, "hover:border-border/80 hover:shadow-xl")
       )}
     >
       {/* Target handle on top */}

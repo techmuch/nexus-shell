@@ -74,6 +74,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     connectNodes,
     triggerAutoLayout,
     undoLayout,
+    setSelectedNodeId,
     importMap,
     exportMap,
   } = useDialogueMappingStore();
@@ -119,6 +120,82 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
           wasRightPressedOnNodeRef.current = false;
           return;
         }
+      }
+
+      // Arrow keys navigation
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (selectedNodeId) {
+          const currentNode = nodes.find((n) => n.id === selectedNodeId);
+          if (currentNode) {
+            const cx = currentNode.position.x;
+            const cy = currentNode.position.y;
+            
+            let bestNodeId: string | null = null;
+            let minMetric = Infinity;
+            
+            nodes.forEach((n) => {
+              if (n.id === selectedNodeId) return;
+              const nx = n.position.x;
+              const ny = n.position.y;
+              const dx = nx - cx;
+              const dy = ny - cy;
+              
+              let isValid = false;
+              let metric = Infinity;
+              
+              if (e.key === 'ArrowRight') {
+                if (dx > 10) {
+                  isValid = true;
+                  metric = dx + 2 * Math.abs(dy);
+                }
+              } else if (e.key === 'ArrowLeft') {
+                if (dx < -10) {
+                  isValid = true;
+                  metric = -dx + 2 * Math.abs(dy);
+                }
+              } else if (e.key === 'ArrowUp') {
+                if (dy < -10) {
+                  isValid = true;
+                  metric = -dy + 2 * Math.abs(dx);
+                }
+              } else if (e.key === 'ArrowDown') {
+                if (dy > 10) {
+                  isValid = true;
+                  metric = dy + 2 * Math.abs(dx);
+                }
+              }
+              
+              if (isValid && metric < minMetric) {
+                minMetric = metric;
+                bestNodeId = n.id;
+              }
+            });
+            
+            if (bestNodeId) {
+              setSelectedNodeId(bestNodeId);
+              setNodes(
+                nodes.map((n) => ({
+                  ...n,
+                  selected: n.id === bestNodeId,
+                }))
+              );
+            }
+          }
+        } else {
+          // Fallback: select first node
+          if (nodes.length > 0) {
+            const fallbackId = nodes[0].id;
+            setSelectedNodeId(fallbackId);
+            setNodes(
+              nodes.map((n) => ({
+                ...n,
+                selected: n.id === fallbackId,
+              }))
+            );
+          }
+        }
+        return;
       }
 
       // Cmd/Ctrl + Z -> Undo Layout
