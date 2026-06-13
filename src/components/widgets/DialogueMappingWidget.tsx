@@ -548,6 +548,9 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
               maskColor="rgba(15, 23, 42, 0.6)"
               className="border border-border/60 bg-card/65 rounded-lg"
               pannable={true}
+              onClick={(_, position) => {
+                reactFlowInstance.setCenter(position.x, position.y, { zoom: reactFlowInstance.getZoom() });
+              }}
             />
           </ReactFlow>
         </div>
