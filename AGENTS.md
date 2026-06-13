@@ -69,4 +69,11 @@ Always run the following commands to test and verify your changes:
 - **Template Literal Escapes Safeguard:** When editing/creating files using AI writing tools, inspect string interpolation blocks. Ensure backslashes (`\`) have not been incorrectly prepended to dollar signs (e.g. producing `\${value}` instead of `${value}`), which breaks JS variable references. Confirm syntax by running `npx tsc --noEmit` and fixing "unused variable" errors immediately.
 - **Playwright Fallback Screenshotting:** If the browser agent's native screenshot tools fail or are restricted in the workspace shell, capture visual snapshots by writing a temporary Playwright spec (e.g. `tests/screenshot-helper.spec.ts`), running it, outputting screenshots to the artifacts folder, and removing the temporary spec file.
 - **Scoped Interactive Listeners:** When decomposing monolithic widgets into smaller tabbed sub-components, scope all keyboard shortcuts and event listeners (e.g. Delete, Cmd+Z) to fire only when their respective tab pane is active.
+ 
+---
 
+## 💡 Workstation & Library Guidelines
+
+- **Tailwind Purging Safeguard for External Libraries:** Overrides for third-party component libraries (e.g., React Flow, FlexLayout) must be defined *outside* Tailwind's `@layer` directives in `index.css`. This prevents them from being purged during build steps when class names are dynamically injected at runtime.
+- **DOM-Aware Keydown Listeners:** Window-level keydown listeners (such as shortcut hotkeys or edit-mode toggles) must perform DOM visibility checks (e.g., checking if `containerRef.current.offsetParent === null`) to abort execution if the component is mounted but resides inside an inactive/hidden workbench tab.
+- **Canvas Brand Cleanliness:** Always configure `<ReactFlow>` canvas instances with `proOptions={{ hideAttribution: true }}` to remove the default watermark attribution text and keep the workspace UI premium and clean.
