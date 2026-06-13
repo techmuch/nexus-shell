@@ -97,3 +97,32 @@
     @apply bg-background text-foreground transition-colors duration-300;
   }
 }
+
+/* React Flow controls theme override */
+.react-flow__controls {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius, 0.5rem) !important;
+  overflow: hidden;
+  padding: 0 !important;
+}
+.react-flow__controls-button {
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: none !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  transition: background-color 150ms, color 150ms !important;
+}
+.react-flow__controls-button:hover {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+.react-flow__controls-button svg {
+  fill: currentColor !important;
+}
+
+
