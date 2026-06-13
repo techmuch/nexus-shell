@@ -310,6 +310,7 @@ export const WorkflowMapper: React.FC<WorkflowMapperProps> = ({ setActiveTab }) 
         selectionOnDrag={dragMode === 'select'}
         selectionMode={SelectionMode.Partial}
         fitView
+        proOptions={{ hideAttribution: true }}
       >
         <Background color="#334155" gap={16} />
         <Controls />

@@ -30,6 +30,7 @@ const ReactFlowMockWrapper: React.FC<{ node: Node<IDialogueNodeData> }> = ({ nod
         nodesConnectable={false}
         zoomOnScroll={false}
         panOnDrag={false}
+        proOptions={{ hideAttribution: true }}
       />
     </div>
   );

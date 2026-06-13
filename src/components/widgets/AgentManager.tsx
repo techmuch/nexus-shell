@@ -370,6 +370,7 @@ const FlowEditor = ({ initialNodes, initialEdges, onSave, onBack, currentAgent, 
             onPaneClick={() => setSelectedNodeId(null)}
             nodeTypes={nodeTypes}
             fitView
+            proOptions={{ hideAttribution: true }}
           >
             <Controls />
             <MiniMap />

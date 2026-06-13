@@ -664,6 +664,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
             panOnScroll={true}
             panOnScrollMode={"all" as any}
             zoomOnScroll={false}
+            proOptions={{ hideAttribution: true }}
           >
             <Background color="hsl(var(--border))" gap={16} size={1} />
             <Controls className="fill-foreground stroke-foreground text-foreground" />
