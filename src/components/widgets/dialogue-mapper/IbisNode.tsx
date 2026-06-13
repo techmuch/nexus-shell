@@ -88,9 +88,9 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
       label: 'Question',
     },
     idea: {
-      colorClass: 'border-indigo-500 text-indigo-400 shadow-indigo-500/10',
-      icon: <Lightbulb size={16} className="text-indigo-400" />,
-      bgClass: 'bg-indigo-500/5',
+      colorClass: 'border-yellow-500 text-yellow-400 shadow-yellow-500/10',
+      icon: <Lightbulb size={16} className="text-yellow-400" />,
+      bgClass: 'bg-yellow-500/5',
       label: 'Idea',
     },
     pro: {
@@ -112,9 +112,9 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
       label: 'Note',
     },
     decision: {
-      colorClass: 'border-yellow-500 text-yellow-400 shadow-yellow-500/20 ring-1 ring-yellow-500/30',
-      icon: <Check size={16} className="text-yellow-400" />,
-      bgClass: 'bg-yellow-500/10',
+      colorClass: 'border-purple-500 text-purple-400 shadow-purple-500/20 ring-1 ring-purple-500/30',
+      icon: <Check size={16} className="text-purple-400" />,
+      bgClass: 'bg-purple-500/10',
       label: 'Decision',
     },
     link: {

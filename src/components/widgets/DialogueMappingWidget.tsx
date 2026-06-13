@@ -393,14 +393,14 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
 
             <div className="space-y-2.5">
               {[
-                { type: 'question', label: 'Question / Issue', desc: 'Define a problem, decision, or query', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/15', icon: <HelpCircle size={14} /> },
-                { type: 'idea', label: 'Idea / Position', desc: 'Propose a response or solution', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/15', icon: <Lightbulb size={14} /> },
-                { type: 'pro', label: 'Pro Argument', desc: 'Supporting argument for an idea', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/15', icon: <Plus size={14} /> },
-                { type: 'con', label: 'Con Argument', desc: 'Argument opposing an idea', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/15', icon: <Minus size={14} /> },
-                { type: 'note', label: 'Note / Evidence', desc: 'Background fact, URL, or note', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/15', icon: <FileText size={14} /> },
-                { type: 'decision', label: 'Decision / Resolve', desc: 'The resolved position / choice', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/15', icon: <Check size={14} /> },
-                { type: 'link', label: 'Link / Reference', desc: 'Clickable URL reference card', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30 hover:bg-teal-500/15', icon: <Link2 size={14} /> },
-                { type: 'image', label: 'Image / Diagram', desc: 'Embedded image thumbnail card', color: 'bg-pink-500/10 text-pink-400 border-pink-500/30 hover:bg-pink-500/15', icon: <ImageIcon size={14} /> },
+                { type: 'question', label: 'Question / Issue', shortcut: 'Q', desc: 'Define a problem, decision, or query', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/15', icon: <HelpCircle size={14} /> },
+                { type: 'idea', label: 'Idea / Position', shortcut: 'A', desc: 'Propose a response or solution', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/15', icon: <Lightbulb size={14} /> },
+                { type: 'pro', label: 'Pro Argument', shortcut: 'P', desc: 'Supporting argument for an idea', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/15', icon: <Plus size={14} /> },
+                { type: 'con', label: 'Con Argument', shortcut: 'C', desc: 'Argument opposing an idea', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/15', icon: <Minus size={14} /> },
+                { type: 'note', label: 'Note / Evidence', shortcut: 'N', desc: 'Background fact, URL, or note', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/15', icon: <FileText size={14} /> },
+                { type: 'decision', label: 'Decision / Resolve', shortcut: 'D', desc: 'The resolved position / choice', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30 hover:bg-purple-500/15', icon: <Check size={14} /> },
+                { type: 'link', label: 'Link / Reference', shortcut: 'L', desc: 'Clickable URL reference card', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30 hover:bg-teal-500/15', icon: <Link2 size={14} /> },
+                { type: 'image', label: 'Image / Diagram', shortcut: 'I', desc: 'Embedded image thumbnail card', color: 'bg-pink-500/10 text-pink-400 border-pink-500/30 hover:bg-pink-500/15', icon: <ImageIcon size={14} /> },
               ].map((item) => (
                 <button
                   key={item.type}
@@ -411,8 +411,13 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
                   )}
                 >
                   <div className="mt-0.5 shrink-0">{item.icon}</div>
-                  <div>
-                    <h5 className="text-xs font-bold font-mono">{item.label}</h5>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h5 className="text-xs font-bold font-mono truncate">{item.label}</h5>
+                      <kbd className="px-1.5 py-0.5 text-[9px] font-extrabold bg-background/50 border border-foreground/10 rounded shadow-sm text-foreground/80 font-mono shrink-0">
+                        {item.shortcut}
+                      </kbd>
+                    </div>
                     <p className="text-[10px] opacity-75 mt-0.5 leading-normal">{item.desc}</p>
                   </div>
                 </button>
@@ -517,11 +522,11 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
               nodeColor={(node) => {
                 const type = node.data?.type;
                 if (type === 'question') return '#0ea5e9';
-                if (type === 'idea') return '#6366f1';
+                if (type === 'idea') return '#eab308';
                 if (type === 'pro') return '#10b981';
                 if (type === 'con') return '#f43f5e';
                 if (type === 'note') return '#f59e0b';
-                if (type === 'decision') return '#eab308';
+                if (type === 'decision') return '#a855f7';
                 return '#64748b';
               }}
               maskColor="rgba(15, 23, 42, 0.6)"
