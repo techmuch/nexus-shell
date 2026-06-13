@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Node, Edge, Connection } from 'reactflow';
+import { Node, Edge, Connection, MarkerType } from 'reactflow';
 
 export type IbisNodeType = 'question' | 'idea' | 'pro' | 'con' | 'note' | 'decision' | 'link' | 'image';
 
@@ -191,14 +191,14 @@ const initialNodes: Node<IDialogueNodeData>[] = [
 ];
 
 const initialEdges: Edge[] = [
-  { id: 'edge-1-2', source: 'node-1', target: 'node-2', type: 'smoothstep', style: { stroke: '#818cf8', strokeWidth: 2 } },
-  { id: 'edge-2-3', source: 'node-2', target: 'node-3', type: 'smoothstep', style: { stroke: '#4ade80', strokeWidth: 2 } },
-  { id: 'edge-2-4', source: 'node-2', target: 'node-4', type: 'smoothstep', style: { stroke: '#f87171', strokeWidth: 2 } },
-  { id: 'edge-1-5', source: 'node-1', target: 'node-5', type: 'smoothstep', style: { stroke: '#818cf8', strokeWidth: 2 } },
-  { id: 'edge-5-6', source: 'node-5', target: 'node-6', type: 'smoothstep', style: { stroke: '#4ade80', strokeWidth: 2 } },
-  { id: 'edge-5-7', source: 'node-5', target: 'node-7', type: 'smoothstep', style: { stroke: '#fbbf24', strokeWidth: 2 } },
-  { id: 'edge-1-8', source: 'node-1', target: 'node-8', type: 'smoothstep', style: { stroke: '#14b8a6', strokeWidth: 2 } },
-  { id: 'edge-5-9', source: 'node-5', target: 'node-9', type: 'smoothstep', style: { stroke: '#ec4899', strokeWidth: 2 } },
+  { id: 'edge-1-2', source: 'node-1', target: 'node-2', type: 'smoothstep', style: { stroke: '#818cf8', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#818cf8' } },
+  { id: 'edge-2-3', source: 'node-2', target: 'node-3', type: 'smoothstep', style: { stroke: '#4ade80', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4ade80' } },
+  { id: 'edge-2-4', source: 'node-2', target: 'node-4', type: 'smoothstep', style: { stroke: '#f87171', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#f87171' } },
+  { id: 'edge-1-5', source: 'node-1', target: 'node-5', type: 'smoothstep', style: { stroke: '#818cf8', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#818cf8' } },
+  { id: 'edge-5-6', source: 'node-5', target: 'node-6', type: 'smoothstep', style: { stroke: '#4ade80', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4ade80' } },
+  { id: 'edge-5-7', source: 'node-5', target: 'node-7', type: 'smoothstep', style: { stroke: '#fbbf24', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#fbbf24' } },
+  { id: 'edge-1-8', source: 'node-1', target: 'node-8', type: 'smoothstep', style: { stroke: '#14b8a6', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#14b8a6' } },
+  { id: 'edge-5-9', source: 'node-5', target: 'node-9', type: 'smoothstep', style: { stroke: '#ec4899', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#ec4899' } },
 ];
 
 export const useDialogueMappingStore = create<DialogueMappingState>((set, get) => ({
@@ -335,6 +335,7 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
       target,
       type: 'smoothstep',
       style: { stroke: strokeColor, strokeWidth: 2 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: strokeColor },
     };
 
     set((state) => ({
