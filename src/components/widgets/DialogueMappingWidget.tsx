@@ -86,6 +86,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   const [rightDragStartNodeId, setRightDragStartNodeId] = useState<string | null>(null);
   const [currentMousePos, setCurrentMousePos] = useState<{ clientX: number; clientY: number } | null>(null);
   const preventNextContextMenuRef = useRef(false);
+  const wasRightPressedOnNodeRef = useRef(false);
 
   // UI Panels state
   const [showLibrary, setShowLibrary] = useState(true);
@@ -106,6 +107,17 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
         target.isContentEditable
       ) {
         return;
+      }
+
+      // Escape -> Cancel active right-click drag-linking
+      if (e.key === 'Escape') {
+        if (rightDragStartNodeId) {
+          e.preventDefault();
+          setRightDragStartNodeId(null);
+          setCurrentMousePos(null);
+          wasRightPressedOnNodeRef.current = false;
+          return;
+        }
       }
 
       // Cmd/Ctrl + Z -> Undo Layout
@@ -155,7 +167,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [node, layoutHistory, undoLayout, addNode, selectedNodeId, nodes]);
+  }, [node, layoutHistory, undoLayout, addNode, selectedNodeId, nodes, rightDragStartNodeId]);
 
   // Connection warning auto-clear
   useEffect(() => {
@@ -229,8 +241,11 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
           if (nodeId) {
             setRightDragStartNodeId(nodeId);
             setCurrentMousePos({ clientX: e.clientX, clientY: e.clientY });
+            wasRightPressedOnNodeRef.current = true;
           }
         }
+      } else {
+        wasRightPressedOnNodeRef.current = false;
       }
     };
 
@@ -262,9 +277,10 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     };
 
     const handleContextMenu = (e: MouseEvent) => {
-      if (preventNextContextMenuRef.current) {
+      if (wasRightPressedOnNodeRef.current || preventNextContextMenuRef.current) {
         e.preventDefault();
         preventNextContextMenuRef.current = false;
+        wasRightPressedOnNodeRef.current = false;
       }
     };
 
