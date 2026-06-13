@@ -32,6 +32,7 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
   });
   const [editTitle, setEditTitle] = useState(data.title);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setEditTitle(data.title);
@@ -49,6 +50,43 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
       updateNodeData(data.id, { autoEdit: false });
     }
   }, [data.autoEdit, data.id, updateNodeData]);
+
+  // Handle Enter key to transition into edit mode when node is selected
+  useEffect(() => {
+    const isSelected = selected || selectedNodeId === data.id;
+    if (!isSelected || isEditing) {
+      return;
+    }
+
+    const handleKeyDownGlobal = (e: KeyboardEvent) => {
+      // Check visibility of the node to prevent triggering hidden tab actions
+      const container = containerRef.current;
+      if (!container || container.offsetParent === null) {
+        return;
+      }
+
+      // Ignore if typing in some input/textarea
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsEditing(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDownGlobal);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDownGlobal);
+    };
+  }, [selected, selectedNodeId, data.id, isEditing]);
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -155,10 +193,11 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
 
   return (
     <div
+      ref={containerRef}
       onClick={handleNodeClick}
       className={cn(
-        "px-4 py-3 border rounded-xl shadow-lg w-[240px] transition-all select-none bg-card/90 backdrop-blur-sm relative",
-        (selected || isStoreSelected) ? config.selectedClass : cn(config.colorClass, "hover:border-border/80 hover:shadow-xl")
+        "px-4 py-3 rounded-xl shadow-lg w-[240px] transition-all select-none bg-card/90 backdrop-blur-sm relative",
+        (selected || isStoreSelected) ? cn("border-[1.5px]", config.selectedClass) : cn("border", config.colorClass, "hover:border-border/80 hover:shadow-xl")
       )}
     >
       {/* Target handle on top */}

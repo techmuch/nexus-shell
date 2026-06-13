@@ -299,4 +299,28 @@ test.describe('Dialogue Mapping Workstation', () => {
     // Verify updated title is rendered
     await expect(page.getByText('Idea created by shortcut linking')).toBeVisible();
   });
+
+  test('should enter and exit edit mode by pressing Enter key on selected node', async ({ page }) => {
+    // 1. Click on a node to select/focus it (WebSockets node)
+    const nodeLabel = page.getByText('WebSockets with a custom state protocol').first();
+    await nodeLabel.click();
+
+    // 2. Press Enter to enter edit mode
+    await page.keyboard.press('Enter');
+
+    // 3. Verify that input element is visible
+    const inlineInput = page.locator('.react-flow__node-ibisNode input');
+    await expect(inlineInput).toBeVisible();
+
+    // 4. Edit the text
+    await inlineInput.fill('WebSockets edit via Enter key');
+
+    // 5. Press Enter again to save and exit edit mode
+    await page.keyboard.press('Enter');
+
+    // 6. Verify input element is no longer visible and label is updated
+    await expect(inlineInput).not.toBeVisible();
+    await expect(page.getByText('WebSockets edit via Enter key')).toBeVisible();
+  });
 });
+
