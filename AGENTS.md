@@ -21,10 +21,16 @@ You are a senior frontend engineer specializing in professional-grade React/Type
 
 ### 2. High-Fidelity UI/UX & Styling
 - **CSS-Variable Theming:** All styling must be driven by Tailwind CSS classes mapping to CSS custom properties defined in [`index.css`](file:///Users/david/projects/nexus-shell/src/index.css).
-- **Accessibility (a11y) First:** Theme colors must satisfy target contrast ratios. 
+- **Accessibility (a11y) First & Theme Integration:** Theme colors must satisfy target contrast ratios.
   - *Dark Theme:* Avoid pure white text on dark backgrounds to prevent glare; use soft whites/grays like `hsl(240, 5%, 85%)`. Use distinct interactive colors (e.g. muted Indigo).
   - *Light & Custom Themes:* Keep backgrounds clean and use readable colors (e.g. the Georgia Tech theme `--primary: 45 100% 46%`).
-- **Interactive States:** Inputs, buttons, and panels must have clear visual focus indicators (e.g. `focus:ring-2 focus:ring-ring`) and hover states.
+  - *Control Elements:* Utility components (overlays, legends, toolbars, controls) must dynamically adapt to themes using semantic CSS variables (`--card`, `--foreground`, `--border`, `--accent`) instead of hardcoded white backgrounds.
+- **Interactive & Selection States:** Inputs, buttons, and panels must have clear visual focus indicators (e.g. `focus:ring-2 focus:ring-ring`) and hover states.
+  - *Active Selection Highlights:* Selected nodes or key items must stand out significantly by using scale transitions, ontology-colored borders that are 50% wider than normal (e.g., `border-[1.5px]`), custom colored rings, and matching shadows to ensure they visually "pop".
+- **Visual Mapping Ontology & Connectors:**
+  - *Ontology Alignment:* Adhere to classic Compendium-style color coding (e.g., Question: Sky Blue, Idea: Yellow, Pro: Emerald, Con: Rose, Note: Amber, Decision: Purple, Link: Teal, Image: Pink, Map: Indigo).
+  - *Direct Connections:* Prefer clean, direct straight-line connections (`type: 'straight'`) with a neutral Slate-500 (`#64748b`) edge color to keep canvas layouts professional and uncluttered.
+
 
 ### 3. Continuous Browser-Agent Integration & Server Monitoring
 - **Always-On Servers:** You must ensure that both the main development server and the Storybook server are continuously running throughout the entirety of your workflow (e.g., using `npm run dev:bg`).
