@@ -10,7 +10,8 @@ import {
   User,
   Link2,
   Image as ImageIcon,
-  ExternalLink
+  ExternalLink,
+  Folder
 } from 'lucide-react';
 import sampleDiagram from './sample_diagram.png';
 import { useDialogueMappingStore, IDialogueNodeData, IbisNodeType } from '../../../core/services/DialogueMappingService';
@@ -129,6 +130,12 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
       bgClass: 'bg-pink-500/5',
       label: 'Image',
     },
+    map: {
+      colorClass: 'border-indigo-500 text-indigo-400 shadow-indigo-500/10',
+      icon: <Folder size={16} className="text-indigo-400" />,
+      bgClass: 'bg-indigo-500/5',
+      label: 'Map',
+    },
   };
 
   const config = nodeConfigs[data.type] || nodeConfigs.note;
@@ -214,6 +221,21 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
           src={data.imageUrl || sampleDiagram}
           alt={data.title || 'Image Embed'}
         />
+      )}
+
+      {data.type === 'map' && (
+        <div className="mt-2.5">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              alert(`Navigating to nested dialogue map: "${data.title || 'Sub-Map'}"...`);
+            }}
+            className="w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/25 border border-indigo-500/30 hover:border-indigo-500/50 rounded-lg text-[10px] font-bold text-indigo-400 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
+          >
+            <Folder size={11} className="text-indigo-400" />
+            Open Dialogue Map
+          </button>
+        </div>
       )}
 
       {/* Node Metadata Tags */}

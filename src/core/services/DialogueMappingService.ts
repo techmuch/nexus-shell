@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Node, Edge, Connection, MarkerType } from 'reactflow';
 
-export type IbisNodeType = 'question' | 'idea' | 'pro' | 'con' | 'note' | 'decision' | 'link' | 'image';
+export type IbisNodeType = 'question' | 'idea' | 'pro' | 'con' | 'note' | 'decision' | 'link' | 'image' | 'map';
 
 export interface IDialogueNodeData {
   id: string;
@@ -192,14 +192,14 @@ const initialNodes: Node<IDialogueNodeData>[] = [
 ];
 
 const initialEdges: Edge[] = [
-  { id: 'edge-1-2', source: 'node-1', target: 'node-2', type: 'smoothstep', style: { stroke: '#818cf8', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#818cf8' } },
-  { id: 'edge-2-3', source: 'node-2', target: 'node-3', type: 'smoothstep', style: { stroke: '#4ade80', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4ade80' } },
-  { id: 'edge-2-4', source: 'node-2', target: 'node-4', type: 'smoothstep', style: { stroke: '#f87171', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#f87171' } },
-  { id: 'edge-1-5', source: 'node-1', target: 'node-5', type: 'smoothstep', style: { stroke: '#818cf8', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#818cf8' } },
-  { id: 'edge-5-6', source: 'node-5', target: 'node-6', type: 'smoothstep', style: { stroke: '#4ade80', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4ade80' } },
-  { id: 'edge-5-7', source: 'node-5', target: 'node-7', type: 'smoothstep', style: { stroke: '#fbbf24', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#fbbf24' } },
-  { id: 'edge-1-8', source: 'node-1', target: 'node-8', type: 'smoothstep', style: { stroke: '#14b8a6', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#14b8a6' } },
-  { id: 'edge-5-9', source: 'node-5', target: 'node-9', type: 'smoothstep', style: { stroke: '#ec4899', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#ec4899' } },
+  { id: 'edge-1-2', source: 'node-1', target: 'node-2', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
+  { id: 'edge-2-3', source: 'node-2', target: 'node-3', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
+  { id: 'edge-2-4', source: 'node-2', target: 'node-4', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
+  { id: 'edge-1-5', source: 'node-1', target: 'node-5', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
+  { id: 'edge-5-6', source: 'node-5', target: 'node-6', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
+  { id: 'edge-5-7', source: 'node-5', target: 'node-7', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
+  { id: 'edge-1-8', source: 'node-1', target: 'node-8', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
+  { id: 'edge-5-9', source: 'node-5', target: 'node-9', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
 ];
 
 export const useDialogueMappingStore = create<DialogueMappingState>((set, get) => ({
@@ -302,22 +302,14 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
           }
 
           if (isValid) {
-            let strokeColor = '#818cf8'; // default purple/indigo
-            const sourceNode = source === id ? newNode : parentNode;
-            const sourceType = sourceNode.data.type;
-            
-            if (sourceType === 'pro') strokeColor = '#4ade80';
-            else if (sourceType === 'con') strokeColor = '#f87171';
-            else if (sourceType === 'note') strokeColor = '#fbbf24';
-            else if (sourceType === 'link') strokeColor = '#14b8a6';
-            else if (sourceType === 'image') strokeColor = '#ec4899';
+            const strokeColor = '#64748b'; // common slate edge color
 
             const edgeId = `edge-${source}-${target}-${Date.now()}`;
             nextEdges.push({
               id: edgeId,
               source,
               target,
-              type: 'smoothstep',
+              type: 'straight',
               style: { stroke: strokeColor, strokeWidth: 2 },
               markerEnd: { type: MarkerType.ArrowClosed, color: strokeColor },
             });
@@ -408,21 +400,14 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
       return false;
     }
 
-    // Set connection stroke style based on source argument type
-    const sourceNode = get().nodes.find((n) => n.id === source);
-    let strokeColor = '#818cf8'; // default purple/indigo
-    if (sourceNode?.data.type === 'pro') strokeColor = '#4ade80'; // green
-    if (sourceNode?.data.type === 'con') strokeColor = '#f87171'; // red
-    if (sourceNode?.data.type === 'note') strokeColor = '#fbbf24'; // amber
-    if (sourceNode?.data.type === 'link') strokeColor = '#14b8a6'; // teal
-    if (sourceNode?.data.type === 'image') strokeColor = '#ec4899'; // pink
+    const strokeColor = '#64748b'; // common slate edge color
 
     const edgeId = `edge-${source}-${target}-${Date.now()}`;
     const newEdge: Edge = {
       id: edgeId,
       source,
       target,
-      type: 'smoothstep',
+      type: 'straight',
       style: { stroke: strokeColor, strokeWidth: 2 },
       markerEnd: { type: MarkerType.ArrowClosed, color: strokeColor },
     };

@@ -28,7 +28,8 @@ import {
   Tag,
   Maximize2,
   Link2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Folder
 } from 'lucide-react';
 
 import { useDialogueMappingStore, IbisNodeType } from '../../core/services/DialogueMappingService';
@@ -143,6 +144,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
       else if (e.key === 'd') type = 'decision';
       else if (e.key === 'l') type = 'link';
       else if (e.key === 'i') type = 'image';
+      else if (e.key === 'm') type = 'map';
 
       if (type) {
         e.preventDefault();
@@ -417,6 +419,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
                 { type: 'decision', label: 'Decision / Resolve', shortcut: 'D', desc: 'The resolved position / choice', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30 hover:bg-purple-500/15', icon: <Check size={14} /> },
                 { type: 'link', label: 'Link / Reference', shortcut: 'L', desc: 'Clickable URL reference card', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30 hover:bg-teal-500/15', icon: <Link2 size={14} /> },
                 { type: 'image', label: 'Image / Diagram', shortcut: 'I', desc: 'Embedded image thumbnail card', color: 'bg-pink-500/10 text-pink-400 border-pink-500/30 hover:bg-pink-500/15', icon: <ImageIcon size={14} /> },
+                { type: 'map', label: 'Map / Sub-Map', shortcut: 'M', desc: 'Link to another dialogue map', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/15', icon: <Folder size={14} /> },
               ].map((item) => (
                 <button
                   key={item.type}
@@ -543,6 +546,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
                 if (type === 'con') return '#f43f5e';
                 if (type === 'note') return '#f59e0b';
                 if (type === 'decision') return '#a855f7';
+                if (type === 'map') return '#6366f1';
                 return '#64748b';
               }}
               maskColor="rgba(15, 23, 42, 0.6)"
@@ -638,6 +642,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
                     <option value="decision">Decision / Resolve</option>
                     <option value="link">Link / Reference</option>
                     <option value="image">Image / Diagram</option>
+                    <option value="map">Map / Sub-Map</option>
                   </select>
                 </div>
 
