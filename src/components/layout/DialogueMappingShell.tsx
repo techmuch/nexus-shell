@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReactFlowProvider } from 'reactflow';
 import { DialogueMappingWidget } from '../widgets/DialogueMappingWidget';
 import { useDialogueMappingStore } from '../../core/services/DialogueMappingService';
 import { useThemeStore } from '../../core/services/ThemeService';
@@ -78,7 +79,9 @@ export const DialogueMappingShell: React.FC = () => {
 
       {/* 2. Main Canvas Workspace */}
       <div className="flex-1 flex overflow-hidden min-h-0 relative">
-        <DialogueMappingWidget />
+        <ReactFlowProvider>
+          <DialogueMappingWidget />
+        </ReactFlowProvider>
       </div>
 
       {/* 3. Bottom Status Bar */}

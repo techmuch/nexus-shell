@@ -4,6 +4,8 @@ import ReactFlow, {
   Controls,
   MiniMap,
   Connection,
+  useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { TabNode } from 'flexlayout-react';
@@ -39,6 +41,14 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) => {
+  return (
+    <ReactFlowProvider>
+      <DialogueMappingCanvas node={node} />
+    </ReactFlowProvider>
+  );
+};
+
+const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   const nodeTypes = React.useMemo(() => ({
     ibisNode: IbisNode,
   }), []);
@@ -68,6 +78,14 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
   } = useDialogueMappingStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const reactFlowInstance = useReactFlow();
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Right drag link connection states
+  const [rightDragStartNodeId, setRightDragStartNodeId] = useState<string | null>(null);
+  const [currentMousePos, setCurrentMousePos] = useState<{ clientX: number; clientY: number } | null>(null);
+  const preventNextContextMenuRef = useRef(false);
 
   // UI Panels state
   const [showLibrary, setShowLibrary] = useState(true);
@@ -183,6 +201,87 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
     },
     [connectNodes]
   );
+
+  useEffect(() => {
+    const domNode = containerRef.current;
+    if (!domNode) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 2) { // right-click
+        const target = e.target as HTMLElement;
+        const nodeEl = target.closest('.react-flow__node');
+        if (nodeEl) {
+          const nodeId = nodeEl.getAttribute('data-id');
+          if (nodeId) {
+            setRightDragStartNodeId(nodeId);
+            setCurrentMousePos({ clientX: e.clientX, clientY: e.clientY });
+          }
+        }
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (rightDragStartNodeId) {
+        setCurrentMousePos({ clientX: e.clientX, clientY: e.clientY });
+      }
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (e.button === 2 && rightDragStartNodeId) {
+        const target = e.target as HTMLElement;
+        const nodeEl = target.closest('.react-flow__node');
+        if (nodeEl) {
+          const nodeId = nodeEl.getAttribute('data-id');
+          if (nodeId && nodeId !== rightDragStartNodeId) {
+            connectNodes({ 
+              source: rightDragStartNodeId, 
+              target: nodeId,
+              sourceHandle: null,
+              targetHandle: null
+            });
+            preventNextContextMenuRef.current = true;
+          }
+        }
+      }
+      setRightDragStartNodeId(null);
+      setCurrentMousePos(null);
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      if (preventNextContextMenuRef.current) {
+        e.preventDefault();
+        preventNextContextMenuRef.current = false;
+      }
+    };
+
+    const handleDoubleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.react-flow__node') || target.closest('.react-flow__controls') || target.closest('.react-flow__minimap')) {
+        return;
+      }
+
+      const rect = domNode.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const projectedPos = reactFlowInstance.project({ x, y });
+      addNode('question', projectedPos);
+    };
+
+    domNode.addEventListener('mousedown', handleMouseDown);
+    domNode.addEventListener('dblclick', handleDoubleClick);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('contextmenu', handleContextMenu, { capture: true });
+
+    return () => {
+      domNode.removeEventListener('mousedown', handleMouseDown);
+      domNode.removeEventListener('dblclick', handleDoubleClick);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('contextmenu', handleContextMenu, { capture: true });
+    };
+  }, [rightDragStartNodeId, connectNodes, reactFlowInstance, addNode]);
 
   const handleExport = () => {
     const jsonStr = exportMap();
@@ -321,7 +420,7 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
       )}
 
       {/* Center Layout: React Flow Canvas */}
-      <main className="flex-1 flex flex-col min-w-0 h-full relative">
+      <main ref={containerRef} className="flex-1 flex flex-col min-w-0 h-full relative">
         {/* Canvas Toolbar Panel */}
         <div className="h-12 border-b border-border bg-card flex items-center justify-between px-4 shrink-0 select-none">
           <div className="flex items-center space-x-1.5">
@@ -394,6 +493,9 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
             nodeTypes={nodeTypes}
             minZoom={0.1}
             maxZoom={2}
+            panOnScroll={true}
+            panOnScrollMode={"all" as any}
+            zoomOnScroll={false}
           >
             <Background color="hsl(var(--border))" gap={16} size={1} />
             <Controls className="fill-foreground stroke-foreground text-foreground" />
@@ -413,6 +515,32 @@ export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) =>
             />
           </ReactFlow>
         </div>
+
+        {/* Custom right-drag connection line overlay */}
+        {rightDragStartNodeId && currentMousePos && containerRef.current && (() => {
+          const startEl = document.querySelector(`[data-id="${rightDragStartNodeId}"]`);
+          if (!startEl) return null;
+          const rect = startEl.getBoundingClientRect();
+          const containerRect = containerRef.current.getBoundingClientRect();
+          const startX = rect.left + rect.width / 2 - containerRect.left;
+          const startY = rect.top + rect.height / 2 - containerRect.top;
+          const currentX = currentMousePos.clientX - containerRect.left;
+          const currentY = currentMousePos.clientY - containerRect.top;
+
+          return (
+            <svg className="absolute inset-0 pointer-events-none z-50 w-full h-full">
+              <line
+                x1={startX}
+                y1={startY}
+                x2={currentX}
+                y2={currentY}
+                stroke="#64748b"
+                strokeWidth={2}
+                strokeDasharray="4,4"
+              />
+            </svg>
+          );
+        })()}
       </main>
 
       {/* Right Sidebar Restorer */}
