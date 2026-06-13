@@ -534,7 +534,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
           >
             <Background color="hsl(var(--border))" gap={16} size={1} />
             <Controls className="fill-foreground stroke-foreground text-foreground" />
-            <MiniMap 
+             <MiniMap 
               nodeColor={(node) => {
                 const type = node.data?.type;
                 if (type === 'question') return '#0ea5e9';
@@ -547,6 +547,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
               }}
               maskColor="rgba(15, 23, 42, 0.6)"
               className="border border-border/60 bg-card/65 rounded-lg"
+              pannable={true}
             />
           </ReactFlow>
         </div>
