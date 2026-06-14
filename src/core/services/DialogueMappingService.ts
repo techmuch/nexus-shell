@@ -320,7 +320,10 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
       }
 
       return {
-        nodes: nextNodes,
+        nodes: nextNodes.map((n) => ({
+          ...n,
+          selected: n.id === id,
+        })),
         edges: nextEdges,
         selectedNodeId: id,
       };
@@ -383,7 +386,8 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
       },
     };
     set((state) => ({
-      nodes: [...state.nodes, newNode],
+      nodes: [...state.nodes.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }],
+      selectedNodeId: id,
     }));
   },
 
@@ -573,7 +577,7 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
       const parsed = JSON.parse(jsonStr);
       if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
         set({
-          nodes: parsed.nodes,
+          nodes: parsed.nodes.map((n: any) => ({ ...n, selected: false })),
           edges: parsed.edges,
           selectedNodeId: null,
         });

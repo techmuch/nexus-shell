@@ -8,7 +8,9 @@ import ReactFlow, {
   ReactFlowProvider,
   Node,
   Edge,
-  SelectionMode
+  SelectionMode,
+  applyNodeChanges,
+  applyEdgeChanges
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { TabNode } from 'flexlayout-react';
@@ -315,42 +317,29 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   }, [connectionError, setConnectionError]);
   
   // Node editing state in Inspector
-  const activeNode = nodes.find((n) => n.id === selectedNodeId) || null;
+  const selectedNodes = nodes.filter((n) => n.selected);
+  const activeNode = selectedNodes.length === 1 ? selectedNodes[0] : null;
   const [newTag, setNewTag] = useState('');
 
   // Handle nodes/edges movements from canvas
   const onNodesChange = useCallback(
     (changes: any) => {
-      // Direct node position updates
-      const updatedNodes = [...nodes];
-      changes.forEach((change: any) => {
-        if (change.type === 'position' && change.position) {
-          const idx = updatedNodes.findIndex((n) => n.id === change.id);
-          if (idx !== -1) {
-            updatedNodes[idx] = {
-              ...updatedNodes[idx],
-              position: change.position,
-            };
-          }
-        }
-      });
-      setNodes(updatedNodes);
+      const nextNodes = applyNodeChanges(changes, nodes);
+      setNodes(nextNodes);
+
+      const selected = nextNodes.filter((n) => n.selected);
+      if (selected.length === 1) {
+        setSelectedNodeId(selected[0].id);
+      } else {
+        setSelectedNodeId(null);
+      }
     },
-    [nodes, setNodes]
+    [nodes, setNodes, setSelectedNodeId]
   );
 
   const onEdgesChange = useCallback(
     (changes: any) => {
-      const updatedEdges = [...edges];
-      changes.forEach((change: any) => {
-        if (change.type === 'remove') {
-          const idx = updatedEdges.findIndex((e) => e.id === change.id);
-          if (idx !== -1) {
-            updatedEdges.splice(idx, 1);
-          }
-        }
-      });
-      setEdges(updatedEdges);
+      setEdges(applyEdgeChanges(changes, edges));
     },
     [edges, setEdges]
   );
@@ -824,7 +813,13 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
           </div>
 
           <div className="flex-1 p-4 overflow-y-auto space-y-4 select-text">
-            {activeNode ? (
+            {selectedNodes.length > 1 ? (
+              <div className="text-center italic text-muted-foreground/60 pt-10 text-xs space-y-2">
+                <div className="font-semibold text-primary">Multiple Nodes Selected</div>
+                <div>({selectedNodes.length} nodes selected)</div>
+                <div className="text-[10px] mt-2">Node arguments cannot be edited simultaneously. Select a single node to view and edit its logical properties.</div>
+              </div>
+            ) : activeNode ? (
               <div className="space-y-4">
                 {/* 1. Node Title */}
                 <div className="space-y-1">

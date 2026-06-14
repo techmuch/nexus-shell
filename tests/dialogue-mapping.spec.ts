@@ -113,7 +113,7 @@ test.describe('Dialogue Mapping Workstation', () => {
     await questionNode.click({ button: 'right' });
 
     // The custom context menu should appear
-    const copyOption = page.getByText('Copy Node');
+    const copyOption = page.getByText('Copy Node', { exact: true });
     await expect(copyOption).toBeVisible();
 
     // Click "Copy Node"
@@ -137,7 +137,7 @@ test.describe('Dialogue Mapping Workstation', () => {
     const pastedNode = page.getByText('Which communication model should we use for real-time state sync?').nth(1);
     await pastedNode.click({ button: 'right', force: true });
 
-    const deleteOption = page.getByText('Delete Node');
+    const deleteOption = page.getByText('Delete Node', { exact: true });
     await expect(deleteOption).toBeVisible();
     await deleteOption.click();
 
@@ -234,8 +234,10 @@ test.describe('Dialogue Mapping Workstation', () => {
   });
 
   test('should undo manual node drags using keyboard shortcut', async ({ page }) => {
-    // 1. Locate node and record initial bounding box
+    // 1. Locate node, click to select/focus it, wait for scale transition to stabilize, and record initial bounding box
     const node = page.getByText('WebSockets with a custom state protocol').first();
+    await node.click();
+    await page.waitForTimeout(300);
     const boxBefore = await node.boundingBox();
     expect(boxBefore).not.toBeNull();
 
