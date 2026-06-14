@@ -555,7 +555,9 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
       const target = event.target as HTMLElement;
 
       const isSelectionClick = 
+        target.closest('.react-flow__nodesselection-rect') || 
         target.closest('.react-flow__nodesselection') || 
+        target.closest('.react-flow__selection') || 
         target.closest('.react-flow__node');
 
       if (selectedNodes.length > 1 && isSelectionClick) {
