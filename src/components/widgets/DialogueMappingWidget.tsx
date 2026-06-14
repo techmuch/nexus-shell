@@ -35,15 +35,26 @@ import { DialogueMapperLibrary } from './DialogueMapperLibrary';
 import { ContextMenu, IContextMenuItem } from './ContextMenu';
 import { FlowControlToolbar } from './FlowControlToolbar';
 
-export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) => {
+export interface DialogueMappingWidgetProps {
+  node?: TabNode;
+  defaultDragMode?: 'pan' | 'select';
+}
+
+export const DialogueMappingWidget: React.FC<DialogueMappingWidgetProps> = ({ 
+  node,
+  defaultDragMode = 'select'
+}) => {
   return (
     <ReactFlowProvider>
-      <DialogueMappingCanvas node={node} />
+      <DialogueMappingCanvas node={node} defaultDragMode={defaultDragMode} />
     </ReactFlowProvider>
   );
 };
 
-const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
+const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({ 
+  node,
+  defaultDragMode = 'select'
+}) => {
   const nodeTypes = React.useMemo(() => ({
     ibisNode: IbisNode,
   }), []);
@@ -100,7 +111,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   // UI Panels state
   const [showLibrary, setShowLibrary] = useState(true);
   const [showInspector, setShowInspector] = useState(true);
-  const [dragMode, setDragMode] = useState<'pan' | 'select'>('pan');
+  const [dragMode, setDragMode] = useState<'pan' | 'select'>(defaultDragMode);
 
   // Scoped keydown listener for layout undos and Compendium shortcuts
   useEffect(() => {
