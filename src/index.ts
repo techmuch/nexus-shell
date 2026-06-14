@@ -17,6 +17,7 @@ export { MockupReviewWidget } from './components/widgets/MockupReviewWidget';
 export { useMockupReviewStore, type IMockupAnnotation, type IMockupVersion, type IMockupView } from './core/services/MockupReviewService';
 export { DialogueMappingWidget } from './components/widgets/DialogueMappingWidget';
 export { DialogueMappingShell } from './components/layout/DialogueMappingShell';
+export { ThemeSwitcher, type ThemeSwitcherProps } from './components/widgets/ThemeSwitcher';
 export { useDialogueMappingStore, type IDialogueNodeData, type IbisNodeType } from './core/services/DialogueMappingService';
 
 // Registries (Public Singleton Instances)

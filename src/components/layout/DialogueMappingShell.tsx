@@ -1,6 +1,7 @@
 import React from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import { DialogueMappingWidget } from '../widgets/DialogueMappingWidget';
+import { ThemeSwitcher } from '../widgets/ThemeSwitcher';
 import { useDialogueMappingStore } from '../../core/services/DialogueMappingService';
 import { useThemeStore } from '../../core/services/ThemeService';
 import { 
@@ -19,7 +20,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export const DialogueMappingShell: React.FC = () => {
-  const { theme, setTheme } = useThemeStore();
+  const { theme } = useThemeStore();
   const { nodes, edges, selectedNodeId } = useDialogueMappingStore();
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
@@ -54,22 +55,8 @@ export const DialogueMappingShell: React.FC = () => {
         {/* Right Menu Controls (Theme selector & Profile) */}
         <div className="flex items-center space-x-3 select-none">
           {/* Theme switcher */}
-          <div className="flex items-center border rounded-lg p-0.5 bg-secondary/80">
-            {['light', 'dark', 'gt'].map((t) => (
-              <button
-                key={t}
-                onClick={() => setTheme(t as any)}
-                className={cn(
-                  "px-2 py-1 text-[9px] font-extrabold uppercase rounded-md transition-all font-mono",
-                  theme === t 
-                    ? "bg-primary text-primary-foreground shadow" 
-                    : "text-muted-foreground hover:bg-accent"
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <ThemeSwitcher />
+
 
           <div className="w-7 h-7 rounded-full bg-secondary/80 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
             <User size={13} />
