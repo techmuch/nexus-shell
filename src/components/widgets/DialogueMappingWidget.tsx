@@ -552,13 +552,28 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   const onPaneContextMenu = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault();
-      setContextMenu({
-        x: event.clientX,
-        y: event.clientY,
-        targetType: 'pane',
-      });
+      const target = event.target as HTMLElement;
+
+      const isSelectionClick = 
+        target.closest('.react-flow__nodesselection') || 
+        target.closest('.react-flow__node');
+
+      if (selectedNodes.length > 1 && isSelectionClick) {
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          targetType: 'node',
+          id: selectedNodes[0].id,
+        });
+      } else {
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          targetType: 'pane',
+        });
+      }
     },
-    []
+    [selectedNodes]
   );
 
   const handleCopy = useCallback(() => {
