@@ -10,7 +10,8 @@ import ReactFlow, {
   Edge,
   SelectionMode,
   applyNodeChanges,
-  applyEdgeChanges
+  applyEdgeChanges,
+  MarkerType
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { TabNode } from 'flexlayout-react';
@@ -65,7 +66,6 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     updateNodeData,
     deleteNode,
     deleteEdge,
-    pasteNode,
     connectNodes,
     triggerAutoLayout,
     undoLayout,
@@ -92,7 +92,10 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     targetType: 'node' | 'edge' | 'pane';
     id?: string;
   } | null>(null);
-  const [copiedNode, setCopiedNode] = useState<Partial<IDialogueNodeData> | null>(null);
+  const [clipboard, setClipboard] = useState<{
+    nodes: Node<IDialogueNodeData>[];
+    edges: Edge[];
+  } | null>(null);
 
   // UI Panels state
   const [showLibrary, setShowLibrary] = useState(true);
@@ -510,6 +513,19 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
         preventNextContextMenuRef.current = false;
         return;
       }
+
+      // If the right-clicked node is not already selected, select it exclusively
+      const isSelected = nodes.find((n) => n.id === node.id)?.selected;
+      if (!isSelected) {
+        setNodes(
+          nodes.map((n) => ({
+            ...n,
+            selected: n.id === node.id,
+          }))
+        );
+        setSelectedNodeId(node.id);
+      }
+
       setContextMenu({
         x: event.clientX,
         y: event.clientY,
@@ -517,7 +533,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
         id: node.id,
       });
     },
-    []
+    [nodes, setNodes, setSelectedNodeId]
   );
 
   const onEdgeContextMenu = useCallback(
@@ -545,10 +561,142 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     []
   );
 
+  const handleCopy = useCallback(() => {
+    const selectedIds = new Set(selectedNodes.map((n) => n.id));
+    const internalEdges = edges.filter(
+      (e) => selectedIds.has(e.source) && selectedIds.has(e.target)
+    );
+    setClipboard({
+      nodes: selectedNodes,
+      edges: internalEdges,
+    });
+  }, [selectedNodes, edges]);
+
+  const handleCut = useCallback(() => {
+    const selectedIds = new Set(selectedNodes.map((n) => n.id));
+    const internalEdges = edges.filter(
+      (e) => selectedIds.has(e.source) && selectedIds.has(e.target)
+    );
+    setClipboard({
+      nodes: selectedNodes,
+      edges: internalEdges,
+    });
+    recordHistory();
+    setNodes(nodes.filter((n) => !selectedIds.has(n.id)));
+    setEdges(
+      edges.filter((e) => !selectedIds.has(e.source) && !selectedIds.has(e.target))
+    );
+    setSelectedNodeId(null);
+  }, [selectedNodes, edges, nodes, recordHistory, setNodes, setEdges, setSelectedNodeId]);
+
+  const handleDeleteSelection = useCallback(() => {
+    const selectedIds = new Set(selectedNodes.map((n) => n.id));
+    recordHistory();
+    setNodes(nodes.filter((n) => !selectedIds.has(n.id)));
+    setEdges(
+      edges.filter((e) => !selectedIds.has(e.source) && !selectedIds.has(e.target))
+    );
+    setSelectedNodeId(null);
+  }, [selectedNodes, edges, nodes, recordHistory, setNodes, setEdges, setSelectedNodeId]);
+
+  const handlePaste = useCallback(() => {
+    if (!clipboard || !contextMenu) return;
+
+    recordHistory();
+
+    const pastePos = reactFlowInstance.screenToFlowPosition({
+      x: contextMenu.x,
+      y: contextMenu.y,
+    });
+
+    const minX = Math.min(...clipboard.nodes.map((n) => n.position.x));
+    const minY = Math.min(...clipboard.nodes.map((n) => n.position.y));
+
+    const idMap: Record<string, string> = {};
+    const newNodes = clipboard.nodes.map((oldNode, idx) => {
+      const newId = `node-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
+      idMap[oldNode.id] = newId;
+
+      const dx = oldNode.position.x - minX;
+      const dy = oldNode.position.y - minY;
+
+      const pastedNode: Node<IDialogueNodeData> = {
+        ...oldNode,
+        id: newId,
+        position: {
+          x: pastePos.x + dx,
+          y: pastePos.y + dy,
+        },
+        selected: true,
+        data: {
+          ...oldNode.data,
+          id: newId,
+          title: oldNode.data.title,
+          autoEdit: false,
+        },
+      };
+      return pastedNode;
+    });
+
+    const newEdges: Edge[] = [];
+    clipboard.edges.forEach((oldEdge) => {
+      const newSource = idMap[oldEdge.source];
+      const newTarget = idMap[oldEdge.target];
+      if (newSource && newTarget) {
+        const strokeColor = '#64748b'; // Slate-500
+        newEdges.push({
+          ...oldEdge,
+          id: `edge-${newSource}-${newTarget}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          source: newSource,
+          target: newTarget,
+          style: { stroke: strokeColor, strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: strokeColor },
+        });
+      }
+    });
+
+    const updatedNodes = nodes.map((n) => ({ ...n, selected: false }));
+
+    setNodes([...updatedNodes, ...newNodes]);
+    setEdges([...edges, ...newEdges]);
+
+    if (newNodes.length === 1) {
+      setSelectedNodeId(newNodes[0].id);
+    } else {
+      setSelectedNodeId(null);
+    }
+  }, [clipboard, contextMenu, nodes, edges, reactFlowInstance, recordHistory, setNodes, setEdges, setSelectedNodeId]);
+
   const getNodeContextMenuItems = (): IContextMenuItem[] => {
     if (!contextMenu || !contextMenu.id) return [];
-    const nodeId = contextMenu.id;
-    const node = nodes.find((n) => n.id === nodeId);
+
+    if (selectedNodes.length > 1) {
+      return [
+        {
+          label: 'Cut Selection',
+          icon: <Scissors size={14} />,
+          onClick: () => {
+            handleCut();
+          },
+        },
+        {
+          label: 'Copy Selection',
+          icon: <Copy size={14} />,
+          onClick: () => {
+            handleCopy();
+          },
+        },
+        {
+          label: 'Delete Selection',
+          icon: <Trash2 size={14} className="text-destructive" />,
+          onClick: () => {
+            handleDeleteSelection();
+          },
+        },
+      ];
+    }
+
+    const node = nodes.find((n) => n.id === contextMenu.id);
     if (!node) return [];
 
     return [
@@ -556,22 +704,23 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
         label: 'Cut Node',
         icon: <Scissors size={14} />,
         onClick: () => {
-          setCopiedNode(node.data);
-          deleteNode(nodeId);
+          setClipboard({ nodes: [node], edges: [] });
+          recordHistory();
+          deleteNode(node.id);
         },
       },
       {
         label: 'Copy Node',
         icon: <Copy size={14} />,
         onClick: () => {
-          setCopiedNode(node.data);
+          setClipboard({ nodes: [node], edges: [] });
         },
       },
       {
         label: 'Delete Node',
         icon: <Trash2 size={14} className="text-destructive" />,
         onClick: () => {
-          deleteNode(nodeId);
+          deleteNode(node.id);
         },
       },
     ];
@@ -592,10 +741,10 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   };
 
   const getPaneContextMenuItems = (): IContextMenuItem[] => {
-    if (!copiedNode) {
+    if (!clipboard) {
       return [
         {
-          label: 'Paste Node (Empty)',
+          label: 'Paste (Empty)',
           icon: <ClipboardPaste size={14} />,
           onClick: () => {},
         },
@@ -603,16 +752,10 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     }
     return [
       {
-        label: 'Paste Node',
+        label: clipboard.nodes.length > 1 ? 'Paste Selection' : 'Paste Node',
         icon: <ClipboardPaste size={14} />,
         onClick: () => {
-          if (copiedNode.type) {
-            const position = reactFlowInstance.screenToFlowPosition({
-              x: contextMenu?.x || 0,
-              y: contextMenu?.y || 0,
-            });
-            pasteNode(copiedNode.type, position, copiedNode);
-          }
+          handlePaste();
         },
       },
     ];
