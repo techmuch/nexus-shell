@@ -16,6 +16,7 @@ export { DataGrid, type DataGridProps, type IDataGridColumn } from './components
 export { MockupReviewWidget } from './components/widgets/MockupReviewWidget';
 export { useMockupReviewStore, type IMockupAnnotation, type IMockupVersion, type IMockupView } from './core/services/MockupReviewService';
 export { DialogueMappingWidget } from './components/widgets/DialogueMappingWidget';
+export { DialogueMapperLibrary, type DialogueMapperLibraryProps } from './components/widgets/DialogueMapperLibrary';
 export { DialogueMappingShell } from './components/layout/DialogueMappingShell';
 export { ThemeSwitcher, type ThemeSwitcherProps } from './components/widgets/ThemeSwitcher';
 export { DialogueMapperTitle, type DialogueMapperTitleProps } from './components/widgets/DialogueMapperTitle';

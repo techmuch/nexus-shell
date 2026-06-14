@@ -87,6 +87,26 @@ test.describe('Dialogue Mapping Workstation', () => {
     await expect(page.locator('input[placeholder="Enter node title..."]')).toHaveValue('New Question');
   });
 
+  test('should add nodes when dragged from library', async ({ page }) => {
+    const source = page.getByRole('button', { name: 'Idea / Position' });
+    const target = page.locator('.react-flow');
+
+    // Drag the idea button to the canvas
+    await source.dragTo(target);
+
+    // Commit edit mode for the newly created node
+    await page.locator('.react-flow__node-ibisNode input').press('Enter');
+
+    // A new idea node should be visible on the canvas
+    await expect(page.getByText('New Idea')).toBeVisible();
+
+    // Select the new idea node
+    await page.getByText('New Idea').first().click();
+
+    // The inspector should show properties for this new node
+    await expect(page.locator('input[placeholder="Enter node title..."]')).toHaveValue('New Idea');
+  });
+
   test('should edit node titles in inspector sidebar', async ({ page }) => {
     // Click on the preloaded WebSockets Idea node to select it
     await page.getByText('WebSockets with a custom state protocol').first().click();
