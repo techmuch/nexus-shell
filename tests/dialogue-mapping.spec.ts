@@ -107,6 +107,56 @@ test.describe('Dialogue Mapping Workstation', () => {
     await expect(page.locator('input[placeholder="Enter node title..."]')).toHaveValue('New Idea');
   });
 
+  test('should support context menu copy, paste, and delete on nodes and edges', async ({ page }) => {
+    // 1. Right-click the preloaded Question node on the canvas
+    const questionNode = page.getByText('Which communication model should we use for real-time state sync?');
+    await questionNode.click({ button: 'right' });
+
+    // The custom context menu should appear
+    const copyOption = page.getByText('Copy Node');
+    await expect(copyOption).toBeVisible();
+
+    // Click "Copy Node"
+    await copyOption.click();
+
+    // 2. Right-click on the canvas pane
+    const canvas = page.locator('.react-flow');
+    await canvas.click({ button: 'right', position: { x: 200, y: 200 } });
+
+    // Paste option should be visible
+    const pasteOption = page.getByText('Paste Node');
+    await expect(pasteOption).toBeVisible();
+
+    // Click "Paste Node"
+    await pasteOption.click();
+
+    // The pasted node should now be visible on the canvas (there will be two identical question titles)
+    await expect(page.getByText('Which communication model should we use for real-time state sync?').nth(1)).toBeVisible();
+
+    // 3. Right-click the newly pasted node and delete it
+    const pastedNode = page.getByText('Which communication model should we use for real-time state sync?').nth(1);
+    await pastedNode.click({ button: 'right', force: true });
+
+    const deleteOption = page.getByText('Delete Node');
+    await expect(deleteOption).toBeVisible();
+    await deleteOption.click();
+
+    // The duplicated node should be removed
+    await expect(page.getByText('Which communication model should we use for real-time state sync?').nth(1)).not.toBeVisible();
+
+    // 4. Right-click on an edge connection path
+    const edge = page.locator('.react-flow__edge-path').first();
+    await edge.click({ button: 'right' });
+
+    // Delete Connection option should be visible
+    const deleteConnectionOption = page.getByText('Delete Connection');
+    await expect(deleteConnectionOption).toBeVisible();
+    await deleteConnectionOption.click();
+
+    // The edge path count should decrease from 8 to 7
+    await expect(page.locator('.react-flow__edge-path')).toHaveCount(7);
+  });
+
   test('should edit node titles in inspector sidebar', async ({ page }) => {
     // Click on the preloaded WebSockets Idea node to select it
     await page.getByText('WebSockets with a custom state protocol').first().click();

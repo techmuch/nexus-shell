@@ -28,6 +28,8 @@ interface DialogueMappingState {
   addNode: (type: IbisNodeType, position: { x: number; y: number }, parentNodeId?: string | null) => void;
   updateNodeData: (id: string, updates: Partial<IDialogueNodeData>) => void;
   deleteNode: (id: string) => void;
+  deleteEdge: (id: string) => void;
+  pasteNode: (type: IbisNodeType, position: { x: number; y: number }, initialData: Partial<IDialogueNodeData>) => void;
   connectNodes: (connection: Connection) => boolean;
   validateConnection: (sourceId: string, targetId: string) => { valid: boolean; reason?: string };
   triggerAutoLayout: (direction: 'vertical' | 'horizontal' | 'grid') => void;
@@ -349,6 +351,39 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
       nodes: state.nodes.filter((node) => node.id !== id),
       edges: state.edges.filter((edge) => edge.source !== id && edge.target !== id),
       selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
+    }));
+  },
+
+  deleteEdge: (id) => {
+    set((state) => ({
+      edges: state.edges.filter((edge) => edge.id !== id),
+    }));
+  },
+
+  pasteNode: (type, position, initialData) => {
+    const id = `node-${Date.now()}`;
+    const newNode: Node<IDialogueNodeData> = {
+      id,
+      type: 'ibisNode',
+      position,
+      width: 240,
+      height: 182,
+      data: {
+        id,
+        type,
+        title: initialData.title || `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+        description: initialData.description || '',
+        tags: initialData.tags || [],
+        author: initialData.author || 'user',
+        timestamp: new Date().toLocaleString(),
+        status: initialData.status,
+        url: initialData.url,
+        imageUrl: initialData.imageUrl,
+        autoEdit: false,
+      },
+    };
+    set((state) => ({
+      nodes: [...state.nodes, newNode],
     }));
   },
 

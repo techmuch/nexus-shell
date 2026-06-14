@@ -6,6 +6,8 @@ import ReactFlow, {
   Connection,
   useReactFlow,
   ReactFlowProvider,
+  Node,
+  Edge
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { TabNode } from 'flexlayout-react';
@@ -19,12 +21,16 @@ import {
   Sparkles, 
   AlertCircle,
   Tag,
-  Maximize2
+  Maximize2,
+  Copy,
+  ClipboardPaste,
+  Scissors
 } from 'lucide-react';
 
-import { useDialogueMappingStore, IbisNodeType } from '../../core/services/DialogueMappingService';
+import { useDialogueMappingStore, IbisNodeType, IDialogueNodeData } from '../../core/services/DialogueMappingService';
 import { IbisNode } from './dialogue-mapper/IbisNode';
 import { DialogueMapperLibrary } from './DialogueMapperLibrary';
+import { ContextMenu, IContextMenuItem } from './ContextMenu';
 
 export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) => {
   return (
@@ -56,6 +62,8 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     addNode,
     updateNodeData,
     deleteNode,
+    deleteEdge,
+    pasteNode,
     connectNodes,
     triggerAutoLayout,
     undoLayout,
@@ -74,6 +82,15 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   const [currentMousePos, setCurrentMousePos] = useState<{ clientX: number; clientY: number } | null>(null);
   const preventNextContextMenuRef = useRef(false);
   const wasRightPressedOnNodeRef = useRef(false);
+
+  // Context Menu and clipboard states
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    targetType: 'node' | 'edge' | 'pane';
+    id?: string;
+  } | null>(null);
+  const [copiedNode, setCopiedNode] = useState<Partial<IDialogueNodeData> | null>(null);
 
   // UI Panels state
   const [showLibrary, setShowLibrary] = useState(true);
@@ -394,10 +411,9 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     };
 
     const handleContextMenu = (e: MouseEvent) => {
-      if (wasRightPressedOnNodeRef.current || preventNextContextMenuRef.current) {
+      const target = e.target as HTMLElement;
+      if (domNode.contains(target)) {
         e.preventDefault();
-        preventNextContextMenuRef.current = false;
-        wasRightPressedOnNodeRef.current = false;
       }
     };
 
@@ -496,6 +512,121 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
     },
     [reactFlowInstance, addNode]
   );
+
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      event.preventDefault();
+      if (preventNextContextMenuRef.current) {
+        preventNextContextMenuRef.current = false;
+        return;
+      }
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        targetType: 'node',
+        id: node.id,
+      });
+    },
+    []
+  );
+
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        targetType: 'edge',
+        id: edge.id,
+      });
+    },
+    []
+  );
+
+  const onPaneContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        targetType: 'pane',
+      });
+    },
+    []
+  );
+
+  const getNodeContextMenuItems = (): IContextMenuItem[] => {
+    if (!contextMenu || !contextMenu.id) return [];
+    const nodeId = contextMenu.id;
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) return [];
+
+    return [
+      {
+        label: 'Cut Node',
+        icon: <Scissors size={14} />,
+        onClick: () => {
+          setCopiedNode(node.data);
+          deleteNode(nodeId);
+        },
+      },
+      {
+        label: 'Copy Node',
+        icon: <Copy size={14} />,
+        onClick: () => {
+          setCopiedNode(node.data);
+        },
+      },
+      {
+        label: 'Delete Node',
+        icon: <Trash2 size={14} className="text-destructive" />,
+        onClick: () => {
+          deleteNode(nodeId);
+        },
+      },
+    ];
+  };
+
+  const getEdgeContextMenuItems = (): IContextMenuItem[] => {
+    if (!contextMenu || !contextMenu.id) return [];
+    const edgeId = contextMenu.id;
+    return [
+      {
+        label: 'Delete Connection',
+        icon: <Trash2 size={14} className="text-destructive" />,
+        onClick: () => {
+          deleteEdge(edgeId);
+        },
+      },
+    ];
+  };
+
+  const getPaneContextMenuItems = (): IContextMenuItem[] => {
+    if (!copiedNode) {
+      return [
+        {
+          label: 'Paste Node (Empty)',
+          icon: <ClipboardPaste size={14} />,
+          onClick: () => {},
+        },
+      ];
+    }
+    return [
+      {
+        label: 'Paste Node',
+        icon: <ClipboardPaste size={14} />,
+        onClick: () => {
+          if (copiedNode.type) {
+            const position = reactFlowInstance.screenToFlowPosition({
+              x: contextMenu?.x || 0,
+              y: contextMenu?.y || 0,
+            });
+            pasteNode(copiedNode.type, position, copiedNode);
+          }
+        },
+      },
+    ];
+  };
 
   const handleAddTag = () => {
     if (!activeNode || !newTag.trim()) return;
@@ -628,6 +759,12 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
             onNodeDragStart={recordHistory}
             onDrop={onDrop}
             onDragOver={onDragOver}
+            onNodeContextMenu={onNodeContextMenu}
+            onEdgeContextMenu={onEdgeContextMenu}
+            onPaneContextMenu={onPaneContextMenu}
+            onPaneClick={() => setContextMenu(null)}
+            onNodeClick={() => setContextMenu(null)}
+            onEdgeClick={() => setContextMenu(null)}
             nodeTypes={nodeTypes}
             minZoom={0.1}
             maxZoom={2}
@@ -855,6 +992,21 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
             )}
           </div>
         </aside>
+      )}
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={
+            contextMenu.targetType === 'node'
+              ? getNodeContextMenuItems()
+              : contextMenu.targetType === 'edge'
+              ? getEdgeContextMenuItems()
+              : getPaneContextMenuItems()
+          }
+          onClose={() => setContextMenu(null)}
+        />
       )}
     </div>
   );
