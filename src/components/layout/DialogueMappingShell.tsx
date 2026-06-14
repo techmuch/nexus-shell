@@ -2,10 +2,10 @@ import React from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import { DialogueMappingWidget } from '../widgets/DialogueMappingWidget';
 import { ThemeSwitcher } from '../widgets/ThemeSwitcher';
+import { DialogueMapperTitle } from '../widgets/DialogueMapperTitle';
 import { useDialogueMappingStore } from '../../core/services/DialogueMappingService';
 import { useThemeStore } from '../../core/services/ThemeService';
 import { 
-  GitFork, 
   Settings, 
   User, 
   Circle,
@@ -33,15 +33,7 @@ export const DialogueMappingShell: React.FC = () => {
       
       {/* 1. Header Menubar */}
       <header role="banner" aria-label="Dialogue Mapper Menubar" className="h-12 border-b border-border bg-card/65 flex items-center justify-between px-4 shrink-0 select-none backdrop-blur-sm z-30">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-inner">
-            <GitFork size={16} />
-          </div>
-          <div>
-            <h1 className="text-xs font-black uppercase tracking-wider text-foreground font-mono">Nexus Dialogue Mapper</h1>
-            <p className="text-[9px] text-muted-foreground font-semibold">IBIS Decision & Argumentation Modeling</p>
-          </div>
-        </div>
+        <DialogueMapperTitle />
 
         {/* Action Menu Options */}
         <nav role="navigation" aria-label="Shell Menus" className="hidden md:flex items-center space-x-4 text-[11px] font-bold text-muted-foreground">
