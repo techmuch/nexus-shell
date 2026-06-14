@@ -7,18 +7,17 @@ import ReactFlow, {
   useReactFlow,
   ReactFlowProvider,
   Node,
-  Edge
+  Edge,
+  SelectionMode
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { TabNode } from 'flexlayout-react';
 
 import { 
-  Undo2, 
   Download, 
   Upload, 
   Trash2, 
   ChevronRight, 
-  Sparkles, 
   AlertCircle,
   Tag,
   Maximize2,
@@ -31,6 +30,7 @@ import { useDialogueMappingStore, IbisNodeType, IDialogueNodeData } from '../../
 import { IbisNode } from './dialogue-mapper/IbisNode';
 import { DialogueMapperLibrary } from './DialogueMapperLibrary';
 import { ContextMenu, IContextMenuItem } from './ContextMenu';
+import { FlowControlToolbar } from './FlowControlToolbar';
 
 export const DialogueMappingWidget: React.FC<{ node?: TabNode }> = ({ node }) => {
   return (
@@ -95,6 +95,7 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   // UI Panels state
   const [showLibrary, setShowLibrary] = useState(true);
   const [showInspector, setShowInspector] = useState(true);
+  const [dragMode, setDragMode] = useState<'pan' | 'select'>('pan');
 
   // Scoped keydown listener for layout undos and Compendium shortcuts
   useEffect(() => {
@@ -690,45 +691,15 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
       <main ref={containerRef} className="flex-1 flex flex-col min-w-0 h-full relative">
         {/* Canvas Toolbar Panel */}
         <div className="h-12 border-b border-border bg-card flex items-center justify-between px-4 shrink-0 select-none">
-          <div className="flex items-center space-x-1.5">
-            <span className="text-xs font-extrabold uppercase font-mono tracking-widest text-primary mr-3">Workspace</span>
-            
-            {/* Auto-Layout Presets */}
-            <div className="flex items-center border rounded p-0.5 bg-muted/20">
-              <button
-                onClick={() => triggerAutoLayout('vertical')}
-                className="px-2 py-1 text-[10px] font-bold hover:bg-accent rounded text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-                title="Arrange nodes in a vertical tree layout"
-              >
-                <Sparkles size={11} className="text-primary" /> Vertical Tree
-              </button>
-              <button
-                onClick={() => triggerAutoLayout('horizontal')}
-                className="px-2 py-1 text-[10px] font-bold hover:bg-accent rounded text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-                title="Arrange nodes in a left-to-right flow"
-              >
-                Horizontal Flow
-              </button>
-              <button
-                onClick={() => triggerAutoLayout('grid')}
-                className="px-2 py-1 text-[10px] font-bold hover:bg-accent rounded text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-                title="Organize all nodes in an aligned grid pattern"
-              >
-                Grid layout
-              </button>
-            </div>
-
-            {/* Layout Undo */}
-            {layoutHistory.length > 0 && (
-              <button
-                onClick={undoLayout}
-                className="p-1.5 rounded hover:bg-accent text-foreground border border-border/80 flex items-center gap-1 text-[10px] font-bold transition-colors"
-                title="Revert last node move or layout action"
-              >
-                <Undo2 size={12} /> Undo Layout
-              </button>
-            )}
-          </div>
+          <FlowControlToolbar
+            variant="header"
+            dragMode={dragMode}
+            onDragModeChange={setDragMode}
+            onLayoutChange={triggerAutoLayout}
+            onUndo={undoLayout}
+            canUndo={layoutHistory.length > 0}
+            title="Workspace"
+          />
 
           <div className="flex items-center space-x-2">
             <button
@@ -765,6 +736,9 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
             onPaneClick={() => setContextMenu(null)}
             onNodeClick={() => setContextMenu(null)}
             onEdgeClick={() => setContextMenu(null)}
+            panOnDrag={dragMode === 'pan'}
+            selectionOnDrag={dragMode === 'select'}
+            selectionMode={SelectionMode.Partial}
             nodeTypes={nodeTypes}
             minZoom={0.1}
             maxZoom={2}

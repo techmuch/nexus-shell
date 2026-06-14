@@ -13,14 +13,8 @@ import ReactFlow, {
   type Edge as FlowEdge 
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { RotateCcw } from 'lucide-react';
 import { useMockupReviewStore } from '../../../core/services/MockupReviewService';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { FlowControlToolbar } from '../FlowControlToolbar';
 
 interface WorkflowMapperProps {
   setActiveTab: (tab: 'workflow' | 'review' | 'implementation') => void;
@@ -238,64 +232,15 @@ export const WorkflowMapper: React.FC<WorkflowMapperProps> = ({ setActiveTab }) 
   return (
     <div className="flex-1 h-full w-full bg-card overflow-hidden relative">
       {/* Auto-Layout Controls & Drag Mode Toggles */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2 bg-card/90 backdrop-blur-sm p-1.5 rounded-lg border border-border shadow-lg select-none">
-        <span className="text-[10px] uppercase font-bold text-muted-foreground px-2 font-mono">Drag Mode:</span>
-        <button
-          onClick={() => setDragMode('pan')}
-          className={cn(
-            "px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 transition-colors border border-transparent",
-            dragMode === 'pan' ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent text-muted-foreground"
-          )}
-          title="Pan Canvas Mode"
-        >
-          Pan
-        </button>
-        <button
-          onClick={() => setDragMode('select')}
-          className={cn(
-            "px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 transition-colors border border-transparent",
-            dragMode === 'select' ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent text-muted-foreground"
-          )}
-          title="Box Selection Mode (Drag marquee to multi-select)"
-        >
-          Box Select
-        </button>
-
-        <div className="w-[1px] h-4 bg-border mx-1" />
-        <span className="text-[10px] uppercase font-bold text-muted-foreground px-1 font-mono">Layout:</span>
-        <button
-          onClick={() => runAutoLayout('horizontal')}
-          className="px-2 py-1 rounded hover:bg-accent text-foreground text-xs font-semibold border border-transparent flex items-center gap-1"
-          title="Horizontal Flow Layout"
-        >
-          Horizontal
-        </button>
-        <button
-          onClick={() => runAutoLayout('vertical')}
-          className="px-2 py-1 rounded hover:bg-accent text-foreground text-xs font-semibold border border-transparent flex items-center gap-1"
-          title="Vertical Flow Layout"
-        >
-          Vertical
-        </button>
-        <button
-          onClick={() => runAutoLayout('grid')}
-          className="px-2 py-1 rounded hover:bg-accent text-foreground text-xs font-semibold border border-transparent flex items-center gap-1"
-          title="Grid Dashboard Layout"
-        >
-          Grid
-        </button>
-        <button
-          onClick={handleUndoLayout}
-          disabled={layoutHistory.length === 0}
-          className={cn(
-            "p-1 rounded border border-transparent transition-colors",
-            layoutHistory.length === 0 ? "opacity-30 cursor-not-allowed text-muted-foreground" : "hover:bg-accent text-primary"
-          )}
-          title="Undo Last Node Move or Layout (Control+Z)"
-        >
-          <RotateCcw size={14} />
-        </button>
-      </div>
+      <FlowControlToolbar
+        variant="floating"
+        dragMode={dragMode}
+        onDragModeChange={setDragMode}
+        onLayoutChange={runAutoLayout}
+        onUndo={handleUndoLayout}
+        canUndo={layoutHistory.length > 0}
+        className="absolute top-4 right-4 z-10"
+      />
 
       <ReactFlow
         nodes={nodes}

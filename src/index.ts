@@ -17,6 +17,7 @@ export { MockupReviewWidget } from './components/widgets/MockupReviewWidget';
 export { useMockupReviewStore, type IMockupAnnotation, type IMockupVersion, type IMockupView } from './core/services/MockupReviewService';
 export { DialogueMappingWidget } from './components/widgets/DialogueMappingWidget';
 export { DialogueMapperLibrary, type DialogueMapperLibraryProps } from './components/widgets/DialogueMapperLibrary';
+export { FlowControlToolbar, type FlowControlToolbarProps } from './components/widgets/FlowControlToolbar';
 export { DialogueMappingShell } from './components/layout/DialogueMappingShell';
 export { ThemeSwitcher, type ThemeSwitcherProps } from './components/widgets/ThemeSwitcher';
 export { DialogueMapperTitle, type DialogueMapperTitleProps } from './components/widgets/DialogueMapperTitle';

@@ -125,3 +125,6 @@ playwright/.cache/
 # OS X
 .DS_Store
 .npmrc
+
+# Storybook
+storybook-static/
