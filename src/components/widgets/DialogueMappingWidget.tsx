@@ -324,6 +324,11 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
   const activeNode = selectedNodes.length === 1 ? selectedNodes[0] : null;
   const [newTag, setNewTag] = useState('');
 
+  const selectedNodesRef = useRef(selectedNodes);
+  useEffect(() => {
+    selectedNodesRef.current = selectedNodes;
+  }, [selectedNodes]);
+
   // Handle nodes/edges movements from canvas
   const onNodesChange = useCallback(
     (changes: any) => {
@@ -407,6 +412,22 @@ const DialogueMappingCanvas: React.FC<{ node?: TabNode }> = ({ node }) => {
       const target = e.target as HTMLElement;
       if (domNode.contains(target)) {
         e.preventDefault();
+
+        // Check if right clicked on node selection overlay wrapper
+        const selectionEl = 
+          target.closest('.react-flow__nodesselection-rect') || 
+          target.closest('.react-flow__nodesselection') || 
+          target.closest('.react-flow__selection');
+        const activeSelectedNodes = selectedNodesRef.current;
+
+        if (selectionEl && activeSelectedNodes.length > 1) {
+          setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            targetType: 'node',
+            id: activeSelectedNodes[0].id,
+          });
+        }
       }
     };
 
