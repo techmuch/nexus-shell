@@ -1,4 +1,4 @@
-import { Layout, TabNode, Actions, Action } from 'flexlayout-react'
+import { Layout, TabNode, Actions, Action, Model } from 'flexlayout-react'
 import 'flexlayout-react/style/light.css'
 import '../../styles/flexlayout-theme.css'
 import { MenuBar } from '../widgets/MenuBar'
@@ -22,9 +22,19 @@ interface ShellLayoutProps {
   menuConfig?: Record<string, IMenuItem[]>;
   statusBarConfig?: IStatusBarWidget[];
   rightMenuBarContent?: React.ReactNode;
+  title?: React.ReactNode;
+  layoutModel?: Model;
 }
 
-export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig, rightMenuBarContent }: ShellLayoutProps) => {
+export const ShellLayout = ({ 
+  panels, 
+  slashCommands, 
+  menuConfig, 
+  statusBarConfig, 
+  rightMenuBarContent,
+  title,
+  layoutModel
+}: ShellLayoutProps) => {
   const { model, setModel, isTabDirty, setTabDirty } = useLayoutStore()
   const { theme } = useThemeStore()
   const { setPanels } = useSidebarStore()
@@ -58,11 +68,12 @@ export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig
   const factory = (node: TabNode) => {
     try {
       const componentId = node.getComponent();
-
+      const config = node.getConfig() || {};
+ 
       // Check the Component Registry for dynamic components
       const RegisteredComponent = componentId ? componentRegistry.get(componentId) : undefined;
       if (RegisteredComponent) {
-        return <RegisteredComponent node={node} />;
+        return <RegisteredComponent node={node} {...config} />;
       }
 
       return <div className="p-4 text-sm">Unknown Component: {componentId}</div>;
@@ -90,16 +101,22 @@ export const ShellLayout = ({ panels, slashCommands, menuConfig, statusBarConfig
 
   return (
     <div className={`flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden theme-${theme}`}>
-      <MenuBar rightContent={rightMenuBarContent} />
+      <MenuBar title={title} rightContent={rightMenuBarContent} />
       <div className="flex-1 flex overflow-hidden">
         <ActivityBar />
         <SidebarPane />
         <div className="flex-1 flex flex-col min-w-0 bg-card">
            <div className="flex-1 relative h-full w-full">
               <Layout 
-                model={model} 
+                model={layoutModel || model} 
                 factory={factory} 
-                onModelChange={(model) => setModel(model)}
+                onModelChange={(m) => {
+                  if (layoutModel) {
+                    // If model is controlled/overridden by layoutModel prop, don't write to global store
+                  } else {
+                    setModel(m);
+                  }
+                }}
                 onAction={onAction}
               />
            </div>

@@ -4,6 +4,10 @@ import { initializeShell } from '../core/Boot';
 import { Home, User, Bell, Activity, Info, RefreshCcw } from 'lucide-react';
 import { UserProfile } from '../components/widgets/UserProfile';
 
+import { DialogueMapperTitle } from '../components/widgets/DialogueMapperTitle';
+import { ThemeSwitcher } from '../components/widgets/ThemeSwitcher';
+import { useLayoutStore, dialogueMappingLayoutJson, dialogueMapperMenus } from '../core/services/LayoutService';
+
 const meta: Meta<typeof ShellLayout> = {
   title: 'Layout/ShellLayout',
   component: ShellLayout,
@@ -163,5 +167,27 @@ export const CustomSlashCommands: Story = {
       },
     ],
   },
+};
+
+
+
+export const DialogueMappingWorkbench: Story = {
+  decorators: [
+    (Story) => {
+      initializeShell();
+      useLayoutStore.getState().setStorageKey('nexus-shell-dialogue-layout', dialogueMappingLayoutJson);
+      return <Story />;
+    },
+  ],
+  args: {
+    title: <DialogueMapperTitle className="mr-8 scale-[0.85] origin-left" />,
+    menuConfig: dialogueMapperMenus,
+    rightMenuBarContent: (
+      <div className="flex items-center space-x-3 select-none">
+        <ThemeSwitcher />
+        <UserProfile showName={false} />
+      </div>
+    )
+  }
 };
 

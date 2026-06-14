@@ -16,6 +16,8 @@ import { WelcomeTab } from '../components/widgets/WelcomeTab';
 import { DataGrid } from '../components/widgets/DataGrid';
 import { MockupReviewWidget } from '../components/widgets/MockupReviewWidget';
 import { DialogueMappingWidget } from '../components/widgets/DialogueMappingWidget';
+import { DialogueMapperLibraryWidget } from '../components/widgets/DialogueMapperLibraryWidget';
+import { ArgumentInspectorWidget } from '../components/widgets/ArgumentInspectorWidget';
 
 /**
  * Initializes the shell's core commands and menus.
@@ -26,6 +28,8 @@ export const initializeShell = async () => {
   componentRegistry.register('datagrid', DataGrid);
   componentRegistry.register('mockup-review', MockupReviewWidget);
   componentRegistry.register('dialogue-map', DialogueMappingWidget);
+  componentRegistry.register('dialogue-library', DialogueMapperLibraryWidget);
+  componentRegistry.register('argument-inspector', ArgumentInspectorWidget);
   // Register Core Status Bar Widgets
   useStatusBarStore.getState().setWidgets([
     {

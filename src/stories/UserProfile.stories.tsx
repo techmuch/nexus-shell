@@ -4,6 +4,13 @@ import { UserProfile } from '../components/widgets/UserProfile';
 const meta: Meta<typeof UserProfile> = {
   title: 'Widgets/UserProfile',
   component: UserProfile,
+  argTypes: {
+    showName: { control: 'boolean' },
+    name: { control: 'text' },
+    role: { control: 'text' },
+    email: { control: 'text' },
+    avatarUrl: { control: 'text' },
+  },
   parameters: {
     layout: 'centered',
   },
@@ -18,7 +25,7 @@ export const Default: Story = {
     role: 'Principal Engineer',
   },
   render: (args) => (
-    <div className="theme-light p-4 border rounded bg-background">
+    <div className="theme-light p-4 pb-32 w-80 border rounded bg-background">
       <UserProfile {...args} />
     </div>
   )
@@ -31,7 +38,7 @@ export const WithAvatar: Story = {
     avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
   },
   render: (args) => (
-    <div className="theme-light p-4 border rounded bg-background">
+    <div className="theme-light p-4 pb-32 w-80 border rounded bg-background">
       <UserProfile {...args} />
     </div>
   )
@@ -44,7 +51,7 @@ export const Compact: Story = {
     avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
   },
   render: (args) => (
-    <div className="theme-light p-4 border rounded bg-background">
+    <div className="theme-light p-4 pb-32 w-20 border rounded bg-background flex justify-center">
       <UserProfile {...args} />
     </div>
   )
@@ -56,8 +63,17 @@ export const DarkTheme: Story = {
     role: 'Admin',
   },
   render: (args) => (
-    <div className="theme-dark p-4 border rounded bg-slate-900 text-slate-100">
+    <div className="theme-dark p-4 pb-32 w-80 border rounded bg-slate-900 text-slate-100">
       <UserProfile {...args} />
+    </div>
+  )
+};
+
+export const FromStore: Story = {
+  args: {},
+  render: () => (
+    <div className="theme-light p-4 pb-32 w-80 border rounded bg-background">
+      <UserProfile />
     </div>
   )
 };

@@ -4,10 +4,11 @@ import { commandRegistry } from '../../core/registry/CommandRegistry';
 import { ChevronRight } from 'lucide-react';
 
 interface MenuBarProps {
+  title?: React.ReactNode;
   rightContent?: React.ReactNode;
 }
 
-export const MenuBar = ({ rightContent }: MenuBarProps) => {
+export const MenuBar = ({ title, rightContent }: MenuBarProps) => {
   const [menus, setMenus] = useState<Record<string, IMenuItem[]>>(menuRegistry.getAllMenus());
 
   useEffect(() => {
@@ -68,9 +69,19 @@ export const MenuBar = ({ rightContent }: MenuBarProps) => {
   };
 
   return (
-    <header role="banner" aria-label="Application Header" className="h-8 bg-muted border-b flex items-center justify-between px-4 select-none shrink-0">
+    <header 
+      role="banner" 
+      aria-label="Application Header" 
+      className={`bg-muted border-b flex items-center justify-between px-4 select-none shrink-0 transition-all ${
+        title ? "h-12 bg-card/65 backdrop-blur-sm" : "h-8"
+      }`}
+    >
       <div className="flex items-center">
-        <div className="font-semibold mr-6 text-sm">Nexus Shell</div>
+        {title !== undefined ? (
+          title
+        ) : (
+          <div className="font-semibold mr-6 text-sm">Nexus Shell</div>
+        )}
         <nav role="navigation" aria-label="Main Menu" className="flex space-x-1 text-sm">
           {Object.entries(menus).map(([name, items]) => (
             <div key={name} className="relative group">

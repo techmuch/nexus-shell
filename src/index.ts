@@ -16,6 +16,8 @@ export { DataGrid, type DataGridProps, type IDataGridColumn } from './components
 export { MockupReviewWidget } from './components/widgets/MockupReviewWidget';
 export { useMockupReviewStore, type IMockupAnnotation, type IMockupVersion, type IMockupView } from './core/services/MockupReviewService';
 export { DialogueMappingWidget } from './components/widgets/DialogueMappingWidget';
+export { DialogueMapperLibraryWidget } from './components/widgets/DialogueMapperLibraryWidget';
+export { ArgumentInspectorWidget } from './components/widgets/ArgumentInspectorWidget';
 export { DialogueMapperLibrary, type DialogueMapperLibraryProps } from './components/widgets/DialogueMapperLibrary';
 export { FlowControlToolbar, type FlowControlToolbarProps } from './components/widgets/FlowControlToolbar';
 export { DialogueMappingShell } from './components/layout/DialogueMappingShell';
@@ -39,6 +41,7 @@ export { useTerminalStore } from './core/services/TerminalService';
 export { useChatStore, type ISlashCommand } from './core/services/ChatService';
 export { useStatusBarStore, type IStatusBarWidget } from './core/services/StatusBarService';
 export { useKeyboardShortcuts } from './core/services/KeyboardService';
+export { useUserProfileStore, type UserProfileState } from './core/services/UserProfileService';
 
 // Styles (Import this in your app to get the theme/base styles)
 import './index.css';

@@ -7,11 +7,11 @@ import { useDialogueMappingStore } from '../../core/services/DialogueMappingServ
 import { useThemeStore } from '../../core/services/ThemeService';
 import { 
   Settings, 
-  User, 
   Circle,
   Database,
   Grid
 } from 'lucide-react';
+import { UserProfile } from '../widgets/UserProfile';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -50,9 +50,7 @@ export const DialogueMappingShell: React.FC = () => {
           <ThemeSwitcher />
 
 
-          <div className="w-7 h-7 rounded-full bg-secondary/80 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-            <User size={13} />
-          </div>
+          <UserProfile showName={false} />
         </div>
       </header>
 

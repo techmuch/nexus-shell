@@ -38,22 +38,33 @@ import { FlowControlToolbar } from './FlowControlToolbar';
 export interface DialogueMappingWidgetProps {
   node?: TabNode;
   defaultDragMode?: 'pan' | 'select';
+  hideInternalLibrary?: boolean;
+  hideInternalInspector?: boolean;
 }
 
 export const DialogueMappingWidget: React.FC<DialogueMappingWidgetProps> = ({ 
   node,
-  defaultDragMode = 'select'
+  defaultDragMode = 'select',
+  hideInternalLibrary = false,
+  hideInternalInspector = false
 }) => {
   return (
     <ReactFlowProvider>
-      <DialogueMappingCanvas node={node} defaultDragMode={defaultDragMode} />
+      <DialogueMappingCanvas 
+        node={node} 
+        defaultDragMode={defaultDragMode} 
+        hideInternalLibrary={hideInternalLibrary}
+        hideInternalInspector={hideInternalInspector}
+      />
     </ReactFlowProvider>
   );
 };
 
 const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({ 
   node,
-  defaultDragMode = 'select'
+  defaultDragMode = 'select',
+  hideInternalLibrary = false,
+  hideInternalInspector = false
 }) => {
   const nodeTypes = React.useMemo(() => ({
     ibisNode: IbisNode,
@@ -109,8 +120,8 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
   } | null>(null);
 
   // UI Panels state
-  const [showLibrary, setShowLibrary] = useState(true);
-  const [showInspector, setShowInspector] = useState(true);
+  const [showLibrary, setShowLibrary] = useState(!hideInternalLibrary);
+  const [showInspector, setShowInspector] = useState(!hideInternalInspector);
   const [dragMode, setDragMode] = useState<'pan' | 'select'>(defaultDragMode);
 
   // Scoped keydown listener for layout undos and Compendium shortcuts
@@ -849,7 +860,7 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
       )}
 
       {/* Left Sidebar: Node Library / Palette */}
-      {showLibrary && (
+      {!hideInternalLibrary && showLibrary && (
         <DialogueMapperLibrary
           onAddNode={handleAddNodeFromLibrary}
           onClose={() => setShowLibrary(false)}
@@ -858,7 +869,7 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
       )}
 
       {/* Hidden Sidebar Restorers */}
-      {!showLibrary && (
+      {!hideInternalLibrary && !showLibrary && (
         <button
           onClick={() => setShowLibrary(true)}
           className="absolute left-2 top-16 z-20 p-1.5 rounded-lg bg-card border border-border shadow-lg text-foreground hover:bg-accent"
@@ -980,7 +991,7 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
       </main>
 
       {/* Right Sidebar Restorer */}
-      {!showInspector && (
+      {!hideInternalInspector && !showInspector && (
         <button
           onClick={() => setShowInspector(true)}
           className="absolute right-2 top-16 z-20 p-1.5 rounded-lg bg-card border border-border shadow-lg text-foreground hover:bg-accent animate-pulse"
@@ -991,7 +1002,7 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
       )}
 
       {/* Right Sidebar: Node Metadata Inspector */}
-      {showInspector && (
+      {!hideInternalInspector && showInspector && (
         <aside className="w-80 border-l border-border bg-card/45 flex flex-col shrink-0 overflow-hidden relative z-10 animate-slide-in-right">
           <div className="p-4 border-b border-border bg-muted/15 flex justify-between items-center shrink-0">
             <span className="text-xs font-extrabold uppercase tracking-wider text-primary font-mono">Argument Inspector</span>
