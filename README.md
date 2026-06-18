@@ -1,16 +1,63 @@
-# Nexus-Shell Framework
+# 🚀 Nexus Shell Framework
 
-Nexus-Shell is a professional-grade, library-first frontend framework for building "Workbench" style applications (like VS Code or JupyterLab). Built with **React 19**, **TypeScript**, and **FlexLayout**, it provides a modular foundation for complex, multi-panel web tools.
+[![npm version](https://img.shields.io/npm/v/nexus-shell.svg)](https://www.npmjs.com/package/nexus-shell)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build & Deploy Storybook](https://github.com/techmuch/nexus-shell/actions/workflows/deploy-storybook.yml/badge.svg)](https://github.com/techmuch/nexus-shell/actions/workflows/deploy-storybook.yml)
+[![Live Documentation](https://img.shields.io/badge/docs-live--pages-blueviolet)](https://techmuch.github.io/nexus-shell/?path=/docs/introduction--docs)
+
+Nexus Shell is a professional-grade, library-first React 19 / TypeScript frontend framework for building multi-panel **"Workbench"** style applications (resembling VS Code, JupyterLab, or specialized dashboard workstations). 
+
+Instead of building a rigid layout from scratch, Nexus Shell provides a **fully decoupled, registry-driven workspace engine** powered by `flexlayout-react`, allowing tabs, menus, hotkeys, status bars, and custom sidebars to be dynamically declared and contextually composed.
+
+---
+
+## 📖 Live Interactive Documentation
+Explore the live documentation, interactive component playground, prop definitions, and layout compositions at:
+👉 **[Live Storybook Documentation Site](https://techmuch.github.io/nexus-shell/?path=/docs/introduction--docs)**
+
+---
+
+## 🎨 Visual Showcase & Capabilities
+
+### 1. Tabbed Dialogue Mapping Workbench & Workspace
+A flexible workstation that integrates Compendium-style visual argumentation mapping (React Flow canvas) with external node libraries and logic inspectors as drag-and-drop tabs.
+![Dialogue Mapping Workbench (Dark Theme)](docs/images/dialogue-mapper-library-dark.png)
+*(Above: Dialogue Mapping workspace in Dark Theme showing interactive nodes, custom icons, and Straight connectors)*
+
+### 2. Georgia Tech Theme & Theme-Adaptivity
+Fully responsive styling driven by HSL CSS variables, conforming to WCAG contrast standards.
+![Dialogue Mapping Workbench (GT Theme)](docs/images/dialogue-mapper-library-light.png)
+*(Above: Light Theme workspace showing responsive menus, active tab headers, and the account widget)*
+
+### 3. Workflow Reviews & Mockup Canvas Overlay
+Draw overlay annotations directly onto child mockups and generate implementation plans dynamically using AI nodes.
+![Mockup Reviewer Layout](docs/images/mockup-reviewer-layout.png)
+*(Above: A complex Mockup Reviewer workstation running canvas drawing tools and terminal consoles side-by-side)*
+
+### 4. Interactive Storybook Workspace
+Reorganized story taxonomy allowing you to build, test, and preview widgets in isolation or combined.
+![Storybook Taxonomy](docs/images/media__storybook_layout.png)
+
+---
+
+## 🤔 Why Choose Nexus Shell?
+
+| If you are building... | Nexus Shell provides... |
+| :--- | :--- |
+| **IDE/Workbench Web Apps** | A complete drag-and-drop tab layout engine with splits, resizing, and sidebars (`flexlayout-react` integration). |
+| **Modular Dashboard Interfaces** | Inversion of Control registries (`componentRegistry`, `commandRegistry`, `menuRegistry`) so features register themselves dynamically. |
+| **Complex Geospatial/Tactical Maps** | High-performance maps (`WargameMap`) combining `react-map-gl`, `deck.gl`, and `h3-js` for hexagonal grid overlays and MIL-STD military icons. |
+| **AI Orchestration Workbenches** | State-driven workflow templates, agent nodes, and drawing canvas mockups built with React Flow. |
+
+---
 
 ## ✨ Key Features
 
-- **Advanced Tab Docking:** Complete drag-and-drop window management with splits, tabs, and sidebars.
-- **Modular Registry System:** Decouple commands, menus, and plugins from the core UI.
-- **Persistence:** Automatic workspace restoration via `localStorage`.
-- **Command Palette:** `Ctrl+Shift+P` searchable command interface.
-- **Theming:** First-class support for Light, Dark, and custom themes (includes a Georgia Tech theme), optimized for high accessibility and reduced eye strain.
-- **Accessible Components:** Input fields and buttons follow strict UI/UX guidelines for contrast, sizing, and focus states.
-- **Library Ready:** ESM and UMD bundles with full TypeScript type definitions.
+- **Advanced Docking Engine**: Full drag-and-drop tab management (dock, split, float, collapse) out-of-the-box.
+- **Inversion of Control (IoC) Registries**: Add new menu items, hotkeys, or tab contents programmatically from anywhere in your code without touching the layout container.
+- **Zustand State Persistence**: Automatically restores the user's workspace structure, theme preference, and pane configurations across page reloads.
+- **Accessibility & Contrast First**: Built to look beautiful and professional under three default themes (`theme-light`, `theme-dark`, and `theme-gt` for Georgia Tech fans) while satisfying AA/AAA color contrast ratios.
+- **Pre-Integrated Widgets**: A library of reusable layout widgets including terminal consoles, chat panels, tree file explorers, virtualized grids, and hex maps.
 
 ---
 
@@ -24,222 +71,74 @@ npm install nexus-shell
 
 ### 2. Basic Setup
 
-In your main entry point (e.g., `App.tsx`):
+In your main entry point (e.g., `main.tsx` or `App.tsx`):
 
 ```tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { ShellLayout, initializeShell } from 'nexus-shell';
-import 'nexus-shell/style.css';
+import 'nexus-shell/style.css'; // Essential styling properties
 
-// Initialize core shell services
+// Initialize core registries and default welcome workspace
 initializeShell();
 
 export default function App() {
   return (
-    <div className="h-screen w-screen">
-      <ShellLayout />
+    <div className="h-screen w-screen bg-background text-foreground">
+      <ShellLayout 
+        title={<div className="font-bold text-lg">My Custom IDE</div>}
+      />
     </div>
   );
 }
+
+ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 ```
 
 ---
 
-## 🏗 Core Concepts
+## 🏗 Registry-Driven Customization
 
-### 1. Registries (The Brains)
-Nexus-Shell uses registries to manage global state without component coupling.
+Nexus Shell lets you register custom features dynamically:
 
-- **`commandRegistry`**: Register global actions with IDs, labels, and optional keybindings.
-- **`menuRegistry`**: Map commands to the top Menu Bar.
-- **`pluginRegistry`**: Manage the lifecycle (`activate`/`deactivate`) of modular features.
-
-### 2. Commands & Menus
+### Register a Keyboard Shortcut (Command)
 ```typescript
-import { commandRegistry, menuRegistry } from 'nexus-shell';
+import { commandRegistry } from 'nexus-shell';
 
-// Register a command
 commandRegistry.registerCommand({
   id: 'my-app.hello',
   label: 'Say Hello',
   keybinding: 'Control+L',
-  execute: () => alert('Hello World!'),
-});
-
-// Add it to the Help menu
-menuRegistry.registerMenu('Help', {
-  id: 'help.hello',
-  label: 'Say Hello',
-  commandId: 'my-app.hello',
+  execute: () => alert('Hello from Nexus Shell!'),
 });
 ```
 
-### 3. Layout Management
-The layout is powered by `flexlayout-react`. You can dynamically add tabs from anywhere in your app:
-
+### Register a Tab Component
 ```typescript
-import { useLayoutStore } from 'nexus-shell';
+import { componentRegistry } from 'nexus-shell';
 
-const addMyTab = () => {
-  useLayoutStore.getState().addTab('my-component', 'My Tab Title');
-};
-```
-
----
-
-## 🛠 Step-by-Step: Creating a Custom Application
-
-Follow these steps to build a feature-rich application using Nexus-Shell:
-
-### Step 1: Initialize the Shell
-Call `initializeShell()` before your app renders. This sets up the default "Welcome" tab, core menus, and global keyboard listeners.
-
-### Step 2: Define your Components
-Create React components that you want to appear as tabs. You must register these in the `factory` of the `ShellLayout` or provide a custom factory.
-
-### Step 3: Register Commands and Menus
-Define the actions your users can take. By using `commandRegistry`, your actions automatically show up in the **Command Palette** (`Ctrl+Shift+P`) and can be triggered by **Keyboard Shortcuts**.
-
-### Step 4: Implement Plugins
-For larger apps, encapsulate features into Plugins:
-```typescript
-import { IPlugin, commandRegistry } from 'nexus-shell';
-
-export const MyFeaturePlugin: IPlugin = {
-  id: 'my-feature',
-  name: 'My Feature',
-  activate: () => {
-    // Register commands, menus, and sidebars here
-  },
-  deactivate: () => {
-    // Cleanup
-  }
-};
-```
-
-### Step 5: Choose a Theme
-Users can switch themes in the Settings sidebar. You can also set the theme programmatically:
-```typescript
-import { useThemeStore } from 'nexus-shell';
-
-useThemeStore.getState().setTheme('gt'); // Go Jackets!
-```
-
----
-
-## 🎨 Customization API
-
-Nexus-Shell is highly configurable via props on the `ShellLayout` component. This allows you to repurpose the workbench for different application needs.
-
-### 1. Menu Bar Configuration (`menuConfig`)
-Define hierarchical menus with nested submenus and commands.
-```tsx
-const myMenus = {
-  'File': [
-    { id: 'new', label: 'New File', commandId: 'nexus.new-tab' },
-    { id: 'recent', label: 'Open Recent', submenu: [
-      { id: 'r1', label: 'Project Alpha' },
-      { id: 'r2', label: 'Project Beta' }
-    ]}
-  ]
-};
-```
-
-### 2. Status Bar Widgets (`statusBarConfig`)
-Add info widgets to the bottom bar with specific alignments.
-```tsx
-const myStatusBar = [
-  { id: 'info', label: 'System OK', alignment: 'left', icon: Activity },
-  { id: 'v', label: 'v1.0.0', alignment: 'center' },
-  { id: 'user', label: 'Admin', alignment: 'right', onClick: () => alert('Admin Clicked') }
-];
-```
-
-### 3. Sidebar Panels (`panels`)
-Inject custom tools into the left Activity Bar.
-```tsx
-const myPanels = [
-  { id: 'home', label: 'Home', icon: Home, component: MyHomeComponent },
-  { id: 'db', label: 'Database', icon: Database, component: <DbExplorer /> }
-];
-```
-
-### 4. Chat Slash Commands (`slashCommands`)
-Extend the chat interface with custom functional commands.
-```tsx
-const myChatCommands = [
-  { command: 'ping', description: 'Test latency', execute: () => console.log('Pong!') },
-  { command: 'clear', description: 'Reset chat', execute: (args) => resetLogic() }
-];
-```
-
-### 5. Search Integration (`SearchWidget`)
-A reusable component for implementing project-wide search.
-```tsx
-<SearchWidget 
-  placeholder="Filter objects..."
-  onSearch={(query) => doFilter(query)}
-  results={filteredResults}
-  suggestions={['recent-1.txt', 'recent-2.txt']}
-  onSelect={(result) => openItem(result)}
-  loading={isSearching}
-/>
-```
-
-### 6. AI Agent Management (`AgentManager`)
-A visually rich component for defining and orchestrating LLM agents using React Flow.
-```tsx
-<AgentManager 
-  agents={agentList}
-  onFetchAgents={fetchAgents}
-  onSaveAgent={saveAgent}
-  onDeleteAgent={deleteAgent}
-  title="My Agents"
-  subtitle="Manage and visually build your custom AI workflows"
-/>
-```
-
-### 7. Geospatial & Wargaming Analytics (`WargameMap`)
-A high-performance mapping component combining `react-map-gl`, `deck.gl`, and `milsymbol` for interactive wargaming, modeling, and simulation. Features H3 hex grids, attack vectors, and dynamically generated NATO military icons.
-```tsx
-<WargameMap 
-  units={mockUnits}
-  attacks={mockAttacks}
-  terrainHexes={terrainHexes}
-  mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-/>
-```
-
-**Usage Example:**
-```tsx
-<ShellLayout 
-  menuConfig={myMenus}
-  statusBarConfig={myStatusBar}
-  panels={myPanels}
-  slashCommands={myChatCommands}
-/>
-```
-
----
-
-## 📂 Project Structure (Library)
-
-```text
-/dist               <-- Compiled library artifacts (ESM, UMD, CSS, Types)
-/src
-  /components       <-- UI Components (Layout, Widgets)
-  /core
-    /registry       <-- Registry logic (Commands, Menus, Plugins)
-    /services       <-- State Management (Zustand)
-  /index.ts         <-- Public API Entry Point
+componentRegistry.register('my-custom-widget', () => (
+  <div className="p-4 bg-card text-card-foreground">
+    <h2>Dynamic Custom Tab</h2>
+    <p>This tab can be docked anywhere in the workspace!</p>
+  </div>
+));
 ```
 
 ---
 
 ## 🧪 Development & Testing
 
-- **Run Dev App:** `npm run dev`
-- **Build Library:** `npm run build`
-- **Run Tests:** `npx playwright test`
+```bash
+# Start Vite App & local Storybook server
+npm run dev:all
+
+# Build package artifacts (ESM, UMD, CSS, and Types)
+npm run build
+
+# Run Playwright E2E and Visual Regression tests
+npx playwright test
+```
 
 ---
 
