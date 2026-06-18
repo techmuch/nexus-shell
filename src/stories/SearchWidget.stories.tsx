@@ -4,7 +4,7 @@ import { File, Folder, Code, Terminal, Globe, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 const meta: Meta<typeof SearchWidget> = {
-  title: 'Widgets/SearchWidget',
+  title: 'Widgets/General/SearchWidget',
   component: SearchWidget,
   parameters: {
     layout: 'centered',

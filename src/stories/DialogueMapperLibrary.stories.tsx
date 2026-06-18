@@ -3,7 +3,7 @@ import { DialogueMapperLibrary } from '../components/widgets/DialogueMapperLibra
 import { useThemeStore } from '../core/services/ThemeService';
 
 const meta: Meta<typeof DialogueMapperLibrary> = {
-  title: 'Widgets/DialogueMapperLibrary',
+  title: 'Widgets/DialogueMapper/DialogueMapperLibrary',
   component: DialogueMapperLibrary,
   parameters: {
     layout: 'centered',

@@ -5,7 +5,7 @@ import { Home } from 'lucide-react';
 import { useEffect } from 'react';
 
 const meta: Meta<typeof SidebarPane> = {
-  title: 'Widgets/SidebarPane',
+  title: 'Widgets/Shell/SidebarPane',
   component: SidebarPane,
   parameters: {
     layout: 'centered',

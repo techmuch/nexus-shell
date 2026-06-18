@@ -3,7 +3,7 @@ import { DialogueMapperTitle } from '../components/widgets/DialogueMapperTitle';
 import { Network, Database } from 'lucide-react';
 
 const meta: Meta<typeof DialogueMapperTitle> = {
-  title: 'Widgets/DialogueMapperTitle',
+  title: 'Widgets/DialogueMapper/DialogueMapperTitle',
   component: DialogueMapperTitle,
   parameters: {
     layout: 'centered',

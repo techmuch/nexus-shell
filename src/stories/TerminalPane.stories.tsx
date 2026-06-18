@@ -4,7 +4,7 @@ import { useTerminalStore } from '../core/services/TerminalService';
 import { useEffect } from 'react';
 
 const meta: Meta<typeof TerminalPane> = {
-  title: 'Widgets/TerminalPane',
+  title: 'Widgets/Shell/TerminalPane',
   component: TerminalPane,
   parameters: {
     layout: 'centered',

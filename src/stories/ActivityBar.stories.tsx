@@ -4,7 +4,7 @@ import { useSidebarStore } from '../core/services/SidebarService';
 import { Home, User, Bell } from 'lucide-react';
 
 const meta: Meta<typeof ActivityBar> = {
-  title: 'Widgets/ActivityBar',
+  title: 'Widgets/Shell/ActivityBar',
   component: ActivityBar,
   parameters: {
     layout: 'centered',

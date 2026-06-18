@@ -4,7 +4,7 @@ import { useStatusBarStore } from '../core/services/StatusBarService';
 import { Info, Check } from 'lucide-react';
 
 const meta: Meta<typeof StatusBar> = {
-  title: 'Widgets/StatusBar',
+  title: 'Widgets/Shell/StatusBar',
   component: StatusBar,
   parameters: {
     layout: 'fullscreen',

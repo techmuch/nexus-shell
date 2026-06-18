@@ -1,0 +1,93 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Introduction" />
+
+# 🚀 Nexus Shell Component Library & Workbench
+
+Welcome to the documentation site for **Nexus Shell**, a professional-grade React/TypeScript design system and composite workstation library. 
+
+This library is built with a **decoupled, registry-driven architecture** (Inversion of Control) and features theme-adaptive styling driven entirely by CSS custom properties and Tailwind CSS.
+
+---
+
+## 📦 Installation & Setup
+
+Install the package via npm:
+```bash
+npm install nexus-shell
+```
+
+Import the global design system styles in your entry file (e.g., `main.tsx` or `index.ts`):
+```typescript
+import 'nexus-shell/style.css';
+```
+
+---
+
+## 🎨 Color Ontologies & Theming
+
+Nexus Shell comes out of the box with three main semantic themes:
+*   **Light Theme** (`theme-light`)
+*   **Dark Theme** (`theme-dark`)
+*   **Georgia Tech Theme** (`theme-gt`)
+
+To activate a theme, wrap your workspace (or document root) in the corresponding class name:
+```html
+<div className="theme-dark bg-background text-foreground">
+  <!-- Content here -->
+</div>
+```
+
+---
+
+## 🛠 Project Structure Taxonomy
+
+Our Storybook documentation is organized into three main namespaces to help you find what you need:
+
+### 1. `Compositions/`
+These are full layouts that combine multiple widgets into complete workspaces.
+*   **ShellLayout**: The master IDE/workbench wrapper containing menu bars, terminals, chat panels, and customizable FlexLayout tabs.
+*   **DialogueMappingShell**: A complete standalone workstation page designed for IBIS argumentation modeling.
+
+### 2. `Widgets/Shell/`
+Core infrastructure controls that frame the IDE/workbench layout.
+*   **MenuBar**: The top-header links and menus.
+*   **StatusBar**: The bottom panel displaying connection statuses, git branches, and action toggles.
+*   **ActivityBar & SidebarPane**: Left expandable panel indicators.
+*   **UserProfile**: Decoupled account utility widget with local image uploads and inline edits.
+
+### 3. `Widgets/DialogueMapper/`
+The specialized widget ecosystem for IBIS decision modeling.
+*   **DialogueMappingWidget**: The React Flow graph canvas.
+*   **DialogueMapperLibrary**: The palette containing the IBIS node templates (Questions, Ideas, Pro/Con arguments).
+*   **ArgumentInspector**: The side panel for viewing and modifying node logical states.
+
+### 4. `Widgets/General/`
+Other generic, reusable UI widgets.
+*   **DataGrid**: A premium virtualization table.
+*   **TreeWidget**: Explorer directory files lists.
+*   **WargameMap**: A hexagonal grid gaming canvas.
+
+---
+
+## 🚀 Getting Started with Compositions
+
+To instantiate a complete workbench workspace with custom tabs and menus, import the `ShellLayout` component:
+
+```tsx
+import { ShellLayout, UserProfile, ThemeSwitcher } from 'nexus-shell';
+
+function App() {
+  return (
+    <ShellLayout
+      title={<div className="font-bold text-sm">Custom Workspace</div>}
+      rightMenuBarContent={
+        <div className="flex items-center space-x-3">
+          <ThemeSwitcher />
+          <UserProfile showName={false} />
+        </div>
+      }
+    />
+  );
+}
+```

@@ -5,7 +5,7 @@ import { useChatStore } from '../core/services/ChatService';
 import { useEffect } from 'react';
 
 const meta: Meta<typeof ChatPane> = {
-  title: 'Widgets/ChatPane',
+  title: 'Widgets/Shell/ChatPane',
   component: ChatPane,
   parameters: {
     layout: 'centered',

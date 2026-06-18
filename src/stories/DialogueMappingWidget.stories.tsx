@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { DialogueMappingWidget } from '../components/widgets/DialogueMappingWidget';
 
 const meta: Meta<typeof DialogueMappingWidget> = {
-  title: 'DialogueMapper/DialogueMappingWidget',
+  title: 'Widgets/DialogueMapper/DialogueMappingWidget',
   component: DialogueMappingWidget,
   argTypes: {
     defaultDragMode: {

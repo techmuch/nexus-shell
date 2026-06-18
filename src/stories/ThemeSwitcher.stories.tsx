@@ -3,7 +3,7 @@ import { ThemeSwitcher } from '../components/widgets/ThemeSwitcher';
 import { useThemeStore } from '../core/services/ThemeService';
 
 const meta: Meta<typeof ThemeSwitcher> = {
-  title: 'Widgets/ThemeSwitcher',
+  title: 'Widgets/Shell/ThemeSwitcher',
   component: ThemeSwitcher,
   parameters: {
     layout: 'centered',

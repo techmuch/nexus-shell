@@ -3,7 +3,7 @@ import { TreeWidget, ITreeNode } from '../components/widgets/TreeWidget';
 import { useState } from 'react';
 
 const meta: Meta<typeof TreeWidget> = {
-  title: 'Widgets/TreeWidget',
+  title: 'Widgets/General/TreeWidget',
   component: TreeWidget,
   parameters: {
     layout: 'centered',

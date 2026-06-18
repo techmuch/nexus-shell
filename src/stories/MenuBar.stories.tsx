@@ -7,7 +7,7 @@ import { menuRegistry } from '../core/registry/MenuRegistry';
 initializeShell();
 
 const meta: Meta<typeof MenuBar> = {
-  title: 'Widgets/MenuBar',
+  title: 'Widgets/Shell/MenuBar',
   component: MenuBar,
   parameters: {
     layout: 'fullscreen',

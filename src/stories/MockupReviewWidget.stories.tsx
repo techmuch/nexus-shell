@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MockupReviewWidget } from '../components/widgets/MockupReviewWidget';
 
 const meta: Meta<typeof MockupReviewWidget> = {
-  title: 'Widgets/MockupReviewWidget',
+  title: 'Widgets/General/MockupReviewWidget',
   component: MockupReviewWidget,
   parameters: {
     layout: 'padded',

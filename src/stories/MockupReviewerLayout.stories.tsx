@@ -8,7 +8,7 @@ import { ImplementationPlanWorkspace } from '../components/widgets/mockup-review
 import { ExecutionOverlay } from '../components/widgets/mockup-reviewer/ExecutionOverlay';
 
 const meta: Meta = {
-  title: 'Widgets/MockupReviewerLayout',
+  title: 'Compositions/MockupReviewerLayout',
   parameters: {
     layout: 'fullscreen',
   },

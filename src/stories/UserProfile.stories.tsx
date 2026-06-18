@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { UserProfile } from '../components/widgets/UserProfile';
 
 const meta: Meta<typeof UserProfile> = {
-  title: 'Widgets/UserProfile',
+  title: 'Widgets/Shell/UserProfile',
   component: UserProfile,
   argTypes: {
     showName: { control: 'boolean' },

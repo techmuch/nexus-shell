@@ -3,7 +3,7 @@ import { WargameMap } from '../components/widgets/WargameMap';
 import { latLngToCell, gridDisk } from 'h3-js';
 
 const meta = {
-  title: 'Widgets/WargameMap',
+  title: 'Widgets/General/WargameMap',
   component: WargameMap,
   parameters: {
     layout: 'fullscreen',

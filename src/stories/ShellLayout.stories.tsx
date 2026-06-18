@@ -9,7 +9,7 @@ import { ThemeSwitcher } from '../components/widgets/ThemeSwitcher';
 import { useLayoutStore, dialogueMappingLayoutJson, dialogueMapperMenus } from '../core/services/LayoutService';
 
 const meta: Meta<typeof ShellLayout> = {
-  title: 'Layout/ShellLayout',
+  title: 'Compositions/ShellLayout',
   component: ShellLayout,
   parameters: {
     layout: 'fullscreen',

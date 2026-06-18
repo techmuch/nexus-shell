@@ -4,7 +4,7 @@ import { DialogueMappingShell } from '../components/layout/DialogueMappingShell'
 import { useThemeStore } from '../core/services/ThemeService';
 
 const meta: Meta<typeof DialogueMappingShell> = {
-  title: 'DialogueMapper/DialogueMappingShell',
+  title: 'Compositions/DialogueMappingShell',
   component: DialogueMappingShell,
   parameters: {
     layout: 'fullscreen',

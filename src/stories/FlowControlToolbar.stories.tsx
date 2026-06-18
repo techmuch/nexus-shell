@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useThemeStore } from '../core/services/ThemeService';
 
 const meta: Meta<typeof FlowControlToolbar> = {
-  title: 'Widgets/FlowControlToolbar',
+  title: 'Widgets/DialogueMapper/FlowControlToolbar',
   component: FlowControlToolbar,
   parameters: {
     layout: 'centered',

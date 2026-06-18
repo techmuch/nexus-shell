@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Play, RotateCcw, CheckCircle, ShieldAlert } from 'lucide-react';
 
 const meta: Meta<typeof DataGrid> = {
-  title: 'Widgets/DataGrid',
+  title: 'Widgets/General/DataGrid',
   component: DataGrid,
   parameters: {
     layout: 'padded',

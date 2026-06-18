@@ -3,7 +3,7 @@ import { AgentManager, Agent } from '../components/widgets/AgentManager';
 import { useState } from 'react';
 
 const meta = {
-  title: 'Widgets/AgentManager',
+  title: 'Widgets/General/AgentManager',
   component: AgentManager,
   parameters: {
     layout: 'fullscreen',

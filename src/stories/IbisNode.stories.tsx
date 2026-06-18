@@ -9,7 +9,7 @@ const nodeTypes = {
 };
 
 const meta: Meta = {
-  title: 'DialogueMapper/IbisNode',
+  title: 'Widgets/DialogueMapper/IbisNode',
   parameters: {
     layout: 'padded',
   },

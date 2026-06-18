@@ -3,7 +3,7 @@ import { CommandPalette } from '../components/widgets/CommandPalette';
 import { initializeShell } from '../core/Boot';
 
 const meta: Meta<typeof CommandPalette> = {
-  title: 'Widgets/CommandPalette',
+  title: 'Widgets/Shell/CommandPalette',
   component: CommandPalette,
   parameters: {
     layout: 'centered',
