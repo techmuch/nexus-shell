@@ -1,0 +1,1 @@
+import{c}from"./index-B2XhonKX.js";const m="nexus-shell-theme",a=e=>{const t=window.document.documentElement;t.classList.remove("theme-light","theme-dark","theme-gt"),t.classList.add(`theme-${e}`)},l=c(e=>{const o=localStorage.getItem(m)||"light";return a(o),{theme:o,setTheme:s=>{localStorage.setItem(m,s),a(s),e({theme:s})}}});export{l as u};
