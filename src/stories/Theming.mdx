@@ -1,0 +1,77 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Guides/Theming & Styling" />
+
+# 🎨 Theming & Styling Guidelines
+
+Nexus Shell uses a **theme-adaptive design system** driven entirely by CSS custom properties (variables) combined with Tailwind CSS. Instead of hardcoding background or text colors, all components reference semantic token variables.
+
+---
+
+## 🏛 The Core Design Tokens
+
+All styles map to CSS custom properties defined in `index.css`. The main variables you should use and extend include:
+
+```css
+:root {
+  --background: 0 0% 100%;       /* Main app background */
+  --foreground: 240 10% 3.9%;    /* Default text color */
+  --card: 0 0% 100%;             /* Card panels */
+  --card-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;       /* Primary action buttons */
+  --primary-foreground: 0 0% 98%;
+  --accent: 240 4.8% 95.9%;      /* Hover / Active selection highlight */
+  --accent-foreground: 240 5.9% 10%;
+  --border: 240 5.9% 90%;        /* Layout borders and lines */
+  --ring: 240 5.9% 10%;          /* Accessibility focus indicator ring */
+}
+```
+
+---
+
+## 🌗 Built-in Themes
+
+Nexus Shell ships with three production-ready themes. To apply a theme, wrap your workstation container in the corresponding class name:
+
+| Theme Class | Name | Contrast Target | Description |
+| :--- | :--- | :--- | :--- |
+| `theme-light` | Light Theme | Standard AA | Clean, light gray workbench optimized for bright environments. |
+| `theme-dark` | Dark Theme | High Contrast | Soft dark theme. Avoids pure white text (`hsl(240, 5%, 85%)`) to prevent glare and reduce eye strain. |
+| `theme-gt` | Georgia Tech Theme | Specialized Gold/Blue | Gold primary accents (`hsl(45, 100%, 46%)`) matched with deep navy accents. |
+
+### Usage Example
+```tsx
+export default function App() {
+  return (
+    // Wrap the top-level container in your desired theme class
+    <div className="theme-dark min-h-screen bg-background text-foreground">
+      <ShellLayout />
+    </div>
+  );
+}
+```
+
+---
+
+## 🛠 Best Practices for Custom Themes
+
+To create your own theme:
+1. Define a custom theme class selector (e.g., `.theme-forest`).
+2. Override the HSL color tokens.
+3. Make sure background and foreground colors satisfy the target **4.5:1** contrast ratio (WCAG AA) for standard text.
+
+### Example Stylesheet:
+```css
+.theme-forest {
+  --background: 140 30% 12%;
+  --foreground: 140 10% 90%;
+  --card: 140 25% 15%;
+  --card-foreground: 140 10% 95%;
+  --primary: 142 76% 36%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 140 20% 25%;
+  --accent-foreground: 142 76% 36%;
+  --border: 140 20% 20%;
+  --ring: 142 76% 36%;
+}
+```

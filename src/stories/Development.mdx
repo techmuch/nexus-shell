@@ -1,0 +1,75 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Guides/Development Best Practices" />
+
+# 🛠 Development & Extension Best Practices
+
+This guide outlines step-by-step guidelines and coding standards for developing new features, layouts, and components within the Nexus Shell ecosystem.
+
+---
+
+## 🎹 1. Scoped & DOM-Aware Keyboard Listeners
+
+When adding global keyboard listeners (e.g., listening to `keydown` for hotkeys or workspace toggle switches), you must ensure they do not fire contextually if their tab is inactive or hidden.
+
+### Best Practices:
+1. **DOM Visibility Checks**: Before executing hotkey logic, check if the component container is visible in the active DOM (using `offsetParent === null` aborts).
+2. **Scope to Active Tab**: Scope hotkeys to fire only when their respective tab pane is active in the workbench.
+
+### Implementation Example:
+```tsx
+import { useEffect, useRef } from 'react';
+
+export function MyTabWidget() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. Abort if component container is unmounted or hidden
+      if (!containerRef.current || containerRef.current.offsetParent === null) {
+        return;
+      }
+
+      // 2. Process command hotkeys
+      if (e.key === 'Delete') {
+        e.preventDefault();
+        console.log('Delete command triggered within active container');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return <div ref={containerRef} className="h-full w-full">Content</div>;
+}
+```
+
+---
+
+## 🎨 2. Tailwind Purging Safeguards
+
+Nexus Shell integrates third-party interactive libraries (like `reactflow` and `flexlayout-react`). Overriding their default styles in Tailwind requires special care to prevent selectors from being purged during build steps.
+
+### Best Practice:
+* **Place Overrides Outside `@layer`**: Custom styles targeting external package class names (e.g. `.flexlayout__layout`, `.react-flow__node`) must be declared **outside** Tailwind's `@layer base`, `@layer components`, or `@layer utilities` directives in `index.css`. This prevents them from being purged when the classes are dynamically generated at runtime.
+
+---
+
+## 🧹 3. Canvas Layout Cleanliness
+
+When embedding visual mapping canvas overlays or interactive layouts (e.g., using `reactflow` elements):
+
+### Best Practice:
+* **Hide Attributions**: Always configure canvas elements to suppress default watermarks or attribution badges to maintain a premium, branded workspace look.
+* Set `proOptions={{ hideAttribution: true }}` on `<ReactFlow>` instances.
+
+---
+
+## 📦 4. Decoupled Zustand State Management
+
+State stores must be modular and focused. Avoid massive, monolithic stores.
+
+### Best Practice:
+* **State Isolation**: When introducing new workstations or features, create standalone Zustand stores (e.g. `useUserProfileStore` or `useDialogueMappingStore`) to separate state domains.
+* **Storage Key Configuration**: Extend stores that save state to `localStorage` to accept custom storage keys, preventing layout collisions between stories or workstation tabs.

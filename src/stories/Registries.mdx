@@ -1,0 +1,88 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Guides/Registry Architecture (IoC)" />
+
+# 🔌 Registry-Driven Architecture (IoC)
+
+Nexus Shell operates on a **decoupled, registry-driven architecture** (Inversion of Control). Monolithic layout containers (like `ShellLayout`) should never directly embed custom panels, widgets, or shortcuts. Instead, features must register themselves dynamically via global registry instances.
+
+---
+
+## 🚦 The Four Core Registries
+
+| Registry | Purpose | Key Method |
+| :--- | :--- | :--- |
+| `componentRegistry` | Binds React components to panel ID strings. | `componentRegistry.register(id, component)` |
+| `commandRegistry` | Declares actions, keyboard hotkeys, and accelerators. | `commandRegistry.registerCommand(config)` |
+| `menuRegistry` | Feeds hierarchical links into the global header MenuBar. | `menuRegistry.registerMenu(menuName, item)` |
+| `pluginRegistry` | Manages feature lifecycles (`activate` / `deactivate`). | `pluginRegistry.register(plugin)` |
+
+---
+
+## 🛠 Step-by-Step implementation Guide
+
+### Step 1: Register a Component
+Before a component can appear in a workspace tab or side panel, it must be registered with a unique string ID.
+
+```typescript
+import { componentRegistry } from 'nexus-shell';
+import MyWidget from './MyWidget';
+
+// Register the component loader function
+componentRegistry.register('my-unique-widget', () => <MyWidget />);
+```
+
+### Step 2: Declare an Action (Command)
+A command defines an executable action and optional keyboard shortcuts. Registered commands automatically populate the **Command Palette** (`Ctrl+Shift+P`).
+
+```typescript
+import { commandRegistry } from 'nexus-shell';
+
+commandRegistry.registerCommand({
+  id: 'my-feature.save-data',
+  label: 'Save Workspace Data',
+  keybinding: 'Control+S',
+  execute: () => {
+    console.log('Data saved successfully!');
+  }
+});
+```
+
+### Step 3: Add the Action to the Menu Bar
+Link your registered command to a category in the top Menu Bar.
+
+```typescript
+import { menuRegistry } from 'nexus-shell';
+
+menuRegistry.registerMenu('File', {
+  id: 'menu-file.save',
+  label: 'Save Workspace',
+  commandId: 'my-feature.save-data',
+});
+```
+
+### Step 4: Package as a Plugin (Lifecycle Hook)
+For complex features, bundle registrations inside a plugin. This allows the system to activate and clean up registrations dynamically.
+
+```typescript
+import { IPlugin, componentRegistry, commandRegistry } from 'nexus-shell';
+
+export const AnalyticsPlugin: IPlugin = {
+  id: 'analytics-plugin',
+  name: 'Analytics Dashboard',
+  activate: () => {
+    // 1. Register dashboard components
+    componentRegistry.register('analytics-tab', () => <AnalyticsWidget />);
+    
+    // 2. Register command
+    commandRegistry.registerCommand({
+      id: 'analytics.refresh',
+      label: 'Refresh Dashboard Metrics',
+      execute: () => { /* Refresh metrics logic */ },
+    });
+  },
+  deactivate: () => {
+    // Perform cleanup steps if necessary
+  }
+};
+```
