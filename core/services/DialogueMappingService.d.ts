@@ -14,6 +14,10 @@ export interface IDialogueNodeData {
     url?: string;
     imageUrl?: string;
     autoEdit?: boolean;
+    freeformPosition?: {
+        x: number;
+        y: number;
+    };
 }
 interface DialogueMappingState {
     nodes: Node<IDialogueNodeData>[];

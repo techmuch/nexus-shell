@@ -1,9 +1,9 @@
 import { Meta, StoryObj } from '@storybook/react';
-import { DialogueMapperTitle } from '../components/widgets/DialogueMapperTitle';
+import { NexusWorkspaceTitle } from '../components/widgets/NexusWorkspaceTitle';
 
-declare const meta: Meta<typeof DialogueMapperTitle>;
+declare const meta: Meta<typeof NexusWorkspaceTitle>;
 export default meta;
-type Story = StoryObj<typeof DialogueMapperTitle>;
+type Story = StoryObj<typeof NexusWorkspaceTitle>;
 export declare const Default: Story;
 export declare const CustomTextAndIcon: Story;
 export declare const LightTheme: Story;

@@ -1,10 +1,10 @@
 import { default as React } from '../../../node_modules/react';
 
-export interface DialogueMapperTitleProps {
+export interface NexusWorkspaceTitleProps {
     title?: string;
     subtitle?: string;
     icon?: React.ReactNode;
     className?: string;
 }
-export declare const DialogueMapperTitle: React.FC<DialogueMapperTitleProps>;
-export default DialogueMapperTitle;
+export declare const NexusWorkspaceTitle: React.FC<NexusWorkspaceTitleProps>;
+export default NexusWorkspaceTitle;

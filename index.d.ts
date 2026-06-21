@@ -19,9 +19,9 @@ export { DialogueMapperLibraryWidget } from './components/widgets/DialogueMapper
 export { ArgumentInspectorWidget } from './components/widgets/ArgumentInspectorWidget';
 export { DialogueMapperLibrary, type DialogueMapperLibraryProps } from './components/widgets/DialogueMapperLibrary';
 export { FlowControlToolbar, type FlowControlToolbarProps } from './components/widgets/FlowControlToolbar';
-export { DialogueMappingShell } from './components/layout/DialogueMappingShell';
+export { NexusWorkspaceShell } from './components/layout/NexusWorkspaceShell';
 export { ThemeSwitcher, type ThemeSwitcherProps } from './components/widgets/ThemeSwitcher';
-export { DialogueMapperTitle, type DialogueMapperTitleProps } from './components/widgets/DialogueMapperTitle';
+export { NexusWorkspaceTitle, type NexusWorkspaceTitleProps } from './components/widgets/NexusWorkspaceTitle';
 export { useDialogueMappingStore, type IDialogueNodeData, type IbisNodeType } from './core/services/DialogueMappingService';
 export { commandRegistry, type ICommand } from './core/registry/CommandRegistry';
 export { menuRegistry, type IMenuItem } from './core/registry/MenuRegistry';
