@@ -1,3 +1,4 @@
+import { StoreApi, UseBoundStore } from 'zustand';
 import { Node, Edge, Connection } from 'reactflow';
 
 export type IbisNodeType = 'question' | 'idea' | 'pro' | 'con' | 'note' | 'decision' | 'link' | 'image' | 'map';
@@ -19,6 +20,8 @@ interface DialogueMappingState {
     edges: Edge[];
     selectedNodeId: string | null;
     layoutHistory: Node<IDialogueNodeData>[][];
+    autoLayoutMode: 'vertical' | 'horizontal' | 'freeform';
+    setAutoLayoutMode: (mode: 'vertical' | 'horizontal' | 'freeform') => void;
     setNodes: (nodes: Node<IDialogueNodeData>[]) => void;
     setEdges: (edges: Edge[]) => void;
     setSelectedNodeId: (id: string | null) => void;
@@ -46,5 +49,7 @@ interface DialogueMappingState {
     importMap: (jsonStr: string) => boolean;
     exportMap: () => string;
 }
-export declare const useDialogueMappingStore: import('zustand').UseBoundStore<import('zustand').StoreApi<DialogueMappingState>>;
+export declare let globalFallbackStore: UseBoundStore<StoreApi<DialogueMappingState>> | null;
+export declare const getMapStore: (mapId: string) => UseBoundStore<StoreApi<DialogueMappingState>>;
+export declare const useDialogueMappingStore: UseBoundStore<StoreApi<DialogueMappingState>>;
 export {};

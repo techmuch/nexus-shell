@@ -4,8 +4,7 @@ import { TabNode } from 'flexlayout-react';
 export interface DialogueMappingWidgetProps {
     node?: TabNode;
     defaultDragMode?: 'pan' | 'select';
-    hideInternalLibrary?: boolean;
-    hideInternalInspector?: boolean;
+    mapId: string;
 }
 export declare const DialogueMappingWidget: React.FC<DialogueMappingWidgetProps>;
 export default DialogueMappingWidget;

@@ -6,7 +6,7 @@ interface LayoutState {
     storageKey: string;
     setModel: (model: Model) => void;
     setStorageKey: (key: string, fallbackLayout?: IJsonModel) => void;
-    addTab: (componentName: string, title?: string) => void;
+    addTab: (componentName: string, title?: string, overrideConfig?: Record<string, any>) => void;
     setTabDirty: (tabId: string, dirty: boolean) => void;
     isTabDirty: (tabId: string) => boolean;
 }
