@@ -394,7 +394,35 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
   // Handle nodes/edges movements from canvas
   const onNodesChange = useCallback(
     (changes: any) => {
-      const nextNodes = applyNodeChanges(changes, nodes);
+      let manualDrag = false;
+      changes.forEach((change: any) => {
+        if (change.type === 'position' && change.dragging) {
+          manualDrag = true;
+        }
+      });
+
+      let nextNodes = applyNodeChanges(changes, nodes);
+
+      if (manualDrag) {
+        nextNodes = nextNodes.map(n => {
+          const isBeingDragged = changes.find((c: any) => c.id === n.id && c.type === 'position' && c.dragging);
+          if (isBeingDragged) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                freeformPosition: { ...n.position }
+              }
+            };
+          }
+          return n;
+        });
+
+        if (autoLayoutMode !== 'freeform') {
+          setAutoLayoutMode('freeform');
+        }
+      }
+
       setNodes(nextNodes);
 
       const selected = nextNodes.filter((n) => n.selected);
@@ -404,7 +432,7 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
         setSelectedNodeId(null);
       }
     },
-    [nodes, setNodes, setSelectedNodeId]
+    [nodes, setNodes, setSelectedNodeId, autoLayoutMode, setAutoLayoutMode]
   );
 
   const onEdgesChange = useCallback(

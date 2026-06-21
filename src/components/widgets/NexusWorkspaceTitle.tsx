@@ -7,16 +7,16 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export interface DialogueMapperTitleProps {
+export interface NexusWorkspaceTitleProps {
   title?: string;
   subtitle?: string;
   icon?: React.ReactNode;
   className?: string;
 }
 
-export const DialogueMapperTitle: React.FC<DialogueMapperTitleProps> = ({
-  title = "Nexus Dialogue Mapper",
-  subtitle = "IBIS Decision & Argumentation Modeling",
+export const NexusWorkspaceTitle: React.FC<NexusWorkspaceTitleProps> = ({
+  title = "NEXUS Research Workspace",
+  subtitle = "Autonomous Multi-Agent Orchestration",
   icon = <GitFork size={16} />,
   className,
 }) => {
@@ -37,4 +37,4 @@ export const DialogueMapperTitle: React.FC<DialogueMapperTitleProps> = ({
   );
 };
 
-export default DialogueMapperTitle;
+export default NexusWorkspaceTitle;

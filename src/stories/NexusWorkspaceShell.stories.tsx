@@ -1,25 +1,25 @@
 import { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { DialogueMappingShell } from '../components/layout/DialogueMappingShell';
+import { NexusWorkspaceShell } from '../components/layout/NexusWorkspaceShell';
 import { useThemeStore } from '../core/services/ThemeService';
 
-const meta: Meta<typeof DialogueMappingShell> = {
-  title: 'Compositions/DialogueMappingShell',
-  component: DialogueMappingShell,
+const meta: Meta<typeof NexusWorkspaceShell> = {
+  title: 'Compositions/NexusWorkspaceShell',
+  component: NexusWorkspaceShell,
   parameters: {
     layout: 'fullscreen',
   },
 };
 
 export default meta;
-type Story = StoryObj<typeof DialogueMappingShell>;
+type Story = StoryObj<typeof NexusWorkspaceShell>;
 
 const DarkWorkspaceWrapper = () => {
   const setTheme = useThemeStore((state) => state.setTheme);
   useEffect(() => {
     setTheme('dark');
   }, [setTheme]);
-  return <DialogueMappingShell />;
+  return <NexusWorkspaceShell />;
 };
 
 export const DarkWorkspace: Story = {
@@ -35,7 +35,7 @@ const LightWorkspaceWrapper = () => {
   useEffect(() => {
     setTheme('light');
   }, [setTheme]);
-  return <DialogueMappingShell />;
+  return <NexusWorkspaceShell />;
 };
 
 export const LightWorkspace: Story = {
@@ -51,7 +51,7 @@ const GeorgiaTechWorkspaceWrapper = () => {
   useEffect(() => {
     setTheme('gt');
   }, [setTheme]);
-  return <DialogueMappingShell />;
+  return <NexusWorkspaceShell />;
 };
 
 export const GeorgiaTechWorkspace: Story = {

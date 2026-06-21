@@ -89,7 +89,24 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
     try {
       const savedLayout = localStorage.getItem(DEFAULT_STORAGE_KEY);
       if (savedLayout) {
-        initialModel = Model.fromJson(JSON.parse(savedLayout));
+        const json = JSON.parse(savedLayout);
+        initialModel = Model.fromJson(json);
+
+        // V1 Migration: Purge old standalone dialogue-mapper sidebars
+        const componentsToRemove = new Set(['dialogue-library', 'argument-inspector']);
+        const nodesToRemove: string[] = [];
+        initialModel.visitNodes((n) => {
+          if (n.getType() === 'tab') {
+            const tabNode = n as import('flexlayout-react').TabNode;
+            if (componentsToRemove.has(tabNode.getComponent() as string)) {
+              nodesToRemove.push(tabNode.getId());
+            }
+          }
+        });
+        
+        nodesToRemove.forEach((id) => {
+          initialModel.doAction(Actions.deleteTab(id));
+        });
       } else {
         initialModel = Model.fromJson(defaultLayout);
       }

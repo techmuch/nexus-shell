@@ -15,6 +15,7 @@ export interface IDialogueNodeData {
   url?: string;
   imageUrl?: string;
   autoEdit?: boolean;
+  freeformPosition?: { x: number; y: number };
 }
 
 interface DialogueMappingState {
@@ -55,8 +56,22 @@ export const getMapStore = (mapId: string): UseBoundStore<StoreApi<DialogueMappi
       edges: [],
       selectedNodeId: null,
       layoutHistory: [],
-      autoLayoutMode: 'freeform',
-      setAutoLayoutMode: (mode) => set({ autoLayoutMode: mode }),
+      autoLayoutMode: 'vertical',
+      setAutoLayoutMode: (mode) => {
+        set({ autoLayoutMode: mode });
+        if (mode === 'freeform') {
+          set((state) => ({
+            nodes: state.nodes.map((n) => {
+              if (n.data.freeformPosition) {
+                return { ...n, position: { ...n.data.freeformPosition } };
+              }
+              return n;
+            }),
+          }));
+        } else {
+          get().triggerAutoLayout(mode);
+        }
+      },
       connectionError: null,
 
   setNodes: (nodes) => set({ nodes }),
@@ -99,58 +114,22 @@ export const getMapStore = (mapId: string): UseBoundStore<StoreApi<DialogueMappi
         const parentNode = state.nodes.find((n) => n.id === parentNodeId);
         if (parentNode) {
           // Determine edge direction using local semantics to avoid store get() sync delays
-          let isValid = false;
-          let source = id;
-          let target = parentNodeId;
+          // The user expects newly spawned nodes to be children of the selected node
+          let isValid = true;
+          let source = parentNodeId;
+          let target = id;
 
-          const sourceType = type;
-          const targetType = parentNode.data.type;
+          const parentType = parentNode.data.type;
+          const newType = type;
 
-          // Try New -> Parent
-          if (sourceType === 'pro' || sourceType === 'con') {
-            if (targetType === 'idea' || targetType === 'decision') {
-              isValid = true;
-            }
-          } else if (sourceType === 'idea') {
-            if (targetType === 'question' || targetType === 'idea') {
-              isValid = true;
-            }
-          } else if (sourceType === 'decision') {
-            if (targetType === 'question') {
-              isValid = true;
-            }
-          } else {
-            // neutral types (note, link, image) can connect to anything
-            isValid = true;
+          // Only reverse the relationship if it's a strict IBIS violation that demands New -> Parent
+          if (newType === 'decision' && parentType === 'question') {
+            source = id;
+            target = parentNodeId;
+          } else if ((newType === 'pro' || newType === 'con') && parentType === 'decision') {
+            source = id;
+            target = parentNodeId;
           }
-
-          if (!isValid) {
-            // Try Parent -> New
-            if (targetType === 'pro' || targetType === 'con') {
-              if (sourceType === 'idea' || sourceType === 'decision') {
-                source = parentNodeId;
-                target = id;
-                isValid = true;
-              }
-            } else if (targetType === 'idea') {
-              if (sourceType === 'question' || sourceType === 'idea') {
-                source = parentNodeId;
-                target = id;
-                isValid = true;
-              }
-            } else if (targetType === 'decision') {
-              if (sourceType === 'question') {
-                source = parentNodeId;
-                target = id;
-                isValid = true;
-              }
-            } else {
-              source = parentNodeId;
-              target = id;
-              isValid = true;
-            }
-          }
-
           if (isValid) {
             const strokeColor = '#64748b'; // common slate edge color
 
@@ -211,12 +190,20 @@ export const getMapStore = (mapId: string): UseBoundStore<StoreApi<DialogueMappi
       edges: state.edges.filter((edge) => edge.source !== id && edge.target !== id),
       selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
     }));
+    const mode = get().autoLayoutMode;
+    if (mode !== 'freeform') {
+      setTimeout(() => get().triggerAutoLayout(mode), 10);
+    }
   },
 
   deleteEdge: (id) => {
     set((state) => ({
       edges: state.edges.filter((edge) => edge.id !== id),
     }));
+    const mode = get().autoLayoutMode;
+    if (mode !== 'freeform') {
+      setTimeout(() => get().triggerAutoLayout(mode), 10);
+    }
   },
 
   pasteNode: (type, position, initialData) => {
@@ -310,6 +297,11 @@ export const getMapStore = (mapId: string): UseBoundStore<StoreApi<DialogueMappi
     set((state) => ({
       edges: [...state.edges, newEdge],
     }));
+
+    const mode = get().autoLayoutMode;
+    if (mode !== 'freeform') {
+      setTimeout(() => get().triggerAutoLayout(mode), 10);
+    }
 
     return true;
   },

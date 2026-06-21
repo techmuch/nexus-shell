@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Folder, Users, Share2, Save, Settings } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// Cleaned unused styling hooks
 
 interface ProjectPropertiesProps {
   projectId: string;

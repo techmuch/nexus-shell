@@ -6,7 +6,7 @@ import '../../styles/flexlayout-theme.css';
 
 import { DialogueMappingWidget } from '../widgets/DialogueMappingWidget';
 import { ThemeSwitcher } from '../widgets/ThemeSwitcher';
-import { DialogueMapperTitle } from '../widgets/DialogueMapperTitle';
+import { NexusWorkspaceTitle } from '../widgets/NexusWorkspaceTitle';
 import { ActivityBar } from '../widgets/ActivityBar';
 import { SidebarPane } from '../widgets/SidebarPane';
 import { ProjectPropertiesWidget } from '../widgets/ProjectPropertiesWidget';
@@ -26,18 +26,13 @@ function cn(...inputs: ClassValue[]) {
 
 
 
-export const DialogueMappingShell: React.FC = () => {
+export const NexusWorkspaceShell: React.FC = () => {
   const { theme } = useThemeStore();
   const { model, setStorageKey, setModel } = useLayoutStore();
 
   React.useEffect(() => {
-    setStorageKey('dialogue-mapping-shell', dialogueMappingLayoutJson);
+    setStorageKey('nexus-workspace-shell', dialogueMappingLayoutJson);
   }, [setStorageKey]);
-
-  const handleAddNodeFromLibrary = () => {
-    // If we want library click-to-add, we need to resolve active map.
-    // Left empty for now since drag-and-drop handles this.
-  };
 
   const factory = (node: TabNode) => {
     const component = node.getComponent();
@@ -68,8 +63,8 @@ export const DialogueMappingShell: React.FC = () => {
     )}>
       
       {/* 1. Header Menubar */}
-      <header role="banner" aria-label="Dialogue Mapper Menubar" className="h-12 border-b border-border bg-card/65 flex items-center justify-between px-4 shrink-0 select-none backdrop-blur-sm z-30">
-        <DialogueMapperTitle />
+      <header role="banner" aria-label="Nexus Workspace Menubar" className="h-12 border-b border-border bg-card/65 flex items-center justify-between px-4 shrink-0 select-none backdrop-blur-sm z-30">
+        <NexusWorkspaceTitle />
 
         {/* Action Menu Options */}
         <nav role="navigation" aria-label="Shell Menus" className="hidden md:flex items-center space-x-4 text-[11px] font-bold text-muted-foreground">
@@ -122,4 +117,4 @@ export const DialogueMappingShell: React.FC = () => {
     </div>
   );
 };
-export default DialogueMappingShell;
+export default NexusWorkspaceShell;
