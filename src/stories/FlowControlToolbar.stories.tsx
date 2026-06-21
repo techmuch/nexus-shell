@@ -25,7 +25,8 @@ const InteractiveHeaderWrapper = () => {
         variant="header"
         dragMode={dragMode}
         onDragModeChange={setDragMode}
-        onLayoutChange={(dir) => {
+        autoLayoutMode="freeform"
+        onAutoLayoutModeChange={(dir) => {
           alert(`Trigger layout: ${dir}`);
           setCanUndo(true);
         }}
@@ -34,7 +35,7 @@ const InteractiveHeaderWrapper = () => {
           setCanUndo(false);
         }}
         canUndo={canUndo}
-        title="Workspace"
+
       />
       <div className="text-[10px] text-muted-foreground font-mono">
         Active Drag: {dragMode}
@@ -55,7 +56,8 @@ const InteractiveFloatingWrapper = () => {
           variant="floating"
           dragMode={dragMode}
           onDragModeChange={setDragMode}
-          onLayoutChange={(dir) => {
+          autoLayoutMode="freeform"
+          onAutoLayoutModeChange={(dir) => {
             alert(`Trigger layout: ${dir}`);
             setCanUndo(true);
           }}
@@ -94,10 +96,11 @@ export const StaticHeaderLight: Story = {
         variant="header"
         dragMode="pan"
         onDragModeChange={() => {}}
-        onLayoutChange={() => {}}
+        autoLayoutMode="freeform"
+        onAutoLayoutModeChange={() => {}}
         onUndo={() => {}}
         canUndo={true}
-        title="Workspace"
+
       />
     </div>
   ),
@@ -110,10 +113,11 @@ export const StaticHeaderDark: Story = {
         variant="header"
         dragMode="pan"
         onDragModeChange={() => {}}
-        onLayoutChange={() => {}}
+        autoLayoutMode="freeform"
+        onAutoLayoutModeChange={() => {}}
         onUndo={() => {}}
         canUndo={true}
-        title="Workspace"
+
       />
     </div>
   ),
@@ -126,10 +130,11 @@ export const StaticHeaderGeorgiaTech: Story = {
         variant="header"
         dragMode="pan"
         onDragModeChange={() => {}}
-        onLayoutChange={() => {}}
+        autoLayoutMode="freeform"
+        onAutoLayoutModeChange={() => {}}
         onUndo={() => {}}
         canUndo={true}
-        title="GT Workspace"
+
       />
     </div>
   ),
@@ -143,7 +148,8 @@ export const StaticFloatingLight: Story = {
           variant="floating"
           dragMode="select"
           onDragModeChange={() => {}}
-          onLayoutChange={() => {}}
+          autoLayoutMode="freeform"
+          onAutoLayoutModeChange={() => {}}
           onUndo={() => {}}
           canUndo={true}
         />
@@ -161,7 +167,8 @@ export const StaticFloatingDark: Story = {
           variant="floating"
           dragMode="select"
           onDragModeChange={() => {}}
-          onLayoutChange={() => {}}
+          autoLayoutMode="freeform"
+          onAutoLayoutModeChange={() => {}}
           onUndo={() => {}}
           canUndo={true}
         />
@@ -179,7 +186,8 @@ export const StaticFloatingGeorgiaTech: Story = {
           variant="floating"
           dragMode="select"
           onDragModeChange={() => {}}
-          onLayoutChange={() => {}}
+          autoLayoutMode="freeform"
+          onAutoLayoutModeChange={() => {}}
           onUndo={() => {}}
           canUndo={true}
         />

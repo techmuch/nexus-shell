@@ -17,44 +17,37 @@ import 'reactflow/dist/style.css';
 import { TabNode } from 'flexlayout-react';
 
 import { 
-  Download, 
-  Upload, 
   Trash2, 
-  ChevronRight, 
   AlertCircle,
-  Tag,
-  Maximize2,
   Copy,
   ClipboardPaste,
   Scissors
 } from 'lucide-react';
 
-import { useDialogueMappingStore, IbisNodeType, IDialogueNodeData } from '../../core/services/DialogueMappingService';
+import { getMapStore, IbisNodeType, IDialogueNodeData } from '../../core/services/DialogueMappingService';
 import { IbisNode } from './dialogue-mapper/IbisNode';
-import { DialogueMapperLibrary } from './DialogueMapperLibrary';
 import { ContextMenu, IContextMenuItem } from './ContextMenu';
 import { FlowControlToolbar } from './FlowControlToolbar';
+import { DialogueMapperLibrary } from './DialogueMapperLibrary';
+import { DialogueMapperInspector } from './DialogueMapperInspector';
 
 export interface DialogueMappingWidgetProps {
   node?: TabNode;
   defaultDragMode?: 'pan' | 'select';
-  hideInternalLibrary?: boolean;
-  hideInternalInspector?: boolean;
+  mapId: string;
 }
 
 export const DialogueMappingWidget: React.FC<DialogueMappingWidgetProps> = ({ 
   node,
   defaultDragMode = 'select',
-  hideInternalLibrary = false,
-  hideInternalInspector = false
+  mapId
 }) => {
   return (
     <ReactFlowProvider>
       <DialogueMappingCanvas 
         node={node} 
-        defaultDragMode={defaultDragMode} 
-        hideInternalLibrary={hideInternalLibrary}
-        hideInternalInspector={hideInternalInspector}
+        defaultDragMode={defaultDragMode}
+        mapId={mapId}
       />
     </ReactFlowProvider>
   );
@@ -63,15 +56,18 @@ export const DialogueMappingWidget: React.FC<DialogueMappingWidgetProps> = ({
 const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({ 
   node,
   defaultDragMode = 'select',
-  hideInternalLibrary = false,
-  hideInternalInspector = false
+  mapId
 }) => {
   const nodeTypes = React.useMemo(() => ({
     ibisNode: IbisNode,
   }), []);
 
+  const useStore = React.useMemo(() => {
+    return getMapStore(mapId);
+  }, [mapId]);
+
   if (typeof window !== 'undefined') {
-    (window as any).useDialogueMappingStore = useDialogueMappingStore;
+    (window as any).useDialogueMappingStore = useStore;
   }
 
   const {
@@ -85,21 +81,67 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
     setNodes,
     setEdges,
     addNode,
-    updateNodeData,
     deleteNode,
     deleteEdge,
     connectNodes,
-    triggerAutoLayout,
     undoLayout,
     setSelectedNodeId,
-    importMap,
-    exportMap,
-  } = useDialogueMappingStore();
+    autoLayoutMode,
+    setAutoLayoutMode,
+  } = useStore();
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Initial Data Load
+  useEffect(() => {
+    let mounted = true;
+    const loadMap = async () => {
+      try {
+        const res = await fetch('/api/files');
+        const files = await res.json();
+        
+        const findContent = (arr: any[]): string | null => {
+           for (const f of arr) {
+             if (f.id === mapId) return f.content;
+             if (f.children) {
+               const found = findContent(f.children);
+               if (found) return found;
+             }
+           }
+           return null;
+        };
+        
+        const content = findContent(files || []);
+        if (content && mounted) {
+          useStore.getState().importMap(content);
+        }
+      } catch (e) {
+        console.error("Failed to load map data", e);
+      }
+    };
+    loadMap();
+    return () => { mounted = false; };
+  }, [mapId, useStore]);
+
+  // Debounced Auto-Save
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (nodes.length > 0 || edges.length > 0) {
+        fetch('/api/maps/content', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: mapId,
+            content: JSON.stringify({ nodes, edges })
+          })
+        }).catch(console.error);
+      }
+    }, 2000);
+    return () => clearTimeout(handler);
+  }, [nodes, edges, mapId]);
   
   // Right drag link connection states
   const [rightDragStartNodeId, setRightDragStartNodeId] = useState<string | null>(null);
@@ -120,9 +162,9 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
   } | null>(null);
 
   // UI Panels state
-  const [showLibrary, setShowLibrary] = useState(!hideInternalLibrary);
-  const [showInspector, setShowInspector] = useState(!hideInternalInspector);
   const [dragMode, setDragMode] = useState<'pan' | 'select'>(defaultDragMode);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(true);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
 
   // Scoped keydown listener for layout undos and Compendium shortcuts
   useEffect(() => {
@@ -343,8 +385,6 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
   
   // Node editing state in Inspector
   const selectedNodes = nodes.filter((n) => n.selected);
-  const activeNode = selectedNodes.length === 1 ? selectedNodes[0] : null;
-  const [newTag, setNewTag] = useState('');
 
   const selectedNodesRef = useRef(selectedNodes);
   useEffect(() => {
@@ -481,48 +521,6 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
       window.removeEventListener('contextmenu', handleContextMenu, { capture: true });
     };
   }, [rightDragStartNodeId, connectNodes, reactFlowInstance, addNode]);
-
-  const handleExport = () => {
-    const jsonStr = exportMap();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dialogue-map-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      const success = importMap(result);
-      if (!success) {
-        alert("Failed to import dialogue map. Ensure it is a valid JSON file with nodes and edges.");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = ''; // clear
-  };
-
-  // Add node from library panel click
-  const handleAddNodeFromLibrary = (type: IbisNodeType) => {
-    // Add in the center of the canvas
-    addNode(type, { x: 350 + Math.random() * 50, y: 150 + Math.random() * 50 });
-  };
-
-  const onDragStart = useCallback((event: React.DragEvent, nodeType: IbisNodeType) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
-  }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -821,35 +819,22 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
     ];
   };
 
-  const handleAddTag = () => {
-    if (!activeNode || !newTag.trim()) return;
-    const currentTags = activeNode.data.tags || [];
-    if (!currentTags.includes(newTag.trim().toLowerCase())) {
-      updateNodeData(activeNode.id, {
-        tags: [...currentTags, newTag.trim().toLowerCase()],
-      });
-    }
-    setNewTag('');
-  };
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    if (!activeNode) return;
-    const currentTags = activeNode.data.tags || [];
-    updateNodeData(activeNode.id, {
-      tags: currentTags.filter((t) => t !== tagToRemove),
-    });
-  };
 
   return (
     <div className="flex w-full h-full overflow-hidden bg-background/95 text-foreground relative select-none font-sans">
-      {/* File Input for Import */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json"
-        onChange={handleFileChange}
-        className="hidden"
-      />
+      
+      {/* Embedded Left Sidebar: Node Library */}
+      {isLibraryOpen && (
+        <DialogueMapperLibrary 
+          className="border-r border-border bg-card/45 h-full z-10"
+          onAddNode={(type) => addNode(type, { x: 350, y: 150 })}
+          onDragStart={(e, type) => {
+            e.dataTransfer.setData('application/reactflow', type);
+            e.dataTransfer.effectAllowed = 'move';
+          }}
+        />
+      )}
 
       {/* Connection Warning Banner */}
       {connectionError && (
@@ -859,56 +844,24 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
         </div>
       )}
 
-      {/* Left Sidebar: Node Library / Palette */}
-      {!hideInternalLibrary && showLibrary && (
-        <DialogueMapperLibrary
-          onAddNode={handleAddNodeFromLibrary}
-          onClose={() => setShowLibrary(false)}
-          onDragStart={onDragStart}
-        />
-      )}
-
-      {/* Hidden Sidebar Restorers */}
-      {!hideInternalLibrary && !showLibrary && (
-        <button
-          onClick={() => setShowLibrary(true)}
-          className="absolute left-2 top-16 z-20 p-1.5 rounded-lg bg-card border border-border shadow-lg text-foreground hover:bg-accent"
-          title="Show Library"
-        >
-          <ChevronRight size={16} />
-        </button>
-      )}
 
       {/* Center Layout: React Flow Canvas */}
       <main ref={containerRef} className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* Canvas Toolbar Panel */}
-        <div className="h-12 border-b border-border bg-card flex items-center justify-between px-4 shrink-0 select-none">
+        {/* Floating Canvas Toolbar Overlay */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 bg-card border border-border rounded-lg shadow-sm flex items-center justify-between px-2 py-1 select-none">
           <FlowControlToolbar
             variant="header"
             dragMode={dragMode}
             onDragModeChange={setDragMode}
-            onLayoutChange={triggerAutoLayout}
+            autoLayoutMode={autoLayoutMode}
+            onAutoLayoutModeChange={setAutoLayoutMode}
             onUndo={undoLayout}
             canUndo={layoutHistory.length > 0}
-            title="Workspace"
+            isLibraryOpen={isLibraryOpen}
+            onToggleLibrary={() => setIsLibraryOpen(!isLibraryOpen)}
+            isInspectorOpen={isInspectorOpen}
+            onToggleInspector={() => setIsInspectorOpen(!isInspectorOpen)}
           />
-
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleImportClick}
-              className="px-2.5 py-1.5 rounded bg-secondary/80 hover:bg-secondary text-foreground text-[10px] font-bold border border-border flex items-center gap-1"
-              title="Import JSON Map"
-            >
-              <Upload size={12} /> Import Map
-            </button>
-            <button
-              onClick={handleExport}
-              className="px-2.5 py-1.5 rounded bg-primary hover:bg-primary/95 text-primary-foreground text-[10px] font-bold flex items-center gap-1 border border-primary/20 shadow-sm"
-              title="Export Map JSON"
-            >
-              <Download size={12} /> Export Map
-            </button>
-          </div>
         </div>
 
         {/* React Flow Editor */}
@@ -990,180 +943,11 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
         })()}
       </main>
 
-      {/* Right Sidebar Restorer */}
-      {!hideInternalInspector && !showInspector && (
-        <button
-          onClick={() => setShowInspector(true)}
-          className="absolute right-2 top-16 z-20 p-1.5 rounded-lg bg-card border border-border shadow-lg text-foreground hover:bg-accent animate-pulse"
-          title="Show Inspector"
-        >
-          <Maximize2 size={16} />
-        </button>
-      )}
-
-      {/* Right Sidebar: Node Metadata Inspector */}
-      {!hideInternalInspector && showInspector && (
-        <aside className="w-80 border-l border-border bg-card/45 flex flex-col shrink-0 overflow-hidden relative z-10 animate-slide-in-right">
-          <div className="p-4 border-b border-border bg-muted/15 flex justify-between items-center shrink-0">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-primary font-mono">Argument Inspector</span>
-            <button
-              onClick={() => setShowInspector(false)}
-              className="p-1 rounded hover:bg-secondary text-muted-foreground transition-colors"
-              title="Hide Inspector"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-
-          <div className="flex-1 p-4 overflow-y-auto space-y-4 select-text">
-            {selectedNodes.length > 1 ? (
-              <div className="text-center italic text-muted-foreground/60 pt-10 text-xs space-y-2">
-                <div className="font-semibold text-primary">Multiple Nodes Selected</div>
-                <div>({selectedNodes.length} nodes selected)</div>
-                <div className="text-[10px] mt-2">Node arguments cannot be edited simultaneously. Select a single node to view and edit its logical properties.</div>
-              </div>
-            ) : activeNode ? (
-              <div className="space-y-4">
-                {/* 1. Node Title */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Node Label</label>
-                  <input
-                    type="text"
-                    value={activeNode.data.title}
-                    onChange={(e) => updateNodeData(activeNode.id, { title: e.target.value })}
-                    className="w-full bg-secondary border border-border rounded-lg p-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring select-text"
-                    placeholder="Enter node title..."
-                  />
-                </div>
-
-                {/* 2. Type Selector */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Argument Logic Class</label>
-                  <select
-                    value={activeNode.data.type}
-                    onChange={(e) => updateNodeData(activeNode.id, { type: e.target.value as IbisNodeType })}
-                    className="w-full bg-secondary border border-border rounded-lg p-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
-                  >
-                    <option value="question">Question / Issue</option>
-                    <option value="idea">Idea / Position</option>
-                    <option value="pro">Pro Argument</option>
-                    <option value="con">Con Argument</option>
-                    <option value="note">Note / Evidence</option>
-                    <option value="decision">Decision / Resolve</option>
-                    <option value="link">Link / Reference</option>
-                    <option value="image">Image / Diagram</option>
-                    <option value="map">Map / Sub-Map</option>
-                  </select>
-                </div>
-
-                {/* 3. Decision Status (Conditional) */}
-                {(activeNode.data.type === 'question' || activeNode.data.type === 'idea' || activeNode.data.type === 'decision') && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Resolution status</label>
-                    <select
-                      value={activeNode.data.status || 'pending'}
-                      onChange={(e) => updateNodeData(activeNode.id, { status: e.target.value as any })}
-                      className="w-full bg-secondary border border-border rounded-lg p-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="accepted">Accepted / Chosen</option>
-                      <option value="rejected">Rejected / Dropped</option>
-                    </select>
-                  </div>
-                )}
-
-                {/* 4. Description Detail Notes */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Description & Notes</label>
-                  <textarea
-                    value={activeNode.data.description || ''}
-                    onChange={(e) => updateNodeData(activeNode.id, { description: e.target.value })}
-                    className="w-full bg-secondary border border-border rounded-lg p-2.5 text-xs text-foreground outline-none h-24 resize-none focus:ring-1 focus:ring-ring select-text"
-                    placeholder="Provide details, facts, URLs, or evidence context..."
-                  />
-                </div>
-
-                {/* Link URL (Conditional) */}
-                {activeNode.data.type === 'link' && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Link URL</label>
-                    <input
-                      type="text"
-                      value={activeNode.data.url || ''}
-                      onChange={(e) => updateNodeData(activeNode.id, { url: e.target.value })}
-                      className="w-full bg-secondary border border-border rounded-lg p-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring select-text"
-                      placeholder="https://example.com"
-                    />
-                  </div>
-                )}
-
-                {/* Image URL (Conditional) */}
-                {activeNode.data.type === 'image' && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Image URL</label>
-                    <input
-                      type="text"
-                      value={activeNode.data.imageUrl || ''}
-                      onChange={(e) => updateNodeData(activeNode.id, { imageUrl: e.target.value })}
-                      className="w-full bg-secondary border border-border rounded-lg p-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring select-text"
-                      placeholder="Image URL or local path..."
-                    />
-                  </div>
-                )}
-
-                {/* 5. Tag Editor */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Tags / Categories</label>
-                  
-                  {/* Active tags badges */}
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {activeNode.data.tags && activeNode.data.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        onClick={() => handleRemoveTag(tag)}
-                        className="text-[9px] bg-secondary text-foreground hover:bg-destructive/15 hover:text-destructive border border-border/80 px-2 py-0.5 rounded-md font-mono cursor-pointer flex items-center gap-1 transition-colors"
-                        title="Click to remove tag"
-                      >
-                        #{tag} <span className="opacity-60 text-[8px]">×</span>
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-1.5">
-                    <input
-                      type="text"
-                      placeholder="e.g. database"
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                      className="flex-1 bg-secondary border border-border rounded-lg p-1.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
-                    />
-                    <button
-                      onClick={handleAddTag}
-                      className="px-2.5 py-1 bg-secondary hover:bg-accent border rounded-lg text-xs font-bold transition-colors"
-                    >
-                      <Tag size={12} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* 6. Node Delete */}
-                <div className="pt-4 border-t border-border/40">
-                  <button
-                    onClick={() => deleteNode(activeNode.id)}
-                    className="w-full py-2 bg-destructive/10 hover:bg-destructive hover:text-destructive-foreground text-destructive border border-destructive/20 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95"
-                  >
-                    <Trash2 size={13} /> Delete Node from Map
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center italic text-muted-foreground/60 pt-10 text-xs">
-                No node selected. Click on a node in the mapping canvas to view and edit its logical properties.
-              </div>
-            )}
-          </div>
-        </aside>
+      {/* Embedded Right Sidebar: Argument Inspector */}
+      {isInspectorOpen && (
+        <div className="w-80 border-l border-border bg-card/45 h-full z-10 shrink-0">
+          <DialogueMapperInspector />
+        </div>
       )}
 
       {contextMenu && (

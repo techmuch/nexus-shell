@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create, StoreApi, UseBoundStore } from 'zustand';
 import { Node, Edge, Connection, MarkerType } from 'reactflow';
 
 export type IbisNodeType = 'question' | 'idea' | 'pro' | 'con' | 'note' | 'decision' | 'link' | 'image' | 'map';
@@ -22,6 +22,8 @@ interface DialogueMappingState {
   edges: Edge[];
   selectedNodeId: string | null;
   layoutHistory: Node<IDialogueNodeData>[][];
+  autoLayoutMode: 'vertical' | 'horizontal' | 'freeform';
+  setAutoLayoutMode: (mode: 'vertical' | 'horizontal' | 'freeform') => void;
   setNodes: (nodes: Node<IDialogueNodeData>[]) => void;
   setEdges: (edges: Edge[]) => void;
   setSelectedNodeId: (id: string | null) => void;
@@ -41,175 +43,21 @@ interface DialogueMappingState {
   exportMap: () => string;
 }
 
-// Preload a sample IBIS Argumentation map
-const initialNodes: Node<IDialogueNodeData>[] = [
-  {
-    id: 'node-1',
-    type: 'ibisNode',
-    position: { x: 500, y: 50 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-1',
-      type: 'question',
-      title: 'Which communication model should we use for real-time state sync?',
-      description: 'We need to keep client workbench layouts synchronized with low overhead.',
-      tags: ['architecture', 'sync'],
-      author: 'admin',
-      timestamp: new Date().toLocaleString(),
-      status: 'pending',
-    },
-  },
-  {
-    id: 'node-2',
-    type: 'ibisNode',
-    position: { x: 200, y: 250 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-2',
-      type: 'idea',
-      title: 'WebSockets with a custom state protocol',
-      description: 'Persistent bi-directional connection using JSON framing.',
-      tags: ['websockets', 'low-latency'],
-      author: 'engineer-1',
-      timestamp: new Date().toLocaleString(),
-      status: 'pending',
-    },
-  },
-  {
-    id: 'node-3',
-    type: 'ibisNode',
-    position: { x: 50, y: 450 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-3',
-      type: 'pro',
-      title: 'Extremely low latency (sub-10ms)',
-      description: 'Ideal for frequent slider drags or text syncing.',
-      tags: ['performance'],
-      author: 'engineer-1',
-      timestamp: new Date().toLocaleString(),
-    },
-  },
-  {
-    id: 'node-4',
-    type: 'ibisNode',
-    position: { x: 350, y: 450 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-4',
-      type: 'con',
-      title: 'Requires sticky sessions on load balancers',
-      description: 'Increases backend routing complexity.',
-      tags: ['deployment'],
-      author: 'devops',
-      timestamp: new Date().toLocaleString(),
-    },
-  },
-  {
-    id: 'node-5',
-    type: 'ibisNode',
-    position: { x: 800, y: 250 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-5',
-      type: 'idea',
-      title: 'Server-Sent Events (SSE) with HTTP/2 multiplexing',
-      description: 'Uni-directional push channel paired with standard POST actions.',
-      tags: ['sse', 'http2'],
-      author: 'engineer-2',
-      timestamp: new Date().toLocaleString(),
-      status: 'accepted',
-    },
-  },
-  {
-    id: 'node-6',
-    type: 'ibisNode',
-    position: { x: 650, y: 450 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-6',
-      type: 'pro',
-      title: 'Automatic reconnection out-of-the-box',
-      description: 'Managed by browser standard EventSource API.',
-      tags: ['reliability'],
-      author: 'engineer-2',
-      timestamp: new Date().toLocaleString(),
-    },
-  },
-  {
-    id: 'node-7',
-    type: 'ibisNode',
-    position: { x: 950, y: 450 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-7',
-      type: 'note',
-      title: 'SSE Benchmark Study link: web.dev/sse',
-      description: 'Shows lower battery consumption on mobile devices compared to WebSockets.',
-      tags: ['reference'],
-      author: 'researcher',
-      timestamp: new Date().toLocaleString(),
-    },
-  },
-  {
-    id: 'node-8',
-    type: 'ibisNode',
-    position: { x: 1250, y: 450 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-8',
-      type: 'link',
-      title: 'IBIS Methodology Reference',
-      description: 'Wikipedia overview of Issue-Based Information Systems (IBIS) dialogue mapping.',
-      tags: ['methodology', 'reference'],
-      author: 'admin',
-      timestamp: new Date().toLocaleString(),
-      url: 'https://en.wikipedia.org/wiki/Issue-Based_Information_System',
-    },
-  },
-  {
-    id: 'node-9',
-    type: 'ibisNode',
-    position: { x: 1100, y: 250 },
-    width: 240,
-    height: 182,
-    data: {
-      id: 'node-9',
-      type: 'image',
-      title: 'Architecture Network Diagram',
-      description: 'High-tech topology visual reference for workbench systems.',
-      tags: ['architecture', 'visual'],
-      author: 'architect',
-      timestamp: new Date().toLocaleString(),
-    },
-  },
-];
+// Export a default fallback for non-map-specific usages if needed
+export let globalFallbackStore: UseBoundStore<StoreApi<DialogueMappingState>> | null = null;
 
-const initialEdges: Edge[] = [
-  { id: 'edge-1-2', source: 'node-1', target: 'node-2', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
-  { id: 'edge-2-3', source: 'node-2', target: 'node-3', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
-  { id: 'edge-2-4', source: 'node-2', target: 'node-4', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
-  { id: 'edge-1-5', source: 'node-1', target: 'node-5', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
-  { id: 'edge-5-6', source: 'node-5', target: 'node-6', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
-  { id: 'edge-5-7', source: 'node-5', target: 'node-7', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
-  { id: 'edge-1-8', source: 'node-1', target: 'node-8', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
-  { id: 'edge-5-9', source: 'node-5', target: 'node-9', type: 'straight', style: { stroke: '#64748b', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' } },
-];
+const storeRegistry = new Map<string, UseBoundStore<StoreApi<DialogueMappingState>>>();
 
-export const useDialogueMappingStore = create<DialogueMappingState>((set, get) => ({
-  nodes: initialNodes,
-  edges: initialEdges,
-  selectedNodeId: null,
-  layoutHistory: [],
-  connectionError: null,
+export const getMapStore = (mapId: string): UseBoundStore<StoreApi<DialogueMappingState>> => {
+  if (!storeRegistry.has(mapId)) {
+    const newStore = create<DialogueMappingState>((set, get) => ({
+      nodes: [],
+      edges: [],
+      selectedNodeId: null,
+      layoutHistory: [],
+      autoLayoutMode: 'freeform',
+      setAutoLayoutMode: (mode) => set({ autoLayoutMode: mode }),
+      connectionError: null,
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -328,6 +176,14 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
         selectedNodeId: id,
       };
     });
+
+    const mode = get().autoLayoutMode;
+    if (mode !== 'freeform') {
+      // Delay slightly to ensure ReactFlow receives the new node before layout runs
+      setTimeout(() => {
+        get().triggerAutoLayout(mode);
+      }, 10);
+    }
   },
 
   updateNodeData: (id, updates) => {
@@ -594,4 +450,29 @@ export const useDialogueMappingStore = create<DialogueMappingState>((set, get) =
     const { nodes, edges } = get();
     return JSON.stringify({ nodes, edges }, null, 2);
   },
-}));
+  }));
+  
+  if (!globalFallbackStore) {
+    globalFallbackStore = newStore;
+  }
+  
+  storeRegistry.set(mapId, newStore);
+  }
+  return storeRegistry.get(mapId)!;
+};
+
+// Re-export a hook for backward compatibility if needed, but components should use getMapStore instead.
+export const useDialogueMappingStore: UseBoundStore<StoreApi<DialogueMappingState>> = ((...args: any[]) => {
+  if (!globalFallbackStore) {
+    getMapStore('default');
+  }
+  return (globalFallbackStore as any)(...args);
+}) as any;
+
+// Add a getState method to the wrapper for compatibility
+useDialogueMappingStore.getState = () => {
+  if (!globalFallbackStore) {
+    getMapStore('default');
+  }
+  return globalFallbackStore!.getState();
+};

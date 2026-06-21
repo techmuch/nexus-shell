@@ -1,15 +1,20 @@
 import React from 'react';
 import { ReactFlowProvider } from 'reactflow';
+import { Layout, TabNode } from 'flexlayout-react';
+import 'flexlayout-react/style/light.css';
+import '../../styles/flexlayout-theme.css';
+
 import { DialogueMappingWidget } from '../widgets/DialogueMappingWidget';
 import { ThemeSwitcher } from '../widgets/ThemeSwitcher';
 import { DialogueMapperTitle } from '../widgets/DialogueMapperTitle';
-import { useDialogueMappingStore } from '../../core/services/DialogueMappingService';
+import { ActivityBar } from '../widgets/ActivityBar';
+import { SidebarPane } from '../widgets/SidebarPane';
+import { ProjectPropertiesWidget } from '../widgets/ProjectPropertiesWidget';
 import { useThemeStore } from '../../core/services/ThemeService';
+import { useLayoutStore, dialogueMappingLayoutJson } from '../../core/services/LayoutService';
 import { 
   Settings, 
-  Circle,
-  Database,
-  Grid
+  Circle
 } from 'lucide-react';
 import { UserProfile } from '../widgets/UserProfile';
 import { clsx, type ClassValue } from 'clsx';
@@ -19,11 +24,42 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+
+
 export const DialogueMappingShell: React.FC = () => {
   const { theme } = useThemeStore();
-  const { nodes, edges, selectedNodeId } = useDialogueMappingStore();
+  const { model, setStorageKey, setModel } = useLayoutStore();
 
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
+  React.useEffect(() => {
+    setStorageKey('dialogue-mapping-shell', dialogueMappingLayoutJson);
+  }, [setStorageKey]);
+
+  const handleAddNodeFromLibrary = () => {
+    // If we want library click-to-add, we need to resolve active map.
+    // Left empty for now since drag-and-drop handles this.
+  };
+
+  const factory = (node: TabNode) => {
+    const component = node.getComponent();
+    
+    if (component === "dialogue-canvas" || component === "dialogue-map") {
+      const config = node.getConfig() || {};
+      const mapId = config.mapId;
+      
+      return (
+        <ReactFlowProvider>
+          <DialogueMappingWidget mapId={mapId} />
+        </ReactFlowProvider>
+      );
+    }
+
+    if (component === "project-properties") {
+      const config = node.getConfig() || {};
+      return <ProjectPropertiesWidget projectId={config.projectId} projectName={config.projectName} />;
+    }
+    
+    return null;
+  };
 
   return (
     <div className={cn(
@@ -46,25 +82,27 @@ export const DialogueMappingShell: React.FC = () => {
 
         {/* Right Menu Controls (Theme selector & Profile) */}
         <div className="flex items-center space-x-3 select-none">
-          {/* Theme switcher */}
           <ThemeSwitcher />
-
-
           <UserProfile showName={false} />
         </div>
       </header>
 
-      {/* 2. Main Canvas Workspace */}
-      <div className="flex-1 flex overflow-hidden min-h-0 relative">
-        <ReactFlowProvider>
-          <DialogueMappingWidget />
-        </ReactFlowProvider>
+      {/* 2. Main FlexLayout Workspace */}
+      <div className="flex-1 overflow-hidden min-h-0 relative bg-muted/20 flex flex-row">
+        <ActivityBar />
+        <SidebarPane />
+        <main className="flex-1 overflow-hidden relative">
+          <Layout 
+            model={model} 
+            factory={factory} 
+            onModelChange={(newModel) => setModel(newModel)}
+          />
+        </main>
       </div>
 
       {/* 3. Bottom Status Bar */}
       <footer role="status" aria-label="Dialogue Mapper Status Bar" className="h-7 border-t border-border bg-card flex items-center justify-between px-4 shrink-0 select-none text-[10px] text-muted-foreground/80 font-mono">
         <div className="flex items-center space-x-4">
-          {/* Connection state */}
           <span className="flex items-center gap-1.5 font-semibold">
             <Circle size={8} fill="#22c55e" className="text-emerald-500 animate-pulse" />
             Connected
@@ -72,25 +110,7 @@ export const DialogueMappingShell: React.FC = () => {
 
           <span className="h-3 w-px bg-border/40" />
 
-          {/* Graph stats */}
-          <span className="flex items-center gap-1">
-            <Database size={11} /> Nodes: <strong className="text-foreground">{nodes.length}</strong>
-          </span>
-
-          <span className="flex items-center gap-1">
-            <Grid size={11} /> Links: <strong className="text-foreground">{edges.length}</strong>
-          </span>
-        </div>
-
-        {/* Selected element details */}
-        <div className="flex items-center space-x-3">
-          {selectedNode ? (
-            <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-md max-w-xs truncate">
-              Active Node: <strong className="text-foreground font-mono">{selectedNode.data.title}</strong>
-            </span>
-          ) : (
-            <span className="italic text-muted-foreground/60 text-[9px]">Select a node to inspect argumentation logic</span>
-          )}
+          <span className="italic text-muted-foreground/60 text-[9px]">Workspace Ready</span>
 
           <span className="h-3 w-px bg-border/40" />
 

@@ -8,8 +8,7 @@ import {
   Check, 
   Link2, 
   Image as ImageIcon, 
-  Folder,
-  ChevronLeft
+  Folder
 } from 'lucide-react';
 import { IbisNodeType } from '../../core/services/DialogueMappingService';
 import { clsx, type ClassValue } from 'clsx';
@@ -28,7 +27,6 @@ export interface DialogueMapperLibraryProps {
 
 export const DialogueMapperLibrary: React.FC<DialogueMapperLibraryProps> = ({
   onAddNode,
-  onClose,
   className,
   onDragStart,
 }) => {
@@ -46,18 +44,7 @@ export const DialogueMapperLibrary: React.FC<DialogueMapperLibraryProps> = ({
 
   return (
     <aside className={cn("w-64 border-r border-border bg-card/45 flex flex-col shrink-0 overflow-hidden relative z-10 animate-slide-in-left", className)}>
-      <div className="p-4 border-b border-border bg-muted/15 flex justify-between items-center shrink-0">
-        <span className="text-xs font-extrabold uppercase tracking-wider text-primary font-mono">IBIS Node Library</span>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-secondary text-muted-foreground transition-colors"
-            title="Hide Sidebar"
-          >
-            <ChevronLeft size={14} />
-          </button>
-        )}
-      </div>
+
 
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
         <p className="text-[11px] text-muted-foreground/80 leading-relaxed">

@@ -144,90 +144,7 @@ export const WorkflowMapper: React.FC<WorkflowMapperProps> = ({ setActiveTab }) 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [layoutHistory, handleUndoLayout]);
 
-  const runAutoLayout = (layoutType: 'horizontal' | 'vertical' | 'grid') => {
-    // Save current positions to history
-    setLayoutHistory((prev) => [...prev, nodes.map(n => ({ ...n, position: { ...n.position } }))]);
 
-    let updatedNodes = [...nodes];
-    const spacingX = 260;
-    const spacingY = 140;
-
-    if (layoutType === 'grid') {
-      updatedNodes.sort((a, b) => {
-        const labelA = (a.data?.label as string) || '';
-        const labelB = (b.data?.label as string) || '';
-        return labelA.localeCompare(labelB);
-      });
-      const cols = 3;
-      updatedNodes = updatedNodes.map((node, index) => {
-        const col = index % cols;
-        const row = Math.floor(index / cols);
-        return {
-          ...node,
-          position: {
-            x: 80 + col * spacingX,
-            y: 80 + row * spacingY
-          }
-        };
-      });
-    } else {
-      // Calculate depth levels (ranks) for horizontal / vertical flow
-      const ranks: Record<string, number> = {};
-      nodes.forEach((n) => { ranks[n.id] = 0; });
-
-      // Run distance relaxation on transition edges
-      const transitions = edges.filter((e) => !e.id.includes('inherit'));
-      for (let i = 0; i < nodes.length; i++) {
-        let changed = false;
-        transitions.forEach((edge) => {
-          const u = edge.source;
-          const v = edge.target;
-          if (ranks[u] !== undefined && ranks[v] !== undefined) {
-            if (ranks[v] < ranks[u] + 1) {
-              ranks[v] = ranks[u] + 1;
-              changed = true;
-            }
-          }
-        });
-        if (!changed) break;
-      }
-
-      // Group nodes by computed rank
-      const rankGroups: Record<number, FlowNode[]> = {};
-      nodes.forEach((node) => {
-        const r = ranks[node.id] || 0;
-        if (!rankGroups[r]) rankGroups[r] = [];
-        rankGroups[r].push(node);
-      });
-
-      // Align positions based on rank flow direction
-      updatedNodes = updatedNodes.map((node) => {
-        const rank = ranks[node.id] || 0;
-        const group = rankGroups[rank] || [];
-        const indexInGroup = group.findIndex((n) => n.id === node.id);
-
-        if (layoutType === 'horizontal') {
-          return {
-            ...node,
-            position: {
-              x: 80 + rank * spacingX,
-              y: 80 + indexInGroup * spacingY
-            }
-          };
-        } else {
-          return {
-            ...node,
-            position: {
-              x: 80 + indexInGroup * spacingX,
-              y: 80 + rank * spacingY
-            }
-          };
-        }
-      });
-    }
-
-    updateWorkflow(updatedNodes, edges);
-  };
 
   return (
     <div className="flex-1 h-full w-full bg-card overflow-hidden relative">
@@ -236,10 +153,11 @@ export const WorkflowMapper: React.FC<WorkflowMapperProps> = ({ setActiveTab }) 
         variant="floating"
         dragMode={dragMode}
         onDragModeChange={setDragMode}
-        onLayoutChange={runAutoLayout}
-        onUndo={handleUndoLayout}
-        canUndo={layoutHistory.length > 0}
-        className="absolute top-4 right-4 z-10"
+        autoLayoutMode="freeform"
+        onAutoLayoutModeChange={() => {}}
+        onUndo={() => {}}
+        canUndo={false}
+        className="absolute top-4 right-4 z-50 bg-background/95 shadow-xl border-border/80"
       />
 
       <ReactFlow

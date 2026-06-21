@@ -7,7 +7,7 @@ interface LayoutState {
   storageKey: string;     // The currently active localStorage key
   setModel: (model: Model) => void;
   setStorageKey: (key: string, fallbackLayout?: IJsonModel) => void;
-  addTab: (componentName: string, title?: string) => void;
+  addTab: (componentName: string, title?: string, overrideConfig?: Record<string, any>) => void;
   setTabDirty: (tabId: string, dirty: boolean) => void;
   isTabDirty: (tabId: string) => boolean;
 }
@@ -42,53 +42,15 @@ export const defaultLayout: IJsonModel = {
 
 export const dialogueMappingLayoutJson: IJsonModel = {
   global: { tabEnableClose: true, tabSetEnableMaximize: false, tabSetEnableDivide: true },
-  borders: [
-     {
-       type: "border",
-       location: "left",
-       children: []
-     }
-  ],
+  borders: [],
   layout: {
     type: "row",
     weight: 100,
     children: [
       {
         type: "tabset",
-        weight: 22,
-        children: [
-          {
-            type: "tab",
-            name: "Node Library",
-            component: "dialogue-library"
-          }
-        ]
-      },
-      {
-        type: "tabset",
-        weight: 56,
-        children: [
-          {
-            type: "tab",
-            name: "Dialogue Map",
-            component: "dialogue-map",
-            config: {
-              hideInternalLibrary: true,
-              hideInternalInspector: true
-            }
-          }
-        ]
-      },
-      {
-        type: "tabset",
-        weight: 22,
-        children: [
-          {
-            type: "tab",
-            name: "Argument Inspector",
-            component: "argument-inspector"
-          }
-        ]
+        weight: 100,
+        children: []
       }
     ]
   }
@@ -185,7 +147,7 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
       });
     },
     isTabDirty: (tabId) => get().dirtyTabs.has(tabId),
-    addTab: (componentName, title) => {
+    addTab: (componentName, title, overrideConfig) => {
       const model = get().model;
       const activeTabset = model.getActiveTabset();
       
@@ -198,11 +160,53 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
           console.warn("Failed to get first tabset fallback", e);
         }
       }
+
+      // Merge base config with override config (which may contain the mapId)
+      const baseConfig = componentName === 'dialogue-map'
+        ? { hideInternalLibrary: true, hideInternalInspector: true }
+        : {};
+      const config: Record<string, any> = { ...baseConfig, ...overrideConfig };
+
+      // Prevent duplicate map tabs
+      if (config.mapId) {
+        let existingTabId: string | null = null;
+        model.visitNodes((n) => {
+          if (n.getType() === 'tab') {
+            const tabNode = n as import('flexlayout-react').TabNode;
+            if (tabNode.getConfig()?.mapId === config.mapId) {
+              existingTabId = tabNode.getId();
+            }
+          }
+        });
+
+        if (existingTabId) {
+          model.doAction(Actions.selectTab(existingTabId));
+          return;
+        }
+      }
+
+      // Prevent duplicate project properties tabs
+      if (config.projectId) {
+        let existingTabId: string | null = null;
+        model.visitNodes((n) => {
+          if (n.getType() === 'tab') {
+            const tabNode = n as import('flexlayout-react').TabNode;
+            if (tabNode.getConfig()?.projectId === config.projectId) {
+              existingTabId = tabNode.getId();
+            }
+          }
+        });
+
+        if (existingTabId) {
+          model.doAction(Actions.selectTab(existingTabId));
+          return;
+        }
+      }
   
       if (targetId) {
           model.doAction(
               Actions.addNode(
-                  { type: "tab", component: componentName, name: title || componentName },
+                  { type: "tab", component: componentName, name: title || componentName, config },
                   targetId,
                   DockLocation.CENTER,
                   -1
@@ -211,4 +215,4 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
       }
     }
   }
-})
+});

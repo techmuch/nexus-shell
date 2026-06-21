@@ -79,37 +79,6 @@ export const Interactive: Story = {
       }
     };
 
-    const handleNewItem = (parentId: string, type: 'file' | 'folder') => {
-      const name = window.prompt(`Enter ${type} name:`);
-      if (!name) return;
-
-      const newItem: ITreeNode = {
-        id: Math.random().toString(36).substr(2, 9),
-        label: name,
-        type,
-        isOpen: type === 'folder',
-        children: type === 'folder' ? [] : undefined
-      };
-
-      const addRecursive = (items: ITreeNode[]): ITreeNode[] => {
-        return items.map(item => {
-          if (item.id === parentId) {
-            return {
-              ...item,
-              isOpen: true,
-              children: [...(item.children || []), newItem]
-            };
-          }
-          if (item.children) {
-            return { ...item, children: addRecursive(item.children) };
-          }
-          return item;
-        });
-      };
-
-      setTreeData(addRecursive([...treeData]));
-    };
-
     const handleRename = (nodeId: string) => {
       const newName = window.prompt('Enter new name:');
       if (!newName) return;
@@ -153,8 +122,8 @@ export const Interactive: Story = {
         <TreeWidget 
           data={treeData} 
           onMoveNode={handleMoveNode}
-          onNewFile={(id) => handleNewItem(id, 'file')}
-          onNewFolder={(id) => handleNewItem(id, 'folder')}
+          onNewFile={(parentId: string | null) => console.log('New file in:', parentId)}
+          onNewFolder={(parentId: string | null) => console.log('New folder in:', parentId)}
           onRename={handleRename}
           onDelete={handleDelete}
         />
