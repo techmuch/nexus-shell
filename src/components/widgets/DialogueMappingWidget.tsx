@@ -163,8 +163,8 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
 
   // UI Panels state
   const [dragMode, setDragMode] = useState<'pan' | 'select'>(defaultDragMode);
-  const [isLibraryOpen, setIsLibraryOpen] = useState(true);
-  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(!node?.getConfig()?.hideInternalLibrary);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(!node?.getConfig()?.hideInternalInspector);
 
   // Scoped keydown listener for layout undos and Compendium shortcuts
   useEffect(() => {

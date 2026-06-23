@@ -5,6 +5,8 @@ interface LayoutState {
   model: Model;
   dirtyTabs: Set<string>; // Set of tab IDs with unsaved changes
   storageKey: string;     // The currently active localStorage key
+  disableLocalStorage: boolean;
+  initLayout: (json: any, disableStorage?: boolean) => void;
   setModel: (model: Model) => void;
   setStorageKey: (key: string, fallbackLayout?: IJsonModel) => void;
   addTab: (componentName: string, title?: string, overrideConfig?: Record<string, any>) => void;
@@ -49,8 +51,37 @@ export const dialogueMappingLayoutJson: IJsonModel = {
     children: [
       {
         type: "tabset",
-        weight: 100,
-        children: []
+        weight: 20,
+        children: [
+          {
+            type: "tab",
+            name: "Node Library",
+            component: "dialogue-library"
+          }
+        ]
+      },
+      {
+        type: "tabset",
+        weight: 60,
+        children: [
+          {
+            type: "tab",
+            name: "Dialogue Map",
+            component: "dialogue-map",
+            config: { hideInternalLibrary: true, hideInternalInspector: true }
+          }
+        ]
+      },
+      {
+        type: "tabset",
+        weight: 20,
+        children: [
+          {
+            type: "tab",
+            name: "Argument Inspector",
+            component: "argument-inspector"
+          }
+        ]
       }
     ]
   }
@@ -122,10 +153,25 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
     model: initialModel,
     dirtyTabs: new Set<string>(),
     storageKey: DEFAULT_STORAGE_KEY,
+    disableLocalStorage: false,
+    initLayout: (json, disableStorage) => {
+      let modelToUse: Model;
+      if (json && Object.keys(json).length > 0) {
+        try {
+          modelToUse = Model.fromJson(json);
+        } catch (e) {
+          console.warn("Failed to parse init layout json, using default", e);
+          modelToUse = Model.fromJson(defaultLayout);
+        }
+      } else {
+        modelToUse = Model.fromJson(defaultLayout);
+      }
+      set({ model: modelToUse, disableLocalStorage: disableStorage || false });
+    },
     setModel: (model) => {
       set({ model });
       const key = get().storageKey;
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && !get().disableLocalStorage) {
         try {
           localStorage.setItem(key, JSON.stringify(model.toJson()));
         } catch (e) {
@@ -178,11 +224,27 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
         }
       }
 
-      // Merge base config with override config (which may contain the mapId)
-      const baseConfig = componentName === 'dialogue-map'
-        ? { hideInternalLibrary: true, hideInternalInspector: true }
-        : {};
+      // Base config is empty. standalone views should show internal components
+      const baseConfig = {};
       const config: Record<string, any> = { ...baseConfig, ...overrideConfig };
+
+      // Prevent duplicate generic singleton tabs (Dashboard, Docs)
+      if (['nexus-dashboard', 'nexus-docs'].includes(componentName)) {
+        let existingTabId: string | null = null;
+        model.visitNodes((n) => {
+          if (n.getType() === 'tab') {
+            const tabNode = n as import('flexlayout-react').TabNode;
+            if (tabNode.getComponent() === componentName) {
+              existingTabId = tabNode.getId();
+            }
+          }
+        });
+
+        if (existingTabId) {
+          model.doAction(Actions.selectTab(existingTabId));
+          return;
+        }
+      }
 
       // Prevent duplicate map tabs
       if (config.mapId) {

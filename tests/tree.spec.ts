@@ -2,6 +2,16 @@ import { test, expect } from '@playwright/test';
 
 test.describe('TreeWidget Context Menu', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/projects', async route => {
+      await route.fulfill({ status: 200, json: [
+        { id: 'proj1', name: 'src' },
+        { id: 'proj2', name: 'docs' }
+      ] });
+    });
+    await page.route('**/api/files', async route => {
+      await route.fulfill({ status: 200, json: [] });
+    });
+
     await page.goto('/');
     // Ensure Explorer sidebar is active
     await page.getByLabel('Explorer').click({ force: true });

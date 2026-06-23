@@ -47,9 +47,9 @@ interface DialogueMappingState {
 // Export a default fallback for non-map-specific usages if needed
 export let globalFallbackStore: UseBoundStore<StoreApi<DialogueMappingState>> | null = null;
 
-const storeRegistry = new Map<string, UseBoundStore<StoreApi<DialogueMappingState>>>();
+const storeRegistry = new Map<string | undefined, UseBoundStore<StoreApi<DialogueMappingState>>>();
 
-export const getMapStore = (mapId: string): UseBoundStore<StoreApi<DialogueMappingState>> => {
+export const getMapStore = (mapId?: string): UseBoundStore<StoreApi<DialogueMappingState>> => {
   if (!storeRegistry.has(mapId)) {
     const newStore = create<DialogueMappingState>((set, get) => ({
       nodes: [],

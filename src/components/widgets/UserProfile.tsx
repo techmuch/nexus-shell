@@ -3,6 +3,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { User, LogOut, Settings, Camera, Check, X, Edit2 } from 'lucide-react';
 import { useUserProfileStore } from '../../core/services/UserProfileService';
+import { useLayoutStore } from '../../core/services/LayoutService';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -234,7 +235,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
               {/* Menu Actions */}
               <button
-                onClick={handleAvatarClick}
+                onClick={() => {
+                  setIsOpen(false);
+                  useLayoutStore.getState().addTab('user-profile', 'User Profile');
+                }}
                 className="w-full px-2 py-1.5 hover:bg-accent/60 hover:text-accent-foreground text-left rounded-md text-[11px] font-medium flex items-center gap-2 cursor-pointer transition-colors"
               >
                 <Camera size={12} className="opacity-70" />
@@ -252,7 +256,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               )}
 
               <button
-                onClick={() => alert('Settings menu coming soon')}
+                onClick={() => {
+                  setIsOpen(false);
+                  useLayoutStore.getState().addTab('user-profile', 'User Profile');
+                }}
                 className="w-full px-2 py-1.5 hover:bg-accent/60 hover:text-accent-foreground text-left rounded-md text-[11px] font-medium flex items-center gap-2 cursor-pointer transition-colors border-t border-border/20 pt-2 mt-1"
               >
                 <Settings size={12} className="opacity-70" />

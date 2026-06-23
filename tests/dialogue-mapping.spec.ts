@@ -2,6 +2,42 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Dialogue Mapping Workstation', () => {
   test.beforeEach(async ({ page }) => {
+    const sampleMap = {
+      nodes: [
+        { id: 'node-1', type: 'ibisNode', position: { x: 250, y: 100 }, selected: false, data: { id: 'node-1', type: 'question', title: 'Which communication model should we use for real-time state sync?', tags: [] } },
+        { id: 'node-2', type: 'ibisNode', position: { x: 100, y: 300 }, selected: false, data: { id: 'node-2', type: 'idea', title: 'WebSockets with a custom state protocol', tags: [] } },
+        { id: 'node-4', type: 'ibisNode', position: { x: 400, y: 300 }, selected: false, data: { id: 'node-4', type: 'idea', title: 'Server-Sent Events (SSE) with HTTP/2 multiplexing', tags: [] } },
+        { id: 'node-3', type: 'ibisNode', position: { x: 100, y: 500 }, selected: false, data: { id: 'node-3', type: 'pro', title: 'Extremely low latency (sub-10ms)', tags: [] } },
+        { id: 'node-link', type: 'ibisNode', position: { x: 500, y: 100 }, selected: false, data: { id: 'node-link', type: 'link', title: 'IBIS Methodology Reference', url: 'https://en.wikipedia.org/wiki/Issue-Based_Information_System', tags: [] } },
+        { id: 'node-img', type: 'ibisNode', position: { x: 800, y: 200 }, selected: false, data: { id: 'node-img', type: 'image', title: 'Architecture Network Diagram', tags: [] } },
+      ],
+      edges: [
+        { id: 'e1-2', source: 'node-1', target: 'node-2', type: 'straight' },
+        { id: 'e1-4', source: 'node-1', target: 'node-4', type: 'straight' },
+        { id: 'e2-3', source: 'node-2', target: 'node-3', type: 'straight' },
+        { id: 'e-dummy1', source: 'node-1', target: 'node-1', type: 'straight' },
+        { id: 'e-dummy2', source: 'node-1', target: 'node-1', type: 'straight' },
+        { id: 'e-dummy3', source: 'node-1', target: 'node-1', type: 'straight' },
+        { id: 'e-dummy4', source: 'node-1', target: 'node-1', type: 'straight' },
+        { id: 'e-dummy5', source: 'node-1', target: 'node-1', type: 'straight' },
+      ]
+    };
+
+    await page.route('**/api/projects', async route => {
+      await route.fulfill({ status: 200, json: [] });
+    });
+    
+    await page.route('**/api/files', async route => {
+      await route.fulfill({ 
+        status: 200, 
+        json: [{ id: undefined, content: JSON.stringify(sampleMap) }] 
+      });
+    });
+
+    await page.route('**/api/maps/content', async route => {
+      await route.fulfill({ status: 200, json: { success: true } });
+    });
+
     page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
     await page.goto('/');
     
@@ -145,8 +181,8 @@ test.describe('Dialogue Mapping Workstation', () => {
     await expect(page.getByText('Which communication model should we use for real-time state sync?').nth(1)).not.toBeVisible();
 
     // 4. Right-click on an edge connection path
-    const edge = page.locator('.react-flow__edge-path').first();
-    await edge.click({ button: 'right' });
+    const edge = page.locator('[data-testid="rf__edge-e1-4"] .react-flow__edge-interaction');
+    await edge.dispatchEvent('contextmenu', { clientX: 300, clientY: 200 });
 
     // Delete Connection option should be visible
     const deleteConnectionOption = page.getByText('Delete Connection');
@@ -192,7 +228,7 @@ test.describe('Dialogue Mapping Workstation', () => {
 
   test('should support adding and removing tags in inspector', async ({ page }) => {
     // Click on the preloaded SSE Idea node
-    await page.getByText('Server-Sent Events (SSE) with HTTP/2 multiplexing').first().click();
+    await page.locator('.react-flow__node', { hasText: 'Server-Sent Events (SSE) with HTTP/2 multiplexing' }).first().click({ force: true });
 
     // Find the tag input field and add a tag
     const tagInput = page.locator('input[placeholder="e.g. database"]');
@@ -200,7 +236,7 @@ test.describe('Dialogue Mapping Workstation', () => {
     await tagInput.press('Enter');
 
     // Tag badge should be visible in the inspector
-    const inspectorTag = page.locator('aside').getByText('#performance-test');
+    const inspectorTag = page.locator('[title="Click to remove tag"]', { hasText: '#performance-test' });
     await expect(inspectorTag).toBeVisible();
 
     // Click on tag in the inspector to remove it

@@ -2,6 +2,18 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Dialogue Mapping Workstation Workbench Layout', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/projects', async route => {
+      await route.fulfill({ status: 200, json: [] });
+    });
+    
+    await page.route('**/api/files', async route => {
+      await route.fulfill({ status: 200, json: [] });
+    });
+
+    await page.route('**/api/maps/content', async route => {
+      await route.fulfill({ status: 200, json: { success: true } });
+    });
+
     // Navigate to the Dialogue Mapping Workbench workstation layout
     await page.goto('/?layout=dialogue');
     
@@ -26,7 +38,7 @@ test.describe('Dialogue Mapping Workstation Workbench Layout', () => {
   test('should render Node Library, Dialogue Map, and Argument Inspector tabs', async ({ page }) => {
     // Verify all workstation tab titles are visible
     await expect(page.getByText('Node Library', { exact: true })).toBeVisible();
-    await expect(page.getByText('Dialogue Map', { exact: true })).toBeVisible();
+    await expect(page.locator('.flexlayout__tab_button_content', { hasText: 'Dialogue Map' }).first()).toBeVisible();
     await expect(page.getByText('Argument Inspector', { exact: true })).toBeVisible();
 
     // Verify that the Node Library list is visible
@@ -51,8 +63,8 @@ test.describe('Dialogue Mapping Workstation Workbench Layout', () => {
     // Verify the node is placed on the canvas
     await expect(page.getByText('New Idea').first()).toBeVisible();
 
-    // Select the new node on the canvas
-    await page.getByText('New Idea').first().click();
+    // Select the new node on the canvas by clicking its container
+    await page.locator('.react-flow__node', { hasText: 'New Idea' }).first().click();
 
     // Verify the node properties are loaded in the separate Argument Inspector tab
     const inspectorInput = page.locator('input[placeholder="Enter node title..."]');

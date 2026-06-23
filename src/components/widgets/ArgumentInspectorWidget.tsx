@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { useDialogueMappingStore, IbisNodeType } from '../../core/services/DialogueMappingService';
+import { getMapStore, IbisNodeType } from '../../core/services/DialogueMappingService';
 import { Tag as TagIcon, Trash2 } from 'lucide-react';
 
-export const ArgumentInspectorWidget: React.FC = () => {
+export const ArgumentInspectorWidget: React.FC<{ node?: any }> = ({ node }) => {
+  const mapId = node?.getConfig?.()?.mapId;
+  const useStore = React.useMemo(() => getMapStore(mapId), [mapId]);
   const {
     nodes,
     selectedNodeId,
     updateNodeData,
     deleteNode
-  } = useDialogueMappingStore();
+  } = useStore();
 
   const [newTag, setNewTag] = useState('');
 

@@ -45,7 +45,13 @@ export const DialogueMapperLibrary: React.FC<DialogueMapperLibraryProps> = ({
   return (
     <aside className={cn("w-64 border-r border-border bg-card/45 flex flex-col shrink-0 overflow-hidden relative z-10 animate-slide-in-left", className)}>
 
-
+      {/* Header section required for E2E tests and visual consistency */}
+      <div className="p-4 border-b border-border/50 bg-muted/20 shrink-0">
+        <h2 className="text-sm font-semibold tracking-tight">IBIS Node Library</h2>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          Drag and drop nodes to build reasoning maps.
+        </p>
+      </div>
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
         <p className="text-[11px] text-muted-foreground/80 leading-relaxed">
           Click elements below to add them to your map, then drag handles to link reasoning.

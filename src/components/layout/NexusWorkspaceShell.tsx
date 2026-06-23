@@ -10,6 +10,7 @@ import { NexusWorkspaceTitle } from '../widgets/NexusWorkspaceTitle';
 import { ActivityBar } from '../widgets/ActivityBar';
 import { SidebarPane } from '../widgets/SidebarPane';
 import { ProjectPropertiesWidget } from '../widgets/ProjectPropertiesWidget';
+import { MenuBar } from '../widgets/MenuBar';
 import { useThemeStore } from '../../core/services/ThemeService';
 import { useLayoutStore, dialogueMappingLayoutJson } from '../../core/services/LayoutService';
 import { 
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '../widgets/UserProfile';
 import { clsx, type ClassValue } from 'clsx';
+import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import { twMerge } from 'tailwind-merge';
 
 function cn(...inputs: ClassValue[]) {
@@ -26,13 +28,27 @@ function cn(...inputs: ClassValue[]) {
 
 
 
-export const NexusWorkspaceShell: React.FC = () => {
+export interface NexusWorkspaceShellProps {
+  disableLocalStorage?: boolean;
+  initialLayoutJson?: any;
+  onLayoutChange?: (model: any) => void;
+}
+
+export const NexusWorkspaceShell: React.FC<NexusWorkspaceShellProps> = ({
+  disableLocalStorage,
+  initialLayoutJson,
+  onLayoutChange
+}) => {
   const { theme } = useThemeStore();
-  const { model, setStorageKey, setModel } = useLayoutStore();
+  const { model, setStorageKey, setModel, initLayout } = useLayoutStore();
 
   React.useEffect(() => {
-    setStorageKey('nexus-workspace-shell', dialogueMappingLayoutJson);
-  }, [setStorageKey]);
+    if (initialLayoutJson !== undefined || disableLocalStorage) {
+      initLayout(initialLayoutJson, disableLocalStorage);
+    } else {
+      setStorageKey('nexus-workspace-shell', dialogueMappingLayoutJson);
+    }
+  }, [setStorageKey, initLayout, initialLayoutJson, disableLocalStorage]);
 
   const factory = (node: TabNode) => {
     const component = node.getComponent();
@@ -43,7 +59,7 @@ export const NexusWorkspaceShell: React.FC = () => {
       
       return (
         <ReactFlowProvider>
-          <DialogueMappingWidget mapId={mapId} />
+          <DialogueMappingWidget mapId={mapId} node={node} />
         </ReactFlowProvider>
       );
     }
@@ -51,6 +67,13 @@ export const NexusWorkspaceShell: React.FC = () => {
     if (component === "project-properties") {
       const config = node.getConfig() || {};
       return <ProjectPropertiesWidget projectId={config.projectId} projectName={config.projectName} />;
+    }
+    
+    if (component) {
+      const RegisteredComponent = componentRegistry.get(component);
+      if (RegisteredComponent) {
+        return <RegisteredComponent node={node} />;
+      }
     }
     
     return null;
@@ -63,24 +86,15 @@ export const NexusWorkspaceShell: React.FC = () => {
     )}>
       
       {/* 1. Header Menubar */}
-      <header role="banner" aria-label="Nexus Workspace Menubar" className="h-12 border-b border-border bg-card/65 flex items-center justify-between px-4 shrink-0 select-none backdrop-blur-sm z-30">
-        <NexusWorkspaceTitle />
-
-        {/* Action Menu Options */}
-        <nav role="navigation" aria-label="Shell Menus" className="hidden md:flex items-center space-x-4 text-[11px] font-bold text-muted-foreground">
-          {['File', 'Edit', 'Layout', 'Argumentation', 'Help'].map((menu) => (
-            <button key={menu} className="hover:text-foreground transition-colors cursor-pointer">
-              {menu}
-            </button>
-          ))}
-        </nav>
-
-        {/* Right Menu Controls (Theme selector & Profile) */}
-        <div className="flex items-center space-x-3 select-none">
-          <ThemeSwitcher />
-          <UserProfile showName={false} />
-        </div>
-      </header>
+      <MenuBar 
+        title={<NexusWorkspaceTitle title="NEXUS DIALOGUE MAPPER" subtitle="IBIS Decision & Argumentation Modeling" />}
+        rightContent={
+          <div className="flex items-center space-x-3 select-none z-50">
+            <ThemeSwitcher />
+            <UserProfile showName={false} />
+          </div>
+        }
+      />
 
       {/* 2. Main FlexLayout Workspace */}
       <div className="flex-1 overflow-hidden min-h-0 relative bg-muted/20 flex flex-row">
@@ -90,7 +104,12 @@ export const NexusWorkspaceShell: React.FC = () => {
           <Layout 
             model={model} 
             factory={factory} 
-            onModelChange={(newModel) => setModel(newModel)}
+            onModelChange={(newModel) => {
+              setModel(newModel);
+              if (onLayoutChange) {
+                onLayoutChange(newModel.toJson());
+              }
+            }}
           />
         </main>
       </div>

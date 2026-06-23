@@ -2,6 +2,23 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Artifact Creation Workflow', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/projects', async route => {
+      await route.fulfill({ status: 200, json: [
+        { id: 'proj1', name: 'src' },
+        { id: 'proj2', name: 'docs' }
+      ] });
+    });
+    let files: any[] = [];
+    await page.route('**/api/files', async route => {
+      if (route.request().method() === 'POST') {
+        const body = JSON.parse(route.request().postData() || '{}');
+        files.push({ id: 'new-file-123', name: body.name, type: body.type, project_id: body.project_id, parent_id: body.parent_id });
+        await route.fulfill({ status: 200, json: { success: true } });
+      } else {
+        await route.fulfill({ status: 200, json: files });
+      }
+    });
+
     await page.goto('/');
     // Ensure Explorer sidebar is active
     await page.getByLabel('Explorer').click({ force: true });

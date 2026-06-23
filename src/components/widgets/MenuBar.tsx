@@ -72,7 +72,7 @@ export const MenuBar = ({ title, rightContent }: MenuBarProps) => {
     <header 
       role="banner" 
       aria-label="Application Header" 
-      className={`bg-muted border-b flex items-center justify-between px-4 select-none shrink-0 transition-all ${
+      className={`bg-muted border-b flex items-center justify-between px-4 select-none shrink-0 transition-all z-50 relative ${
         title ? "h-12 bg-card/65 backdrop-blur-sm" : "h-8"
       }`}
     >

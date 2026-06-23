@@ -4,9 +4,22 @@ import { CommandPalette } from './components/widgets/CommandPalette'
 import { UserProfile } from './components/widgets/UserProfile'
 
 import { ThemeSwitcher } from './components/widgets/ThemeSwitcher'
+import { NexusWorkspaceShell } from './components/layout/NexusWorkspaceShell'
 
 function App() {
   useKeyboardShortcuts()
+
+  const queryParams = new URLSearchParams(window.location.search);
+  const layoutParam = queryParams.get('layout');
+
+  if (layoutParam === 'dialogue') {
+    return (
+      <div className="h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
+        <CommandPalette />
+        <NexusWorkspaceShell />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">

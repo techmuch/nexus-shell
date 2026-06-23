@@ -3,10 +3,11 @@ import {
   Trash2, 
   Tag 
 } from 'lucide-react';
-import { useDialogueMappingStore, IbisNodeType } from '../../core/services/DialogueMappingService';
+import { getMapStore, IbisNodeType } from '../../core/services/DialogueMappingService';
 
-export const DialogueMapperInspector: React.FC = () => {
-  const { nodes, updateNodeData, deleteNode } = useDialogueMappingStore();
+export const DialogueMapperInspector: React.FC<{ mapId?: string }> = ({ mapId }) => {
+  const useStore = React.useMemo(() => getMapStore(mapId), [mapId]);
+  const { nodes, updateNodeData, deleteNode } = useStore();
   
   const selectedNodes = nodes.filter((n) => n.selected);
   const activeNode = selectedNodes.length === 1 ? selectedNodes[0] : null;
@@ -33,6 +34,9 @@ export const DialogueMapperInspector: React.FC = () => {
 
   return (
     <div className="w-full h-full bg-card/45 flex flex-col overflow-hidden relative font-sans text-foreground">
+      <div className="p-3 border-b border-border bg-card flex items-center shrink-0">
+        <h3 className="font-bold text-sm tracking-tight">Argument Inspector</h3>
+      </div>
       <div className="flex-1 p-4 overflow-y-auto space-y-4 select-text">
         {selectedNodes.length > 1 ? (
           <div className="text-center italic text-muted-foreground/60 pt-10 text-xs space-y-2">
