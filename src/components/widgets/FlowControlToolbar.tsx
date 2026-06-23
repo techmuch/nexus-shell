@@ -138,111 +138,116 @@ export const FlowControlToolbar: React.FC<FlowControlToolbarProps> = ({
 
   // Header Variant (inline styling for headers)
   return (
-    <div className={cn("flex items-center space-x-3 text-foreground font-sans", className)}>
-      {onToggleLibrary && (
-        <button
-          onClick={onToggleLibrary}
-          className={cn(
-            "p-1.5 rounded flex items-center justify-center transition-colors active:scale-95",
-            isLibraryOpen ? "bg-primary/20 text-primary" : "hover:bg-accent text-muted-foreground hover:text-foreground"
-          )}
-          title="Toggle Node Library"
-        >
-          <PanelLeft size={16} />
-        </button>
-      )}
-
-
-      {onDragModeChange && dragMode && (
-        <div className="flex items-center border border-border/80 rounded p-0.5 bg-muted/20">
+    <div className={cn("flex items-center justify-between text-foreground font-sans w-full", className)}>
+      <div className="flex items-center justify-start min-w-[40px]">
+        {onToggleLibrary && (
           <button
-            onClick={() => onDragModeChange('pan')}
+            onClick={onToggleLibrary}
             className={cn(
-              "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
-              dragMode === 'pan'
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "hover:bg-accent text-muted-foreground hover:text-foreground"
+              "p-1.5 rounded flex items-center justify-center transition-colors active:scale-95",
+              isLibraryOpen ? "bg-primary/20 text-primary" : "hover:bg-accent text-muted-foreground hover:text-foreground"
             )}
-            title="Pan Mode"
+            title="Toggle Node Library"
           >
-            <Hand size={11} /> Pan
+            <PanelLeft size={16} />
           </button>
-          <button
-            onClick={() => onDragModeChange('select')}
-            className={cn(
-              "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
-              dragMode === 'select'
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "hover:bg-accent text-muted-foreground hover:text-foreground"
-            )}
-            title="Box Select Mode"
-          >
-            <MousePointer size={11} /> Select
-          </button>
-        </div>
-      )}
-
-      <div className="flex items-center border border-border/80 rounded p-0.5 bg-muted/20">
-        <button
-          onClick={() => onAutoLayoutModeChange('vertical')}
-          className={cn(
-            "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
-            autoLayoutMode === 'vertical'
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "hover:bg-accent text-muted-foreground hover:text-foreground"
-          )}
-          title="Vertical Auto-layout"
-        >
-          <Sparkles size={11} className={autoLayoutMode === 'vertical' ? "text-primary-foreground" : "text-primary"} /> Vertical
-        </button>
-        <button
-          onClick={() => onAutoLayoutModeChange('horizontal')}
-          className={cn(
-            "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
-            autoLayoutMode === 'horizontal'
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "hover:bg-accent text-muted-foreground hover:text-foreground"
-          )}
-          title="Horizontal Auto-layout"
-        >
-          Horizontal
-        </button>
-        <button
-          onClick={() => onAutoLayoutModeChange('freeform')}
-          className={cn(
-            "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
-            autoLayoutMode === 'freeform'
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "hover:bg-accent text-muted-foreground hover:text-foreground"
-          )}
-          title="Freeform Manual Layout"
-        >
-          Freeform
-        </button>
+        )}
       </div>
 
-      {canUndo && (
-        <button
-          onClick={onUndo}
-          className="p-1.5 rounded hover:bg-accent text-foreground border border-border/80 flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
-          title="Undo Last Move or Layout Action"
-        >
-          <RotateCcw size={12} /> Undo Layout
-        </button>
-      )}
+      <div className="flex items-center space-x-3">
+        {onDragModeChange && dragMode && (
+          <div className="flex items-center border border-border/80 rounded p-0.5 bg-muted/20">
+            <button
+              onClick={() => onDragModeChange('pan')}
+              className={cn(
+                "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
+                dragMode === 'pan'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "hover:bg-accent text-muted-foreground hover:text-foreground"
+              )}
+              title="Pan Mode"
+            >
+              <Hand size={11} /> Pan
+            </button>
+            <button
+              onClick={() => onDragModeChange('select')}
+              className={cn(
+                "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
+                dragMode === 'select'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "hover:bg-accent text-muted-foreground hover:text-foreground"
+              )}
+              title="Box Select Mode"
+            >
+              <MousePointer size={11} /> Select
+            </button>
+          </div>
+        )}
 
-      {onToggleInspector && (
-        <button
-          onClick={onToggleInspector}
-          className={cn(
-            "p-1.5 rounded flex items-center justify-center transition-colors active:scale-95",
-            isInspectorOpen ? "bg-primary/20 text-primary" : "hover:bg-accent text-muted-foreground hover:text-foreground"
-          )}
-          title="Toggle Argument Inspector"
-        >
-          <PanelRight size={16} />
-        </button>
-      )}
+        <div className="flex items-center border border-border/80 rounded p-0.5 bg-muted/20">
+          <button
+            onClick={() => onAutoLayoutModeChange('vertical')}
+            className={cn(
+              "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
+              autoLayoutMode === 'vertical'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "hover:bg-accent text-muted-foreground hover:text-foreground"
+            )}
+            title="Vertical Auto-layout"
+          >
+            <Sparkles size={11} className={autoLayoutMode === 'vertical' ? "text-primary-foreground" : "text-primary"} /> Vertical
+          </button>
+          <button
+            onClick={() => onAutoLayoutModeChange('horizontal')}
+            className={cn(
+              "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
+              autoLayoutMode === 'horizontal'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "hover:bg-accent text-muted-foreground hover:text-foreground"
+            )}
+            title="Horizontal Auto-layout"
+          >
+            Horizontal
+          </button>
+          <button
+            onClick={() => onAutoLayoutModeChange('freeform')}
+            className={cn(
+              "px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-all active:scale-95",
+              autoLayoutMode === 'freeform'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "hover:bg-accent text-muted-foreground hover:text-foreground"
+            )}
+            title="Freeform Manual Layout"
+          >
+            Freeform
+          </button>
+        </div>
+
+        {canUndo && (
+          <button
+            onClick={onUndo}
+            className="p-1.5 rounded hover:bg-accent text-foreground border border-border/80 flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
+            title="Undo Last Move or Layout Action"
+          >
+            <RotateCcw size={12} /> Undo Layout
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-center justify-end min-w-[40px]">
+        {onToggleInspector && (
+          <button
+            onClick={onToggleInspector}
+            className={cn(
+              "p-1.5 rounded flex items-center justify-center transition-colors active:scale-95",
+              isInspectorOpen ? "bg-primary/20 text-primary" : "hover:bg-accent text-muted-foreground hover:text-foreground"
+            )}
+            title="Toggle Argument Inspector"
+          >
+            <PanelRight size={16} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };
