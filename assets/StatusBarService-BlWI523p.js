@@ -1,1 +1,0 @@
-import{c as s}from"./index-B2XhonKX.js";const o=s(r=>({widgets:[],setWidgets:t=>r({widgets:t}),addWidget:t=>r(i=>({widgets:[...i.widgets,t].sort((e,d)=>(d.priority||0)-(e.priority||0))})),removeWidget:t=>r(i=>({widgets:i.widgets.filter(e=>e.id!==t)})),updateWidget:(t,i)=>r(e=>({widgets:e.widgets.map(d=>d.id===t?{...d,...i}:d)}))}));export{o as u};

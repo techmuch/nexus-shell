@@ -1,0 +1,1 @@
+import{c as r}from"./index-BXm_c4be.js";const t=r(o=>({isOpen:!1,history:["Welcome to Nexus Shell Terminal v0.1.0",'Type "help" for a list of commands.'],setOpen:e=>o({isOpen:e}),toggle:()=>o(e=>({isOpen:!e.isOpen})),addHistory:e=>o(s=>({history:[...s.history,e]})),clearHistory:()=>o({history:[]})}));export{t as u};
