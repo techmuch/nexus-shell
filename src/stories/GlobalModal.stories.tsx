@@ -4,7 +4,7 @@ import { GlobalModal } from '../components/widgets/GlobalModal';
 import { useModalStore } from '../core/services/ModalStoreService';
 
 const meta: Meta<typeof GlobalModal> = {
-  title: 'Widgets/GlobalModal',
+  title: 'Widgets/Shell/GlobalModal',
   component: GlobalModal,
   parameters: {
     layout: 'centered',
