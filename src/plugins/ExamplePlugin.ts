@@ -1,6 +1,7 @@
 import { IPlugin } from '../core/registry/PluginRegistry';
 import { commandRegistry } from '../core/registry/CommandRegistry';
 import { menuRegistry } from '../core/registry/MenuRegistry';
+import { useModalStore } from '../core/services/ModalStoreService';
 
 export const ExamplePlugin: IPlugin = {
   id: 'plugin-example',
@@ -11,7 +12,7 @@ export const ExamplePlugin: IPlugin = {
       id: 'plugin.hello',
       label: 'Plugin Hello',
       execute: () => {
-        alert('Hello from Example Plugin!');
+        useModalStore.getState().openAlert('Hello from Example Plugin!');
       },
     });
 

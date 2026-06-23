@@ -72,3 +72,4 @@ Use your background task monitor to periodically check `dev-server.log` and `sto
 - **Tailwind Purging Safeguard:** Overrides for third-party component libraries must be defined *outside* Tailwind's `@layer` directives in `index.css`.
 - **DOM-Aware Listeners:** Window-level keydown listeners must perform DOM visibility checks (e.g., `offsetParent === null`) to abort execution if inside an inactive/hidden tab.
 - **Security:** Ensure credentials and tokens are never checked into git. Keep sensitive files gitignored.
+- **No Native Browser Prompts:** Never use `window.prompt`, `window.confirm`, or `alert`. They block automations. Always use the async Global Modal (`useModalStore`).

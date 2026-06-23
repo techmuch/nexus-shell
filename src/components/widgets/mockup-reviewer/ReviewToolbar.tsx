@@ -11,6 +11,7 @@ import {
   Undo 
 } from 'lucide-react';
 import { useMockupReviewStore } from '../../../core/services/MockupReviewService';
+import { useModalStore } from '../../../core/services/ModalStoreService';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -96,8 +97,8 @@ export const ReviewToolbar: React.FC<ReviewToolbarProps> = ({
           <>
             {/* Clear Canvas */}
             <button
-              onClick={() => {
-                if (window.confirm("Clear all drawings from this revision?")) {
+              onClick={async () => {
+                if (await useModalStore.getState().openConfirm("Clear all drawings from this revision?")) {
                   activeVersion.annotations
                     .filter((a) => a.type !== 'comment')
                     .forEach((a) => deleteAnnotation(activeView.id, activeVersion.id, a.id));

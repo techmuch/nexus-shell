@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Folder, Users, Share2, Save, Settings } from 'lucide-react';
+import { useModalStore } from '../../core/services/ModalStoreService';
 // Cleaned unused styling hooks
 
 interface ProjectPropertiesProps {
@@ -25,10 +26,10 @@ export const ProjectPropertiesWidget: React.FC<ProjectPropertiesProps> = ({ proj
         })
       });
       if (res.ok) {
-        alert('Successfully shared project!');
+        useModalStore.getState().openAlert('Successfully shared project!');
         setShareUser('');
       } else {
-        alert('Failed to share project. Verify username exists and you have owner rights.');
+        useModalStore.getState().openAlert('Failed to share project. Verify username exists and you have owner rights.', 'Share Error');
       }
     } catch (e) {
       console.error(e);
@@ -43,9 +44,9 @@ export const ProjectPropertiesWidget: React.FC<ProjectPropertiesProps> = ({ proj
         body: JSON.stringify({ id: projectId, name })
       });
       if (res.ok) {
-        alert('Successfully renamed project!');
+        useModalStore.getState().openAlert('Successfully renamed project!');
       } else {
-        alert('Failed to rename project.');
+        useModalStore.getState().openAlert('Failed to rename project.', 'Rename Error');
       }
     } catch (e) {
       console.error(e);

@@ -8,6 +8,7 @@ import { useChatStore } from './services/ChatService';
 import { useThemeStore, ThemeType } from './services/ThemeService';
 import { useStatusBarStore } from './services/StatusBarService';
 import { useTerminalStore } from './services/TerminalService';
+import { useModalStore } from './services/ModalStoreService';
 import { ExamplePlugin } from '../plugins/ExamplePlugin';
 import { Files, Search, GitGraph, Plug, GitBranch, Bell, MessageCircle, Terminal as TerminalIcon } from "lucide-react";
 import { FilesSidebar } from '../components/widgets/FilesSidebar';
@@ -115,7 +116,7 @@ export const initializeShell = async () => {
     {
       command: 'help',
       description: 'Show available commands',
-      execute: () => alert('Available commands: /help, /clear, /theme [light|dark|gt]'),
+      execute: () => useModalStore.getState().openAlert('Available commands: /help, /clear, /theme [light|dark|gt]'),
     },
     {
       command: 'clear',
@@ -134,7 +135,7 @@ export const initializeShell = async () => {
         if (['light', 'dark', 'gt'].includes(theme)) {
           useThemeStore.getState().setTheme(theme);
         } else {
-          alert('Usage: /theme [light|dark|gt]');
+          useModalStore.getState().openAlert('Usage: /theme [light|dark|gt]');
         }
       },
     },
@@ -173,7 +174,7 @@ export const initializeShell = async () => {
     id: 'nexus.about',
     label: 'About Nexus Shell',
     keybinding: 'Control+H',
-    execute: () => alert('Nexus-Shell Framework v0.1.0\nProfessional-grade Workbench UI'),
+    execute: () => useModalStore.getState().openAlert('Nexus-Shell Framework v0.1.0\nProfessional-grade Workbench UI'),
   });
 
   // Register Core Menus

@@ -19,6 +19,7 @@ import 'reactflow/dist/style.css';
 import { Plus, Trash2, Edit2, ArrowLeft, Save, GripVertical, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useModalStore } from '../../core/services/ModalStoreService';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -432,7 +433,7 @@ export const AgentManager: React.FC<AgentManagerProps> = ({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this agent?')) return;
+    if (!await useModalStore.getState().openConfirm('Are you sure you want to delete this agent?')) return;
     if (onDeleteAgent) {
       try {
         await onDeleteAgent(id);
@@ -451,12 +452,12 @@ export const AgentManager: React.FC<AgentManagerProps> = ({
         if (saved) {
           setCurrentAgent(saved);
         }
-        alert('Agent saved successfully!');
+        useModalStore.getState().openAlert('Agent saved successfully!');
       } catch (e) {
         console.error('Save failed', e);
       }
     } else {
-      alert('Save operation not supported via props.');
+      useModalStore.getState().openAlert('Save operation not supported via props.');
     }
   };
 

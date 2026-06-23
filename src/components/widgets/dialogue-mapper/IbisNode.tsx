@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import sampleDiagram from './sample_diagram.png';
 import { useDialogueMappingStore, IDialogueNodeData, IbisNodeType } from '../../../core/services/DialogueMappingService';
+import { useModalStore } from '../../../core/services/ModalStoreService';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -276,7 +277,7 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
           <button
             onClick={(e) => {
               e.stopPropagation();
-              alert(`Navigating to nested dialogue map: "${data.title || 'Sub-Map'}"...`);
+              useModalStore.getState().openAlert(`Navigating to nested dialogue map: "${data.title || 'Sub-Map'}"...`);
             }}
             className="w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/25 border border-indigo-500/30 hover:border-indigo-500/50 rounded-lg text-[10px] font-bold text-indigo-400 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
           >

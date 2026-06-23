@@ -14,6 +14,7 @@ import { useChatStore, ISlashCommand } from '../../core/services/ChatService'
 import { useStatusBarStore, IStatusBarWidget } from '../../core/services/StatusBarService'
 import { menuRegistry, IMenuItem } from '../../core/registry/MenuRegistry'
 import { componentRegistry } from '../../core/registry/ComponentRegistry'
+import { useModalStore } from '../../core/services/ModalStoreService'
 import { useEffect } from 'react'
 
 interface ShellLayoutProps {
@@ -89,11 +90,14 @@ export const ShellLayout = ({
     if (action.type === Actions.DELETE_TAB) {
       const node = model.getNodeById(action.data.node) as TabNode;
       if (node && isTabDirty(node.getId())) {
-        if (!window.confirm(`Tab "${node.getName()}" has unsaved changes. Are you sure you want to close it?`)) {
-          return undefined; // Cancel the close action
-        }
-        // If confirmed, clean up the dirty state
-        setTabDirty(node.getId(), false);
+        useModalStore.getState().openConfirm(`Tab "${node.getName()}" has unsaved changes. Are you sure you want to close it?`).then((confirmed) => {
+          if (confirmed) {
+            // Clean up the dirty state first so the next doAction doesn't trigger the modal again
+            setTabDirty(node.getId(), false);
+            model.doAction(action);
+          }
+        });
+        return undefined; // Cancel the original close action synchronously
       }
     }
     return action;

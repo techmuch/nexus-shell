@@ -5,6 +5,7 @@ import { UserProfile } from './components/widgets/UserProfile'
 
 import { ThemeSwitcher } from './components/widgets/ThemeSwitcher'
 import { NexusWorkspaceShell } from './components/layout/NexusWorkspaceShell'
+import { GlobalModal } from './components/widgets/GlobalModal'
 
 function App() {
   useKeyboardShortcuts()
@@ -15,6 +16,7 @@ function App() {
   if (layoutParam === 'dialogue') {
     return (
       <div className="h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
+        <GlobalModal />
         <CommandPalette />
         <NexusWorkspaceShell />
       </div>
@@ -23,6 +25,7 @@ function App() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
+      <GlobalModal />
       <CommandPalette />
       <ShellLayout 
         rightMenuBarContent={

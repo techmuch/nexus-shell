@@ -15,6 +15,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { useMockupReviewStore } from '../../../core/services/MockupReviewService';
 import { FlowControlToolbar } from '../FlowControlToolbar';
+import { useModalStore } from '../../../core/services/ModalStoreService';
 
 interface WorkflowMapperProps {
   setActiveTab: (tab: 'workflow' | 'review' | 'implementation') => void;
@@ -48,9 +49,10 @@ export const WorkflowMapper: React.FC<WorkflowMapperProps> = ({ setActiveTab }) 
   );
 
   const onConnect = useCallback(
-    (params: Connection) => {
-      const choice = window.prompt(
-        "Select Connection Type:\n1. User Transition (default)\n2. Base Template Inheritance"
+    async (params: Connection) => {
+      const choice = await useModalStore.getState().openPrompt(
+        "Select Connection Type:\n1. User Transition (default)\n2. Base Template Inheritance",
+        "1"
       );
       if (choice === null) return; // User cancelled
 
@@ -71,7 +73,7 @@ export const WorkflowMapper: React.FC<WorkflowMapperProps> = ({ setActiveTab }) 
           updateWorkflow(nodes, addEdge(newEdge, edges));
         }
       } else {
-        const label = window.prompt("Enter transition label (optional):") || "";
+        const label = await useModalStore.getState().openPrompt("Enter transition label (optional):") || "";
         const newEdge = {
           ...params,
           label,
@@ -91,8 +93,8 @@ export const WorkflowMapper: React.FC<WorkflowMapperProps> = ({ setActiveTab }) 
   };
 
   const handleEdgeDoubleClick = useCallback(
-    (_event: React.MouseEvent, edge: FlowEdge) => {
-      const newLabel = window.prompt("Edit Transition Label:", (edge.label as string) || "");
+    async (_event: React.MouseEvent, edge: FlowEdge) => {
+      const newLabel = await useModalStore.getState().openPrompt("Edit Transition Label:", (edge.label as string) || "");
       if (newLabel !== null) {
         const updatedEdges = edges.map((e) => {
           if (e.id === edge.id) {
