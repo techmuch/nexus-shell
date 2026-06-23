@@ -19,7 +19,7 @@ export { DialogueMapperLibraryWidget } from './components/widgets/DialogueMapper
 export { ArgumentInspectorWidget } from './components/widgets/ArgumentInspectorWidget';
 export { DialogueMapperLibrary, type DialogueMapperLibraryProps } from './components/widgets/DialogueMapperLibrary';
 export { FlowControlToolbar, type FlowControlToolbarProps } from './components/widgets/FlowControlToolbar';
-export { NexusWorkspaceShell } from './components/layout/NexusWorkspaceShell';
+export { NexusWorkspaceShell, type NexusWorkspaceShellProps } from './components/layout/NexusWorkspaceShell';
 export { ThemeSwitcher, type ThemeSwitcherProps } from './components/widgets/ThemeSwitcher';
 export { NexusWorkspaceTitle, type NexusWorkspaceTitleProps } from './components/widgets/NexusWorkspaceTitle';
 export { useDialogueMappingStore, type IDialogueNodeData, type IbisNodeType } from './core/services/DialogueMappingService';

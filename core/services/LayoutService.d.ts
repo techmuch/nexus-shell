@@ -4,6 +4,8 @@ interface LayoutState {
     model: Model;
     dirtyTabs: Set<string>;
     storageKey: string;
+    disableLocalStorage: boolean;
+    initLayout: (json: any, disableStorage?: boolean) => void;
     setModel: (model: Model) => void;
     setStorageKey: (key: string, fallbackLayout?: IJsonModel) => void;
     addTab: (componentName: string, title?: string, overrideConfig?: Record<string, any>) => void;

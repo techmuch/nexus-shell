@@ -54,6 +54,6 @@ interface DialogueMappingState {
     exportMap: () => string;
 }
 export declare let globalFallbackStore: UseBoundStore<StoreApi<DialogueMappingState>> | null;
-export declare const getMapStore: (mapId: string) => UseBoundStore<StoreApi<DialogueMappingState>>;
+export declare const getMapStore: (mapId?: string) => UseBoundStore<StoreApi<DialogueMappingState>>;
 export declare const useDialogueMappingStore: UseBoundStore<StoreApi<DialogueMappingState>>;
 export {};
