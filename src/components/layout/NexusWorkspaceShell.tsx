@@ -87,7 +87,7 @@ export const NexusWorkspaceShell: React.FC<NexusWorkspaceShellProps> = ({
       
       {/* 1. Header Menubar */}
       <MenuBar 
-        title={<NexusWorkspaceTitle title="NEXUS DIALOGUE MAPPER" subtitle="IBIS Decision & Argumentation Modeling" />}
+        title={<NexusWorkspaceTitle title="NEXUS RESEARCH" subtitle="Knowledge Modeler & Argumentation Workbench" />}
         rightContent={
           <div className="flex items-center space-x-3 select-none z-50">
             <ThemeSwitcher />

@@ -18,13 +18,13 @@ test.describe('Dialogue Mapping Workstation Workbench Layout', () => {
     await page.goto('/?layout=dialogue');
     
     // Wait for the workbench layout to load
-    await expect(page.getByText('NEXUS DIALOGUE MAPPER')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('NEXUS RESEARCH')).toBeVisible({ timeout: 5000 });
   });
 
   test('should load the header title, theme switcher, and user profile', async ({ page }) => {
     // Verify Dialogue Mapper branding title
-    await expect(page.getByText('NEXUS DIALOGUE MAPPER')).toBeVisible();
-    await expect(page.getByText('IBIS Decision & Argumentation Modeling')).toBeVisible();
+    await expect(page.getByText('NEXUS RESEARCH')).toBeVisible();
+    await expect(page.getByText('Knowledge Modeler & Argumentation Workbench')).toBeVisible();
 
     // Verify Theme Switcher buttons
     await expect(page.getByRole('button', { name: 'Light', exact: true })).toBeVisible();

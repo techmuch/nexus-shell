@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { menuRegistry, IMenuItem } from '../../core/registry/MenuRegistry';
 import { commandRegistry } from '../../core/registry/CommandRegistry';
 import { ChevronRight } from 'lucide-react';
+import { MenuBarSearch } from './MenuBarSearch';
 
 interface MenuBarProps {
   title?: React.ReactNode;
@@ -76,13 +77,13 @@ export const MenuBar = ({ title, rightContent }: MenuBarProps) => {
         title ? "h-12 bg-card/65 backdrop-blur-sm" : "h-8"
       }`}
     >
-      <div className="flex items-center">
+      <div className="flex items-center flex-1">
         {title !== undefined ? (
-          title
+          <div className="mr-12 flex items-center shrink-0">{title}</div>
         ) : (
-          <div className="font-semibold mr-6 text-sm">Nexus Shell</div>
+          <div className="font-semibold mr-6 text-sm shrink-0">Nexus Shell</div>
         )}
-        <nav role="navigation" aria-label="Main Menu" className="flex space-x-1 text-sm">
+        <nav role="navigation" aria-label="Main Menu" className="flex space-x-1 text-sm shrink-0">
           {Object.entries(menus).map(([name, items]) => (
             <div key={name} className="relative group">
               <div className="cursor-pointer hover:bg-accent hover:text-accent-foreground px-3 py-1 rounded text-xs">
@@ -92,10 +93,15 @@ export const MenuBar = ({ title, rightContent }: MenuBarProps) => {
             </div>
           ))}
         </nav>
+
+        {/* Embedded Menubar Search Widget */}
+        <div className="ml-8 w-60 md:w-72 relative hidden sm:block">
+          <MenuBarSearch />
+        </div>
       </div>
       
       {rightContent && (
-        <div className="flex items-center">
+        <div className="flex items-center ml-4 shrink-0">
           {rightContent}
         </div>
       )}

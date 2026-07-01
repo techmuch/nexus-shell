@@ -32,14 +32,15 @@ test.describe('TreeWidget Context Menu', () => {
     const srcFolder = page.locator('div').filter({ hasText: /^src$/ }).first();
     await srcFolder.click({ button: 'right', force: true });
     
-    // Handle the confirmation dialog
-    let dialogMessage = '';
-    page.on('dialog', async dialog => {
-      dialogMessage = dialog.message();
-      await dialog.dismiss(); 
-    });
-    
     await page.getByText('Delete').click();
-    expect(dialogMessage).toBeTruthy();
+
+    // Verify the custom GlobalModal is visible
+    const modal = page.locator('[role="dialog"]');
+    await expect(modal).toBeVisible();
+    await expect(modal.getByText('Delete this item?')).toBeVisible();
+
+    // Dismiss by clicking Cancel
+    await modal.getByRole('button', { name: 'Cancel' }).click();
+    await expect(modal).not.toBeVisible();
   });
 });

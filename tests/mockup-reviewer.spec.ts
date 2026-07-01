@@ -296,12 +296,6 @@ test.describe('Mockup Reviewer Drawing', () => {
     // 1. Switch back to Workflow Mapper tab
     await page.getByRole('button', { name: 'Workflow Mapper' }).first().click();
 
-    // 2. Set up prompt response to choose inheritance connection (option '2')
-    page.once('dialog', async dialog => {
-      expect(dialog.message()).toContain('Select Connection Type');
-      await dialog.accept('2'); // Choose inheritance
-    });
-
     // 3. Drag connection from Dashboard Overview source to Login Portal target
     const childNode = page.locator('.react-flow__node', { hasText: 'Dashboard Overview' });
     const parentNode = page.locator('.react-flow__node', { hasText: 'Login Portal' });
@@ -313,6 +307,14 @@ test.describe('Mockup Reviewer Drawing', () => {
     await page.mouse.down();
     await targetHandle.hover();
     await page.mouse.up();
+
+    // Handle custom prompt modal
+    const modal = page.locator('[role="dialog"]');
+    await expect(modal).toBeVisible();
+    await expect(modal.getByText('Select Connection Type')).toBeVisible();
+    const promptInput = modal.locator('input[type="text"]');
+    await promptInput.fill('2'); // Choose inheritance
+    await modal.getByRole('button', { name: 'Confirm' }).click();
 
     // 4. Double click Dashboard Overview node to navigate to reviewer
     await childNode.dblclick();

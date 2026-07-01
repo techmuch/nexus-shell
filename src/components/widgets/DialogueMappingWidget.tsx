@@ -26,6 +26,7 @@ import {
 
 import { getMapStore, IbisNodeType, IDialogueNodeData } from '../../core/services/DialogueMappingService';
 import { IbisNode } from './dialogue-mapper/IbisNode';
+import { DialogueMapRepository } from '../../core/services/dialogue-mapper/DialogueMapRepository';
 import { ContextMenu, IContextMenuItem } from './ContextMenu';
 import { FlowControlToolbar } from './FlowControlToolbar';
 import { DialogueMapperLibrary } from './DialogueMapperLibrary';
@@ -95,26 +96,21 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    (window as any).reactFlowInstance = reactFlowInstance;
+    return () => {
+      if ((window as any).reactFlowInstance === reactFlowInstance) {
+        delete (window as any).reactFlowInstance;
+      }
+    };
+  }, [reactFlowInstance]);
+
   // Initial Data Load
   useEffect(() => {
     let mounted = true;
     const loadMap = async () => {
       try {
-        const res = await fetch('/api/files');
-        const files = await res.json();
-        
-        const findContent = (arr: any[]): string | null => {
-           for (const f of arr) {
-             if (f.id === mapId) return f.content;
-             if (f.children) {
-               const found = findContent(f.children);
-               if (found) return found;
-             }
-           }
-           return null;
-        };
-        
-        const content = findContent(files || []);
+        const content = await DialogueMapRepository.loadMap(mapId);
         if (content && mounted) {
           useStore.getState().importMap(content);
         }
@@ -130,14 +126,7 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
   useEffect(() => {
     const handler = setTimeout(() => {
       if (nodes.length > 0 || edges.length > 0) {
-        fetch('/api/maps/content', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: mapId,
-            content: JSON.stringify({ nodes, edges })
-          })
-        }).catch(console.error);
+        DialogueMapRepository.saveMap(mapId, nodes, edges).catch(console.error);
       }
     }, 2000);
     return () => clearTimeout(handler);

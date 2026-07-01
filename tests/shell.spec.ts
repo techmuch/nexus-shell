@@ -68,18 +68,16 @@ test('prompts before closing dirty tab', async ({ page }) => {
   await page.getByText('Mark as Dirty').click();
   await expect(page.getByText('This tab will now prompt')).toBeVisible();
 
-  // Try to close the tab - handle the confirm dialog
-  let dialogMessage = '';
-  page.on('dialog', async dialog => {
-    dialogMessage = dialog.message();
-    await dialog.accept(); // Confirmed closing
-  });
-
   // Click the 'x' on the Welcome tab
-  // FlexLayout 'x' buttons are usually close to the tab name
   await page.locator('.flexlayout__tab_button_trailing').first().click();
 
-  expect(dialogMessage).toContain('unsaved changes');
+  // Verify the custom GlobalModal is visible
+  const modal = page.locator('[role="dialog"]');
+  await expect(modal).toBeVisible();
+  await expect(modal.getByText('unsaved changes')).toBeVisible();
+
+  // Confirm closing the tab by clicking the confirm button
+  await modal.getByRole('button', { name: 'Confirm' }).click();
   
   // Welcome tab should be gone
   await expect(page.getByText('Start by exploring')).not.toBeVisible();

@@ -1,5 +1,6 @@
 import { create, StoreApi, UseBoundStore } from 'zustand';
 import { Node, Edge, Connection, MarkerType } from 'reactflow';
+import { layoutDialogueNodes } from './dialogue-mapper/DialogueLayoutEngine';
 
 export type IbisNodeType = 'question' | 'idea' | 'pro' | 'con' | 'note' | 'decision' | 'link' | 'image' | 'map';
 
@@ -308,104 +309,8 @@ export const getMapStore = (mapId?: string): UseBoundStore<StoreApi<DialogueMapp
 
   triggerAutoLayout: (direction) => {
     get().recordHistory();
-    const { nodes } = get();
-
-    // Topological Layout algorithm
-    // 1. Find root nodes (nodes with 0 incoming edges)
-    const incomingEdgeCounts: Record<string, number> = {};
-    nodes.forEach((n) => {
-      incomingEdgeCounts[n.id] = 0;
-    });
-    get().edges.forEach((e) => {
-      if (incomingEdgeCounts[e.target] !== undefined) {
-        incomingEdgeCounts[e.target]++;
-      }
-    });
-
-    // 2. BFS to resolve layering/depth
-    const levels: Record<string, number> = {};
-    const queue: string[] = [];
-    nodes.forEach((n) => {
-      if (incomingEdgeCounts[n.id] === 0) {
-        levels[n.id] = 0;
-        queue.push(n.id);
-      }
-    });
-
-    // Fallback if there are cycles: initialize all unassigned nodes to level 0
-    if (queue.length === 0 && nodes.length > 0) {
-      levels[nodes[0].id] = 0;
-      queue.push(nodes[0].id);
-    }
-
-    while (queue.length > 0) {
-      const currentId = queue.shift()!;
-      const currentLevel = levels[currentId] || 0;
-      
-      const outgoingEdges = get().edges.filter((e) => e.source === currentId);
-      outgoingEdges.forEach((e) => {
-        const nextId = e.target;
-        const nextLevel = levels[nextId];
-        if (nextLevel === undefined || nextLevel < currentLevel + 1) {
-          levels[nextId] = currentLevel + 1;
-          queue.push(nextId);
-        }
-      });
-    }
-
-    // Group nodes by levels
-    const nodesByLevel: Record<number, string[]> = {};
-    nodes.forEach((n) => {
-      const lvl = levels[n.id] !== undefined ? levels[n.id] : 0;
-      if (!nodesByLevel[lvl]) {
-        nodesByLevel[lvl] = [];
-      }
-      nodesByLevel[lvl].push(n.id);
-    });
-
-    // Calculate layout coordinates
-    const spacingX = 320;
-    const spacingY = 250;
-
-    const newNodes = nodes.map((node) => {
-      const lvl = levels[node.id] !== undefined ? levels[node.id] : 0;
-      const levelNodes = nodesByLevel[lvl];
-      const index = levelNodes.indexOf(node.id);
-      const totalInLevel = levelNodes.length;
-
-      let position = { x: node.position.x, y: node.position.y };
-
-      if (direction === 'vertical') {
-        // Center-aligned tree layout
-        const offset = ((totalInLevel - 1) * spacingX) / 2;
-        position = {
-          x: 400 + index * spacingX - offset,
-          y: 50 + lvl * spacingY,
-        };
-      } else if (direction === 'horizontal') {
-        // Left-to-right hierarchy layout
-        const offset = ((totalInLevel - 1) * spacingY) / 2;
-        position = {
-          x: 50 + lvl * spacingX,
-          y: 300 + index * spacingY - offset,
-        };
-      } else if (direction === 'grid') {
-        // Grid organization
-        const cols = 3;
-        const col = index % cols;
-        const row = Math.floor(index / cols);
-        position = {
-          x: 50 + col * spacingX + lvl * 100,
-          y: 50 + row * spacingY + lvl * 150,
-        };
-      }
-
-      return {
-        ...node,
-        position,
-      };
-    });
-
+    const { nodes, edges } = get();
+    const newNodes = layoutDialogueNodes(nodes, edges, direction);
     set({ nodes: newNodes });
   },
 
