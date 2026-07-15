@@ -1,0 +1,68 @@
+import { Meta, Canvas, Controls } from '@storybook/blocks';
+import * as DialogueMappingWidgetStories from './DialogueMappingWidget.stories';
+
+<Meta of={DialogueMappingWidgetStories} />
+
+# 💬 DialogueMappingWidget
+
+`DialogueMappingWidget` is a node-based interactive canvas for IBIS (Issue-Based Information System) argumentation mapping. Powered by React Flow, it provides a comprehensive workspace where users can visually model discussions, weigh choices, and map logical flows.
+
+---
+
+## 🎨 Interactive Preview
+
+### Dark Theme
+<Canvas of={DialogueMappingWidgetStories.DarkTheme} />
+
+### Light Theme
+<Canvas of={DialogueMappingWidgetStories.LightTheme} />
+
+---
+
+## 📋 Properties
+
+Below are the props accepted by the `DialogueMappingWidget` component:
+
+<Controls />
+
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `mapId` | `string` | **Required** | The unique identifier of the dialog map. Used to retrieve and save state from storage. |
+| `defaultDragMode` | `'pan' \| 'select'` | `'select'` | Sets whether dragging the canvas pans the viewport or highlights multiple nodes. |
+| `node` | `TabNode` | `undefined` | Optional reference to the host FlexLayout `TabNode` wrapper, providing visibility context. |
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+The canvas provides powerful built-in shortcuts for high-speed modeling:
+- **`Q` or `?`**: Add a **Question** node.
+- **`A` or `!`**: Add an **Idea** (Answer) node.
+- **`P` or `+`**: Add a **Pro** argument node.
+- **`C` or `-`**: Add a **Con** argument node.
+- **`N`**: Add a **Note** node.
+- **`D`**: Add a **Decision** node.
+- **`Cmd + Z` / `Ctrl + Z`**: Undo the latest node positioning change.
+- **`Arrow Keys`**: Navigate selection between nodes.
+
+---
+
+## 🛠️ Integration Example
+
+Here is how you can render the `DialogueMappingWidget` within your application layout:
+
+```tsx
+import React from 'react';
+import { DialogueMappingWidget } from 'nexus-shell';
+
+export default function AnalysisBoard() {
+  return (
+    <div className="theme-dark h-[600px] w-full border border-border rounded-lg overflow-hidden">
+      <DialogueMappingWidget 
+        mapId="cyber-defense-strategy-2026"
+        defaultDragMode="select"
+      />
+    </div>
+  );
+}
+```

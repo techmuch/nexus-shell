@@ -1,0 +1,96 @@
+import { Meta, Canvas, Controls } from '@storybook/blocks';
+import * as ShellLayoutStories from './ShellLayout.stories';
+
+<Meta of={ShellLayoutStories} />
+
+# 🖥️ ShellLayout
+
+`ShellLayout` is the master application layout container and IDE-like workbench for Nexus Shell. It provides a modular, dockable tab interface powered by `flexlayout-react`, wrapped with key workspace features like a MenuBar, StatusBar, ActivityBar, Sidebars, Terminal, and Chat panels.
+
+It implements Inversion of Control (IoC), accepting dynamic configuration via properties and automatically bootstrapping the global registries.
+
+---
+
+## 🎨 Interactive Preview
+
+<Canvas of={ShellLayoutStories.Default} />
+
+---
+
+## 📋 Properties
+
+Below are the props accepted by the `ShellLayout` component:
+
+<Controls />
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `title` | `React.ReactNode` | Title or branding elements to display on the top-left of the MenuBar. |
+| `rightMenuBarContent` | `React.ReactNode` | Custom widgets or profile components placed on the top-right of the MenuBar. |
+| `panels` | `ISidebarPanel[]` | Panels to register in the collapsible left Sidebar. |
+| `slashCommands` | `ISlashCommand[]` | Custom commands to register into the Chat Pane CLI input context. |
+| `menuConfig` | `Record<string, IMenuItem[]>` | Map of menu titles to lists of action items in the top MenuBar. |
+| `statusBarConfig` | `IStatusBarWidget[]` | Custom indicators and buttons aligned in the footer StatusBar. |
+| `layoutModel` | `Model` | Optional pre-configured `flexlayout-react` model instance for custom layouts. |
+
+---
+
+## 🛠️ Integration Example
+
+Here is how you can initialize the `ShellLayout` with custom Sidebar panels, custom Menu commands, and a customized Status Bar:
+
+```tsx
+import React from 'react';
+import { ShellLayout, UserProfile, ThemeSwitcher } from 'nexus-shell';
+import { Home, Settings, Info } from 'lucide-react';
+
+const myPanels = [
+  {
+    id: 'overview',
+    label: 'Overview',
+    icon: Home,
+    component: () => <div className="p-4">Overview Dashboard</div>
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: Settings,
+    component: () => <div className="p-4">App Settings</div>
+  }
+];
+
+const myMenus = {
+  'File': [
+    { id: 'file.new', label: 'New Project', commandId: 'project.new' },
+    { id: 'file.sep', label: '---' },
+    { id: 'file.exit', label: 'Exit Application', commandId: 'app.exit' }
+  ],
+  'Help': [
+    { id: 'help.about', label: 'About', commandId: 'app.about' }
+  ]
+};
+
+export default function WorkspaceApp() {
+  return (
+    <ShellLayout
+      title={<span className="font-bold text-primary">Nexus Workbench</span>}
+      panels={myPanels}
+      menuConfig={myMenus}
+      rightMenuBarContent={
+        <div className="flex items-center space-x-2">
+          <ThemeSwitcher />
+          <UserProfile showName={false} />
+        </div>
+      }
+      statusBarConfig={[
+        {
+          id: 'status-info',
+          label: 'System OK',
+          icon: Info,
+          alignment: 'left'
+        }
+      ]}
+    />
+  );
+}
+```

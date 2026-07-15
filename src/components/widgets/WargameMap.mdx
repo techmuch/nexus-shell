@@ -1,0 +1,99 @@
+import { Meta, Canvas, Controls } from '@storybook/blocks';
+import * as WargameMapStories from './WargameMap.stories';
+
+<Meta of={WargameMapStories} />
+
+# 🗺️ WargameMap
+
+`WargameMap` is a high-performance tactical map widget designed for command-and-control visualizations and tactical simulation. Powered by MapLibre, React Map GL, and Deck.gl, it renders custom MapLibre basemaps overlaid with dynamic NATO MIL-STD-2525 unit symbols, H3 hexagonal grid tiles, and directional attack arcs.
+
+---
+
+## 🎨 Interactive Preview
+
+<Canvas of={WargameMapStories.Default} />
+
+---
+
+## 📋 Properties
+
+Below are the props accepted by the `WargameMap` component:
+
+<Controls />
+
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `initialViewState` | `object` | `{ longitude: 35.8, latitude: 48.8, zoom: 6, pitch: 45, bearing: 0 }` | The default viewport settings for the map camera. |
+| `units` | `UnitData[]` | `[]` | Array of troop elements containing coordinates and MIL-STD-2525 symbol identifiers. |
+| `attacks` | `AttackData[]` | `[]` | Supply routes or artillery trajectory coordinates. |
+| `terrainHexes` | `TerrainHexData[]` | `[]` | H3 hexagon indexes colorized by control ownership status (`friendly`, `hostile`, `neutral`). |
+| `mapStyle` | `string` | `Positron style URL` | The URL stylesheet of the MapLibre/Carto vector tile server. |
+| `className` | `string` | `undefined` | Custom styling classes to apply to the map wrapper element. |
+
+---
+
+## 🧬 Sub-type Interfaces
+
+```typescript
+export interface UnitData {
+  id: string;
+  sidc: string; // MIL-STD-2525 standard 15-character symbol code
+  coordinates: [number, number]; // [Longitude, Latitude]
+}
+
+export interface AttackData {
+  id: string;
+  origin: [number, number]; // [Longitude, Latitude]
+  target: [number, number]; // [Longitude, Latitude]
+}
+
+export interface TerrainHexData {
+  h3Index: string; // Valid H3 cell index (e.g. "841f181ffffffff")
+  owner: 'friendly' | 'hostile' | 'neutral';
+}
+```
+
+---
+
+## 🛠️ Integration Example
+
+```tsx
+import React from 'react';
+import { WargameMap } from 'nexus-shell';
+
+const troops = [
+  {
+    id: 'infantry-hq',
+    sidc: 'SFGP------', // Friendly Infantry HQ
+    coordinates: [35.5, 48.6] as [number, number],
+  },
+  {
+    id: 'hostile-armor',
+    sidc: 'SHGA------', // Hostile Armored unit
+    coordinates: [36.2, 49.1] as [number, number],
+  }
+];
+
+const maneuvers = [
+  {
+    id: 'strike-1',
+    origin: [35.5, 48.6] as [number, number],
+    target: [36.2, 49.1] as [number, number],
+  }
+];
+
+export default function CommandConsole() {
+  return (
+    <div className="h-[600px] w-full border border-border rounded-lg overflow-hidden">
+      <WargameMap 
+        units={troops}
+        attacks={maneuvers}
+        terrainHexes={[
+          { h3Index: '841f181ffffffff', owner: 'friendly' },
+          { h3Index: '841f183ffffffff', owner: 'hostile' }
+        ]}
+      />
+    </div>
+  );
+}
+```

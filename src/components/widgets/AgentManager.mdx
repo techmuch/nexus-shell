@@ -1,0 +1,87 @@
+import { Meta, Canvas, Controls } from '@storybook/blocks';
+import * as AgentManagerStories from './AgentManager.stories';
+
+<Meta of={AgentManagerStories} />
+
+# 🤖 AgentManager
+
+`AgentManager` is a dashboard and visual flow editor for orchestrating AI agents and node-graph pipelines. Built with React Flow, it provides a comprehensive node palette (models, templates, retrievers, lambdas) allowing developers to visually construct multi-agent loops and visual workflows, customize parameter settings in an inspector drawer, and persist agent schemas.
+
+---
+
+## 🎨 Interactive Preview
+
+<Canvas of={AgentManagerStories.Default} />
+
+---
+
+## 📋 Properties
+
+Below are the props accepted by the `AgentManager` component:
+
+<Controls />
+
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `agents` | `Agent[]` | `[]` | List of defined agents to display in the overview dashboard cards. |
+| `onFetchAgents` | `() => void` | `undefined` | Callback fired when the agent list is loaded or needs to refresh. |
+| `onSaveAgent` | `(agent: Partial<Agent>) => Promise<Agent \| void>` | `undefined` | Async handler triggered when an agent is created or saved from the visual flow designer. |
+| `onDeleteAgent` | `(id: string) => Promise<void>` | `undefined` | Async handler triggered when an agent is deleted from the dashboard. |
+| `title` | `string` | `'AI Agents'` | Dashboard panel title header. |
+| `subtitle` | `string` | `'Manage and visually build your AI agents.'` | Dashboard panel description subtitle. |
+| `className` | `string` | `undefined` | Custom styling class to apply to the manager outer layout. |
+
+---
+
+## 🧬 Data Schemas
+
+```typescript
+export interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  schemaJson: string; // Serialized React Flow state (nodes, edges)
+}
+```
+
+---
+
+## 🛠️ Integration Example
+
+```tsx
+import React, { useState } from 'react';
+import { AgentManager, Agent } from 'nexus-shell';
+
+const initialData: Agent[] = [
+  {
+    id: 'summarizer-agent',
+    name: 'Report Summarizer',
+    description: 'Polls incoming reports and outputs concise bullet points.',
+    schemaJson: '{"nodes":[],"edges":[]}'
+  }
+];
+
+export default function BotDeveloperSuite() {
+  const [agents, setAgents] = useState<Agent[]>(initialData);
+
+  const handleSave = async (updated: Partial<Agent>) => {
+    if (updated.id) {
+      setAgents(prev => prev.map(a => a.id === updated.id ? { ...a, ...updated } as Agent : a));
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setAgents(prev => prev.filter(a => a.id !== id));
+  };
+
+  return (
+    <div className="h-screen w-full">
+      <AgentManager 
+        agents={agents}
+        onSaveAgent={handleSave}
+        onDeleteAgent={handleDelete}
+      />
+    </div>
+  );
+}
+```
