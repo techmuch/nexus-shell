@@ -23,15 +23,15 @@ Below are the props accepted by the `ShellLayout` component:
 
 <Controls />
 
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `title` | `React.ReactNode` | Title or branding elements to display on the top-left of the MenuBar. |
-| `rightMenuBarContent` | `React.ReactNode` | Custom widgets or profile components placed on the top-right of the MenuBar. |
-| `panels` | `ISidebarPanel[]` | Panels to register in the collapsible left Sidebar. |
-| `slashCommands` | `ISlashCommand[]` | Custom commands to register into the Chat Pane CLI input context. |
-| `menuConfig` | `Record<string, IMenuItem[]>` | Map of menu titles to lists of action items in the top MenuBar. |
-| `statusBarConfig` | `IStatusBarWidget[]` | Custom indicators and buttons aligned in the footer StatusBar. |
-| `layoutModel` | `Model` | Optional pre-configured `flexlayout-react` model instance for custom layouts. |
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `title` | `React.ReactNode` | `undefined` | Title or branding elements to display on the top-left of the MenuBar. |
+| `rightMenuBarContent` | `React.ReactNode` | `undefined` | Custom widgets or profile components placed on the top-right of the MenuBar. |
+| `panels` | `ISidebarPanel[]` | `undefined` | Panels to register in the collapsible left Sidebar. |
+| `slashCommands` | `ISlashCommand[]` | `undefined` | Custom commands to register into the Chat Pane CLI input context. |
+| `menuConfig` | `Record<string, IMenuItem[]>` | `undefined` | Map of menu titles to lists of action items in the top MenuBar. |
+| `statusBarConfig` | `IStatusBarWidget[]` | `undefined` | Custom indicators and buttons aligned in the footer StatusBar. |
+| `layoutModel` | `Model` | `useLayoutStore().model` | Optional pre-configured `flexlayout-react` model instance for custom layouts. |
 
 ---
 
