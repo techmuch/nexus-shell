@@ -31,6 +31,12 @@ Look for the originating spec, in this order:
 3. A PRD/spec file under `docs/`, `specs/`, or `.scratch/` matching the branch name or feature.
 4. If nothing is found, ask the user where the spec is. If they say there isn't one, the **Spec** sub-agent will skip and report "no spec available".
 
+**Always include global design intent sources if they exist:**
+- `CONTEXT.md` (Domain Glossary)
+- `docs/REQUIREMENTS.md` (Product Specs)
+- `docs/website-requirements.md` (Website Specs)
+- `docs/adr/` (ADRs)
+
 ### 3. Identify the standards sources
 
 Anything in the repo that documents how code should be written, such as `CODING_STANDARDS.md` or `CONTRIBUTING.md`.
@@ -68,8 +74,8 @@ Send a single message with two `Agent` tool calls. Use the `general-purpose` sub
 **Spec sub-agent prompt** — include:
 
 - The diff command and commit list.
-- The path or fetched contents of the spec.
-- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
+- The path or fetched contents of the spec, along with the global design-intent documents (`CONTEXT.md`, `docs/REQUIREMENTS.md`, `docs/website-requirements.md`, and `docs/adr/`).
+- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong; (d) any gaps or contradictions between the implemented solution and the core design intentions documented in CONTEXT.md, docs/REQUIREMENTS.md, docs/website-requirements.md, and docs/adr/. Quote the spec line or design document rule for each finding. Under 400 words."
 
 If the spec is missing, skip the Spec sub-agent and note this in the final report.
 
