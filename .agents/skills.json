@@ -1,0 +1,15 @@
+{
+  "exclude": [
+    "a11y-debugging",
+    "android-cli",
+    "antigravity-guide",
+    "chrome-devtools",
+    "chrome-extensions",
+    "debug-optimize-lcp",
+    "generate-mockups",
+    "google-antigravity-sdk",
+    "memory-leak-debugging",
+    "modern-web-guidance",
+    "troubleshooting"
+  ]
+}
