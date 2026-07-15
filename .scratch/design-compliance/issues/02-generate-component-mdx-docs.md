@@ -1,5 +1,5 @@
 ---
-Status: ready-for-agent
+Status: resolved
 Category: documentation
 ---
 ## Parent
@@ -14,9 +14,9 @@ Generate MDX documentation files (`*.mdx`) for key components: `ShellLayout`, `D
 5. Integration layout code examples.
 
 ## Acceptance criteria
-- [ ] MDX docs authored for the 4 core components and co-located next to them.
-- [ ] Compiles successfully with `npm run build-storybook`.
-- [ ] Verify that docs appear in the Storybook site navigation.
+- [x] MDX docs authored for the 4 core components and co-located next to them.
+- [x] Compiles successfully with `npm run build-storybook`.
+- [x] Verify that docs appear in the Storybook site navigation.
 
 ## Blocked by
 - .scratch/design-compliance/issues/01-colocate-storybook-stories.md
