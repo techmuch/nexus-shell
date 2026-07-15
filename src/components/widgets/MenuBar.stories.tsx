@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { MenuBar } from '../components/widgets/MenuBar';
-import { initializeShell } from '../core/Boot';
-import { menuRegistry } from '../core/registry/MenuRegistry';
+import { MenuBar } from './MenuBar';
+import { initializeShell } from '../../core/Boot';
+import { menuRegistry } from '../../core/registry/MenuRegistry';
 
 // Initialize core for the story
 initializeShell();

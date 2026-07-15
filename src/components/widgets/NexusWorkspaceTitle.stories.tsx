@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { NexusWorkspaceTitle } from '../components/widgets/NexusWorkspaceTitle';
+import { NexusWorkspaceTitle } from './NexusWorkspaceTitle';
 import { Network, Database } from 'lucide-react';
 
 const meta: Meta<typeof NexusWorkspaceTitle> = {

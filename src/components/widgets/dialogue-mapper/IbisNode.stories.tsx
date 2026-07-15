@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import ReactFlow, { Node } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { IbisNode } from '../components/widgets/dialogue-mapper/IbisNode';
-import { IDialogueNodeData } from '../core/services/DialogueMappingService';
+import { IbisNode } from './IbisNode';
+import { IDialogueNodeData } from '../../../core/services/DialogueMappingService';
 
 const nodeTypes = {
   ibisNode: IbisNode,

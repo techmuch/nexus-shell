@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { DialogueMappingWidget } from '../components/widgets/DialogueMappingWidget';
+import { DialogueMappingWidget } from './DialogueMappingWidget';
 
 const meta: Meta<typeof DialogueMappingWidget> = {
   title: 'Widgets/DialogueMapper/DialogueMappingWidget',

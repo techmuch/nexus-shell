@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { MenuBar } from '../components/widgets/MenuBar';
-import { initializeShell } from '../core/Boot';
-import { commandRegistry } from '../core/registry/CommandRegistry';
-import { useFileStore } from '../core/services/FileStoreService';
+import { MenuBar } from './MenuBar';
+import { initializeShell } from '../../core/Boot';
+import { commandRegistry } from '../../core/registry/CommandRegistry';
+import { useFileStore } from '../../core/services/FileStoreService';
 import { useEffect } from 'react';
 import { create } from 'zustand';
 

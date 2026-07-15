@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { DialogueMapperLibrary } from '../components/widgets/DialogueMapperLibrary';
-import { useThemeStore } from '../core/services/ThemeService';
+import { DialogueMapperLibrary } from './DialogueMapperLibrary';
+import { useThemeStore } from '../../core/services/ThemeService';
 
 const meta: Meta<typeof DialogueMapperLibrary> = {
   title: 'Widgets/DialogueMapper/DialogueMapperLibrary',

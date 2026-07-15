@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SearchWidget, ISearchResult } from '../components/widgets/SearchWidget';
+import { SearchWidget, ISearchResult } from './SearchWidget';
 import { File, Folder, Code, Terminal, Globe, Settings } from 'lucide-react';
 import { useState } from 'react';
 

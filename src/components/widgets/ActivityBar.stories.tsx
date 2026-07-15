@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ActivityBar } from '../components/widgets/ActivityBar';
-import { useSidebarStore } from '../core/services/SidebarService';
+import { ActivityBar } from './ActivityBar';
+import { useSidebarStore } from '../../core/services/SidebarService';
 import { Home, User, Bell } from 'lucide-react';
 
 const meta: Meta<typeof ActivityBar> = {

@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ShellLayout } from '../components/layout/ShellLayout';
-import { initializeShell } from '../core/Boot';
+import { ShellLayout } from './ShellLayout';
+import { initializeShell } from '../../core/Boot';
 import { Home, User, Bell, Activity, Info, RefreshCcw } from 'lucide-react';
-import { UserProfile } from '../components/widgets/UserProfile';
+import { UserProfile } from '../widgets/UserProfile';
 
-import { NexusWorkspaceTitle } from '../components/widgets/NexusWorkspaceTitle';
-import { ThemeSwitcher } from '../components/widgets/ThemeSwitcher';
-import { useLayoutStore, dialogueMappingLayoutJson, dialogueMapperMenus } from '../core/services/LayoutService';
+import { NexusWorkspaceTitle } from '../widgets/NexusWorkspaceTitle';
+import { ThemeSwitcher } from '../widgets/ThemeSwitcher';
+import { useLayoutStore, dialogueMappingLayoutJson, dialogueMapperMenus } from '../../core/services/LayoutService';
 
 const meta: Meta<typeof ShellLayout> = {
   title: 'Compositions/ShellLayout',

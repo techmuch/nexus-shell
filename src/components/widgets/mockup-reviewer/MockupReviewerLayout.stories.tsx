@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
-import { WorkflowMapper } from '../components/widgets/mockup-reviewer/WorkflowMapper';
-import { ReviewSidebar } from '../components/widgets/mockup-reviewer/ReviewSidebar';
-import { ReviewToolbar } from '../components/widgets/mockup-reviewer/ReviewToolbar';
-import { MockupReviewWorkspace } from '../components/widgets/mockup-reviewer/MockupReviewWorkspace';
-import { ImplementationPlanWorkspace } from '../components/widgets/mockup-reviewer/ImplementationPlanWorkspace';
-import { ExecutionOverlay } from '../components/widgets/mockup-reviewer/ExecutionOverlay';
+import { WorkflowMapper } from './WorkflowMapper';
+import { ReviewSidebar } from './ReviewSidebar';
+import { ReviewToolbar } from './ReviewToolbar';
+import { MockupReviewWorkspace } from './MockupReviewWorkspace';
+import { ImplementationPlanWorkspace } from './ImplementationPlanWorkspace';
+import { ExecutionOverlay } from './ExecutionOverlay';
 
 const meta: Meta = {
   title: 'Compositions/MockupReviewerLayout',

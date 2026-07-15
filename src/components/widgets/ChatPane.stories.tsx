@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ChatPane } from '../components/widgets/ChatPane';
-import { useRightSidebarStore } from '../core/services/RightSidebarService';
-import { useChatStore } from '../core/services/ChatService';
+import { ChatPane } from './ChatPane';
+import { useRightSidebarStore } from '../../core/services/RightSidebarService';
+import { useChatStore } from '../../core/services/ChatService';
 import { useEffect } from 'react';
 
 const meta: Meta<typeof ChatPane> = {

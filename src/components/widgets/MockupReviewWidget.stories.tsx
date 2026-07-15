@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { MockupReviewWidget } from '../components/widgets/MockupReviewWidget';
+import { MockupReviewWidget } from './MockupReviewWidget';
 
 const meta: Meta<typeof MockupReviewWidget> = {
   title: 'Widgets/General/MockupReviewWidget',

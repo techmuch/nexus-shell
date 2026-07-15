@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { AgentManager, Agent } from '../components/widgets/AgentManager';
+import { AgentManager, Agent } from './AgentManager';
 import { useState } from 'react';
 
 const meta = {

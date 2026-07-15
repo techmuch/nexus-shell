@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { FlowControlToolbar } from '../components/widgets/FlowControlToolbar';
+import { FlowControlToolbar } from './FlowControlToolbar';
 import { useState } from 'react';
-import { useThemeStore } from '../core/services/ThemeService';
+import { useThemeStore } from '../../core/services/ThemeService';
 
 const meta: Meta<typeof FlowControlToolbar> = {
   title: 'Widgets/DialogueMapper/FlowControlToolbar',

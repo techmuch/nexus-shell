@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { TerminalPane } from '../components/widgets/TerminalPane';
-import { useTerminalStore } from '../core/services/TerminalService';
+import { TerminalPane } from './TerminalPane';
+import { useTerminalStore } from '../../core/services/TerminalService';
 import { useEffect } from 'react';
 
 const meta: Meta<typeof TerminalPane> = {

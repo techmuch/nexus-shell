@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CommandPalette } from '../components/widgets/CommandPalette';
-import { initializeShell } from '../core/Boot';
+import { CommandPalette } from './CommandPalette';
+import { initializeShell } from '../../core/Boot';
 
 const meta: Meta<typeof CommandPalette> = {
   title: 'Widgets/Shell/CommandPalette',

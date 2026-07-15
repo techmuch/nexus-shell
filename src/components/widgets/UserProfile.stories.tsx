@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { UserProfile } from '../components/widgets/UserProfile';
+import { UserProfile } from './UserProfile';
 
 const meta: Meta<typeof UserProfile> = {
   title: 'Widgets/Shell/UserProfile',

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { DataGrid, IDataGridColumn } from '../components/widgets/DataGrid';
+import { DataGrid, IDataGridColumn } from './DataGrid';
 import { useState } from 'react';
 import { Play, RotateCcw, CheckCircle, ShieldAlert } from 'lucide-react';
 

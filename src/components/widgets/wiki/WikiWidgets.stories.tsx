@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { WikiNavigator } from '../../components/widgets/wiki/WikiNavigator';
-import { WikiEditor } from '../../components/widgets/wiki/WikiEditor';
-import { WikiHistorySidebar } from '../../components/widgets/wiki/WikiHistorySidebar';
-import { AiCoWriterWorkspace } from '../../components/widgets/wiki/AiCoWriterWorkspace';
-import { WikiChatWidget } from '../../components/widgets/wiki/WikiChatWidget';
-import { SemanticLinkMapper } from '../../components/widgets/wiki/SemanticLinkMapper';
+import { WikiNavigator } from './WikiNavigator';
+import { WikiEditor } from './WikiEditor';
+import { WikiHistorySidebar } from './WikiHistorySidebar';
+import { AiCoWriterWorkspace } from './AiCoWriterWorkspace';
+import { WikiChatWidget } from './WikiChatWidget';
+import { SemanticLinkMapper } from './SemanticLinkMapper';
 
 const meta: Meta = {
   title: 'Widgets/Wiki Modules',

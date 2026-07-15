@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SidebarPane } from '../components/widgets/SidebarPane';
-import { useSidebarStore } from '../core/services/SidebarService';
+import { SidebarPane } from './SidebarPane';
+import { useSidebarStore } from '../../core/services/SidebarService';
 import { Home } from 'lucide-react';
 import { useEffect } from 'react';
 

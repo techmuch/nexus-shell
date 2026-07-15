@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { NexusWorkspaceShell } from '../components/layout/NexusWorkspaceShell';
-import { useThemeStore } from '../core/services/ThemeService';
+import { NexusWorkspaceShell } from './NexusWorkspaceShell';
+import { useThemeStore } from '../../core/services/ThemeService';
 
 const meta: Meta<typeof NexusWorkspaceShell> = {
   title: 'Compositions/NexusWorkspaceShell',

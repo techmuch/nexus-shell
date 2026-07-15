@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { WargameMap } from '../components/widgets/WargameMap';
+import { WargameMap } from './WargameMap';
 import { latLngToCell, gridDisk } from 'h3-js';
 
 const meta = {

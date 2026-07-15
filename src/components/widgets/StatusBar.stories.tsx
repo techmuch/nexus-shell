@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { StatusBar } from '../components/widgets/StatusBar';
-import { useStatusBarStore } from '../core/services/StatusBarService';
+import { StatusBar } from './StatusBar';
+import { useStatusBarStore } from '../../core/services/StatusBarService';
 import { Info, Check } from 'lucide-react';
 
 const meta: Meta<typeof StatusBar> = {

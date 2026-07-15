@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { TreeWidget, ITreeNode } from '../components/widgets/TreeWidget';
+import { TreeWidget, ITreeNode } from './TreeWidget';
 import { useState } from 'react';
 
 const meta: Meta<typeof TreeWidget> = {

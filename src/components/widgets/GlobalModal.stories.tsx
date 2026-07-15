@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
-import { GlobalModal } from '../components/widgets/GlobalModal';
-import { useModalStore } from '../core/services/ModalStoreService';
+import { GlobalModal } from './GlobalModal';
+import { useModalStore } from '../../core/services/ModalStoreService';
 
 const meta: Meta<typeof GlobalModal> = {
   title: 'Widgets/Shell/GlobalModal',
