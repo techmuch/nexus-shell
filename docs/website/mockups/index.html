@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Shell - Registry-Driven React Workbench</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, #1e1b4b 0%, #030712 60%);
+    }
+    h1, h2, h3, .heading-font {
+      font-family: 'Outfit', sans-serif;
+    }
+    .glass {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .neon-glow {
+      box-shadow: 0 0 40px rgba(99, 102, 241, 0.25);
+    }
+  </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col overflow-x-hidden">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 glass border-b border-white/5 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="h-9 w-9 bg-gradient-to-tr from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <span class="heading-font text-white font-extrabold text-xl">N</span>
+      </div>
+      <span class="heading-font text-white font-bold text-xl tracking-tight">Nexus Shell</span>
+    </div>
+    
+    <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-400">
+      <a href="index.html" class="text-white hover:text-white transition">Home</a>
+      <a href="docs.html" class="hover:text-white transition">Documentation</a>
+      <a href="sandbox.html" class="hover:text-white transition">Interactive Sandbox</a>
+      <a href="https://github.com/techmuch/nexus-shell" target="_blank" class="hover:text-white transition">GitHub</a>
+    </nav>
+
+    <div class="flex items-center space-x-4">
+      <a href="docs.html" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-md shadow-md shadow-indigo-600/10 transition">
+        Get Started
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="max-w-7xl mx-auto px-6 pt-16 pb-24 text-center flex-1 flex flex-col items-center justify-center">
+    <div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-400 text-xs font-medium mb-6">
+      <span>🚀 Version 0.1.23 Released</span>
+    </div>
+    
+    <h1 class="text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-none max-w-4xl">
+      The Registry-Driven <br>
+      <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-emerald-400">
+        Workspace Engine
+      </span> for React
+    </h1>
+    
+    <p class="mt-6 text-slate-400 text-base md:text-xl max-w-2xl leading-relaxed">
+      A modular, layout-agnostic frontend framework. Easily declare menus, hotkeys, collapsible panels, and canvas workbenches via Inversion of Control.
+    </p>
+
+    <!-- Buttons -->
+    <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a href="docs.html" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-md shadow-lg shadow-indigo-600/20 transition">
+        Install Library
+      </a>
+      <a href="sandbox.html" class="w-full sm:w-auto glass hover:bg-white/5 text-slate-200 font-semibold px-8 py-3 rounded-md transition">
+        Try Live Demo
+      </a>
+    </div>
+
+    <!-- Live Preview Workspace -->
+    <div class="mt-16 w-full max-w-5xl glass rounded-xl overflow-hidden neon-glow aspect-[16/9] flex flex-col">
+      <!-- Title bar -->
+      <div class="bg-slate-900/90 border-b border-white/5 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="h-3 w-3 rounded-full bg-rose-500"></div>
+          <div class="h-3 w-3 rounded-full bg-amber-500"></div>
+          <div class="h-3 w-3 rounded-full bg-emerald-500"></div>
+          <span class="text-xs text-slate-500 ml-4 font-mono">nexus-workbench-preview</span>
+        </div>
+        <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded border border-white/5">
+          Theme: <span class="text-indigo-400 font-semibold">theme-dark</span>
+        </div>
+      </div>
+      
+      <!-- Shell Contents -->
+      <div class="flex-1 flex overflow-hidden bg-slate-950">
+        <!-- Sidebar items -->
+        <div class="w-12 bg-slate-900/60 border-r border-white/5 flex flex-col items-center py-4 space-y-6 text-slate-500">
+          <div class="text-indigo-500 cursor-pointer p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></div>
+          <div class="hover:text-slate-300 cursor-pointer p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
+          <div class="hover:text-slate-300 cursor-pointer p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg></div>
+        </div>
+
+        <!-- Sidebar Content -->
+        <div class="w-48 bg-slate-900/30 border-r border-white/5 p-4 text-left hidden sm:block">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Workspace Explorer</span>
+          <div class="mt-4 space-y-2 text-xs text-slate-400">
+            <div class="flex items-center space-x-2 text-slate-200 font-medium"><span class="text-indigo-400">📁</span> <span>src/components</span></div>
+            <div class="flex items-center space-x-2 pl-4"><span class="text-slate-500">📄</span> <span>ShellLayout.tsx</span></div>
+            <div class="flex items-center space-x-2 pl-4"><span class="text-slate-500">📄</span> <span>WelcomeTab.tsx</span></div>
+            <div class="flex items-center space-x-2"><span class="text-indigo-400">📁</span> <span>src/core</span></div>
+          </div>
+        </div>
+
+        <!-- Tab Workspace Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+          <!-- Workspace Tabs -->
+          <div class="bg-slate-900/50 border-b border-white/5 flex text-xs">
+            <div class="px-4 py-2.5 bg-slate-950 border-r border-white/5 border-t-2 border-indigo-500 text-white font-medium flex items-center space-x-2">
+              <span>🏠 Welcome</span>
+            </div>
+            <div class="px-4 py-2.5 hover:bg-slate-900 border-r border-white/5 text-slate-400 flex items-center space-x-2 cursor-pointer">
+              <span>🗺️ WargameMap</span>
+            </div>
+          </div>
+          
+          <!-- Tab Body -->
+          <div class="flex-1 p-6 flex flex-col justify-between text-left">
+            <div>
+              <h2 class="text-lg font-bold text-white">Registry-Driven Architecture Initialized</h2>
+              <p class="text-slate-400 text-xs mt-2 max-w-md">
+                This layout matches your project configuration. The system restored your previous workbench layout from storage automatically.
+              </p>
+            </div>
+            
+            <div class="bg-indigo-950/20 border border-indigo-500/20 p-4 rounded-lg flex items-center justify-between">
+              <div class="flex items-center space-x-3 text-xs">
+                <span class="text-indigo-400 text-lg">💡</span>
+                <span class="text-slate-300">Open the Command Palette using <kbd class="bg-slate-800 px-1 py-0.5 rounded border border-white/10 font-mono text-[10px]">Ctrl+K</kbd></span>
+              </div>
+              <button class="bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-semibold px-3 py-1.5 rounded transition">
+                Toggle Palette
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="max-w-7xl mx-auto px-6 py-20 border-t border-white/5">
+    <div class="text-center max-w-3xl mx-auto">
+      <h2 class="text-3xl md:text-4xl font-extrabold text-white">Why Choose Nexus Shell?</h2>
+      <p class="mt-4 text-slate-400 text-sm md:text-base leading-relaxed">
+        Everything you need to build workstation interfaces with Inversion of Control.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+      <div class="glass p-8 rounded-xl hover:translate-y-[-4px] transition duration-300">
+        <div class="h-10 w-10 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-400 text-xl mb-6">🗂️</div>
+        <h3 class="text-lg font-bold text-white">Splittable Layout Engine</h3>
+        <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+          Provides full drag-and-drop dockable split layouts natively powered by flexlayout-react.
+        </p>
+      </div>
+
+      <div class="glass p-8 rounded-xl hover:translate-y-[-4px] transition duration-300">
+        <div class="h-10 w-10 bg-violet-500/10 rounded-lg flex items-center justify-center text-violet-400 text-xl mb-6">⚙️</div>
+        <h3 class="text-lg font-bold text-white">IoC Registry Model</h3>
+        <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+          Add menus, tabs, and hotkeys programmatically from anywhere without editing the container layout.
+        </p>
+      </div>
+
+      <div class="glass p-8 rounded-xl hover:translate-y-[-4px] transition duration-300">
+        <div class="h-10 w-10 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 text-xl mb-6">🎨</div>
+        <h3 class="text-lg font-bold text-white">Contrast-First Themes</h3>
+        <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+          Looks beautiful and remains readable under light, dark, and high-contrast Georgia Tech themes.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="glass border-t border-white/5 px-6 py-8 text-center text-xs text-slate-500 mt-auto">
+    <p>© 2026 Nexus Shell. Built for downstream developers by TechMuch. MIT Licensed.</p>
+  </footer>
+
+</body>
+</html>
