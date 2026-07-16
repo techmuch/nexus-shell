@@ -24,7 +24,7 @@ const mockNode = {
   isVisible: () => true,
 };
 
-const UnifiedWorkbench: React.FC = () => {
+export const UnifiedWorkbench: React.FC = () => {
   return (
     <div className="flex w-screen h-screen bg-background text-foreground overflow-hidden font-sans">
       {/* Left Sidebar: Node Library */}

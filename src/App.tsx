@@ -6,6 +6,7 @@ import { UserProfile } from './components/widgets/UserProfile'
 import { ThemeSwitcher } from './components/widgets/ThemeSwitcher'
 import { NexusWorkspaceShell } from './components/layout/NexusWorkspaceShell'
 import { GlobalModal } from './components/widgets/GlobalModal'
+import { UnifiedWorkbench } from './components/widgets/DialogueMappingComposition.stories'
 
 function App() {
   useKeyboardShortcuts()
@@ -19,6 +20,16 @@ function App() {
         <GlobalModal />
         <CommandPalette />
         <NexusWorkspaceShell />
+      </div>
+    );
+  }
+
+  if (layoutParam === 'composition') {
+    return (
+      <div className="h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col theme-dark">
+        <GlobalModal />
+        <CommandPalette />
+        <UnifiedWorkbench />
       </div>
     );
   }

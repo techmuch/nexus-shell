@@ -2,8 +2,19 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Dialogue Mapping Composition Story', () => {
   test('should support dragging nodes from library to canvas and updating inspector', async ({ page }) => {
-    // Navigate to Storybook story directly
-    await page.goto('http://localhost:6006/iframe.html?id=compositions-dialogue-mapping-workbench--dark-theme&viewMode=story');
+    // Mock API routes
+    await page.route('**/api/projects', async route => {
+      await route.fulfill({ status: 200, json: [] });
+    });
+    await page.route('**/api/files', async route => {
+      await route.fulfill({ status: 200, json: [] });
+    });
+    await page.route('**/api/maps/content', async route => {
+      await route.fulfill({ status: 200, json: { success: true } });
+    });
+
+    // Navigate to layout composition directly via Vite
+    await page.goto('/?layout=composition');
 
     // Wait for the workbench layout to load
     await expect(page.getByText('IBIS Node Library')).toBeVisible({ timeout: 15000 });
