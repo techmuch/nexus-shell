@@ -161,6 +161,30 @@ export const COMPONENTS: ComponentEntry[] = [
     ],
   },
   {
+    slug: 'graph-layout',
+    name: 'useGraphLayout',
+    tagline: 'Auto layout engines, and the escape back to hand placement',
+    category: 'Graph',
+    demoFile: 'Graph',
+    notes: [
+      'A layout is a pure `(nodes, edges) => nodes` function. Three ship — `vertical`, `horizontal` and `grid` — and any function of that shape can be registered alongside or instead.',
+      'There are two kinds of mode. Under an **auto layout** positions come from the engine, and your stored positions are read but never written, so switching back to `freeform` restores the arrangement you had. Under **`freeform`** positions are exactly yours.',
+      '**Dragging a node under an auto layout escapes to freeform.** That is what makes auto layout usable in an editor rather than merely a viewer: you can always grab a node, and the graph stops rearranging itself the moment you do. Pass `escapeOnDrag: false` for a derived visualisation where a stray drag should be ignored.',
+      '`bake()` returns the computed positions so you can write them back — useful for arranging automatically once, then continuing by hand from there.',
+    ],
+    demos: [
+      {
+        export: 'AutoLayout',
+        region: 'layout',
+        title: 'Switching layouts, and dragging out of one',
+        description:
+          'Switch between the three engines, then drag any node — the mode drops to freeform and the node stays put. Bake writes the computed positions back so hand editing continues from the laid-out arrangement.',
+        flush: true,
+        height: '520px',
+      },
+    ],
+  },
+  {
     slug: 'graph-minimap',
     name: 'GraphMiniMap',
     tagline: 'A scaled overview with a viewport indicator',

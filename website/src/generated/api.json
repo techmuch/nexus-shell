@@ -1522,6 +1522,70 @@
       ]
     },
     {
+      "name": "useGraphLayout",
+      "file": "src/components/graph/useGraphLayout.ts",
+      "description": "Apply a layout engine to a graph, with an escape hatch to hand placement.\n\nTwo kinds of mode:\n\n- **An auto layout** — positions come from the engine. Your nodes' own\n  positions are ignored while it is active, but never overwritten, so\n  switching back to freeform restores the arrangement you had.\n- **`freeform`** — positions are yours, exactly as stored.\n\nDragging a node under an auto layout escapes to freeform rather than fighting\nthe engine. That is the behaviour that makes auto layout usable: you can\nalways grab a node, and the graph stops rearranging itself the moment you do.\n\nThe hook derives positions and reports intent; it owns no node data and\nmutates nothing.",
+      "example": "const layout = useGraphLayout({\n  nodes,\n  edges,\n  defaultMode: 'vertical',\n  onNodeMove: (id, position) => setNodes(move(nodes, id, position)),\n});\n\n<GraphCanvas>\n  {layout.nodes.map((node) => (\n    <GraphNode key={node.id} node={node} onMove={layout.onMove}>\n      {label(node)}\n    </GraphNode>\n  ))}\n</GraphCanvas>\n\n// A picker is a few lines of your own UI:\n{[FREEFORM, ...layout.available].map((mode) => (\n  <button key={mode} onClick={() => layout.setMode(mode)}>{mode}</button>\n))}",
+      "props": [
+        {
+          "name": "edges",
+          "required": true,
+          "type": "IGraphEdge[]",
+          "description": "Your edges. Layouts that ignore structure ignore these.",
+          "default": null
+        },
+        {
+          "name": "nodes",
+          "required": true,
+          "type": "IGraphNode[]",
+          "description": "Your nodes. Positions here are the hand-placed ones.",
+          "default": null
+        },
+        {
+          "name": "defaultMode",
+          "required": false,
+          "type": "LayoutMode",
+          "description": "Starting mode when uncontrolled. Defaults to {@link FREEFORM}.",
+          "default": null
+        },
+        {
+          "name": "escapeOnDrag",
+          "required": false,
+          "type": "boolean",
+          "description": "Dragging a node while an auto layout is active switches to freeform,\nkeeping the arrangement as it stood. Defaults to `true`.\n\nTurn it off for a graph whose positions are entirely derived — a\nvisualisation rather than an editor — where a stray drag should be ignored.",
+          "default": "true"
+        },
+        {
+          "name": "layouts",
+          "required": false,
+          "type": "Record<string, GraphLayout>",
+          "description": "Named layouts to offer. Defaults to the bundled `vertical`, `horizontal`\nand `grid`. Spread it to add your own.",
+          "default": null
+        },
+        {
+          "name": "mode",
+          "required": false,
+          "type": "LayoutMode",
+          "description": "Take control of the mode.",
+          "default": null
+        },
+        {
+          "name": "onModeChange",
+          "required": false,
+          "type": "(mode: LayoutMode) => void",
+          "description": "Called whenever the mode changes, including the escape on drag.",
+          "default": null
+        },
+        {
+          "name": "onNodeMove",
+          "required": false,
+          "type": "(id: string, position: IPoint) => void",
+          "description": "Called when a node is moved by hand, so you can persist the position.\n\nWithout it, a drag under an auto layout still escapes to freeform but the\nnode snaps back to where it was — the engine no longer places it, and\nnothing recorded where the pointer left it.",
+          "default": null
+        }
+      ]
+    },
+    {
       "name": "UserProfile",
       "file": "src/components/widgets/UserProfile.tsx",
       "description": "An avatar and identity widget with a dropdown menu, sized for a menu bar's\nright slot.\n\nFully controlled — it owns only its open/editing UI state. The identity comes\nin as `profile`, edits go out through `onProfileChange`, and the menu is\nwhatever you pass as `actions`. It reads no store and prescribes no menu\nitems, so it works the same against a session hook, an auth provider, or\nstatic props.",

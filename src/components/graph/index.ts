@@ -29,6 +29,13 @@ export {
 } from './useGraphKeyboard';
 export { GraphMiniMap, type GraphMiniMapProps } from './GraphMiniMap';
 export {
+  useGraphLayout,
+  FREEFORM,
+  type LayoutMode,
+  type UseGraphLayoutOptions,
+  type UseGraphLayoutResult,
+} from './useGraphLayout';
+export {
   NodePalette,
   readPaletteDrag,
   GRAPH_NODE_MIME,

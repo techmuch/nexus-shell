@@ -135,6 +135,9 @@ shell's own frame and keep every registration working.
 | `GraphMiniMap` | Scaled graph overview with a viewport indicator |
 | `NodePalette` | Drag-to-create and keyboard-to-create node types |
 | `useGraphKeyboard` | Spatial keyboard navigation and editing for a graph |
+| `useGraphLayout` | Auto layout engines, with a freeform escape for hand placement |
+| `layeredLayout` | Layered tree layout in four directions; handles cycles |
+| `gridLayout` | Uniform grid, ignoring edges |
 | `UserProfile` | Avatar and identity widget |
 
 ## Theming

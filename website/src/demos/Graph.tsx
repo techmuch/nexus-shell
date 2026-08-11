@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { Circle, Diamond, Server, Square } from 'lucide-react';
+import { Circle, Diamond, Hand, LayoutGrid, MoveDown, MoveRight, Server, Square } from 'lucide-react';
 import {
   GraphCanvas,
   GraphEdge,
@@ -10,7 +10,9 @@ import {
   nextId,
   readPaletteDrag,
   removeNode,
+  FREEFORM,
   useGraphKeyboard,
+  useGraphLayout,
   type GraphCanvasHandle,
   type IGraphEdge,
   type IGraphNode,
@@ -454,6 +456,113 @@ export const PaletteOrientations = () => {
         </div>
       </section>
     </div>
+  );
+};
+// #endregion
+
+/* -------------------------------------------------------------------------- */
+/* Auto layout and freeform                                                   */
+/* -------------------------------------------------------------------------- */
+
+// #region layout
+/** A pipeline, deliberately arranged badly so a layout has something to fix. */
+const MESSY: IGraphNode[] = [
+  { id: 'ingest', position: { x: 40, y: 300 }, data: { label: 'Ingest' } },
+  { id: 'parse', position: { x: 320, y: 40 }, data: { label: 'Parse' } },
+  { id: 'validate', position: { x: 90, y: 120 }, data: { label: 'Validate' } },
+  { id: 'enrich', position: { x: 520, y: 260 }, data: { label: 'Enrich' } },
+  { id: 'score', position: { x: 260, y: 400 }, data: { label: 'Score' } },
+  { id: 'store', position: { x: 600, y: 60 }, data: { label: 'Store' } },
+];
+
+const MESSY_EDGES: IGraphEdge[] = [
+  { id: 'l1', source: 'ingest', target: 'parse' },
+  { id: 'l2', source: 'ingest', target: 'validate' },
+  { id: 'l3', source: 'parse', target: 'enrich' },
+  { id: 'l4', source: 'validate', target: 'score' },
+  { id: 'l5', source: 'enrich', target: 'store' },
+  { id: 'l6', source: 'score', target: 'store' },
+];
+
+const MODE_ICON: Record<string, typeof Hand> = {
+  [FREEFORM]: Hand,
+  vertical: MoveDown,
+  horizontal: MoveRight,
+  grid: LayoutGrid,
+};
+
+export const AutoLayout = () => {
+  const [nodes, setNodes] = useState(MESSY);
+
+  const layout = useGraphLayout({
+    nodes,
+    edges: MESSY_EDGES,
+    defaultMode: 'vertical',
+    // Without this, dragging still escapes to freeform but the node snaps
+    // back — nothing recorded where the pointer left it.
+    onNodeMove: (id, position) =>
+      setNodes((current) => current.map((n) => (n.id === id ? { ...n, position } : n))),
+  });
+
+  const byId = Object.fromEntries(layout.nodes.map((n) => [n.id, n]));
+
+  return (
+    <GraphCanvas
+      overlay={
+        <div className="absolute left-3 top-3 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur-sm">
+          {/* The picker is your own UI; the library ships the engines and the
+              mode, not the toolbar. */}
+          {[FREEFORM, ...layout.available].map((mode) => {
+            const Icon = MODE_ICON[mode] ?? Hand;
+            return (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => layout.setMode(mode)}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium capitalize transition-colors ${
+                  layout.mode === mode
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Icon size={12} />
+                {mode}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            disabled={!layout.isAuto}
+            onClick={() => setNodes(layout.bake())}
+            title="Write the computed positions back"
+            className="ml-1 rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-40"
+          >
+            Bake
+          </button>
+        </div>
+      }
+    >
+      <GraphEdgeLayer>
+        {MESSY_EDGES.map((edge) => (
+          <GraphEdge
+            key={edge.id}
+            edge={edge}
+            source={byId[edge.source]}
+            target={byId[edge.target]}
+            routing="smoothstep"
+          />
+        ))}
+      </GraphEdgeLayer>
+
+      {layout.nodes.map((node) => (
+        <GraphNode key={node.id} node={node} onMove={layout.onMove}>
+          <div className="flex h-full items-center px-3">
+            <p className="text-sm font-medium">{label(node)}</p>
+          </div>
+        </GraphNode>
+      ))}
+    </GraphCanvas>
   );
 };
 // #endregion

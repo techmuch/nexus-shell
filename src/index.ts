@@ -98,6 +98,15 @@ export { UserProfile, type UserProfileProps, type IUserProfile, type IUserProfil
 
 export * from './components/graph';
 export {
+  BUILT_IN_LAYOUTS,
+  gridLayout,
+  layeredLayout,
+  type GraphLayout,
+  type GridLayoutOptions,
+  type LayeredLayoutOptions,
+  type LayoutDirection,
+} from './lib/layout';
+export {
   DEFAULT_NODE_SIZE,
   IDENTITY_VIEWPORT,
   clampScale,
