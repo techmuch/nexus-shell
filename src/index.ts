@@ -27,7 +27,7 @@
 // The shell — start here
 // ---------------------------------------------------------------------------
 
-export { ShellLayout, type ShellLayoutProps } from './components/layout/ShellLayout';
+export { ShellLayout, ShellLayout as NexusWorkspaceShell, type ShellLayoutProps } from './components/layout/ShellLayout';
 export {
   initializeShell,
   DEFAULT_COMMAND_IDS,
