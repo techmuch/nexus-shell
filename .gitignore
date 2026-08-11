@@ -128,3 +128,12 @@ playwright/.cache/
 
 # Storybook
 storybook-static/
+
+# Local debug scratch
+debug-*.png
+test-debug.png
+inspect_styles.js
+take_screenshot.js
+
+# Playwright (e2e lives under examples/showcase/e2e)
+examples/showcase/e2e/test-results/

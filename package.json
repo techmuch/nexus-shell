@@ -29,30 +29,27 @@
     "build-storybook": "storybook build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test --config examples/showcase/e2e/playwright.config.ts",
+    "e2e:update": "playwright test --config examples/showcase/e2e/playwright.config.ts --update-snapshots"
   },
   "peerDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "@deck.gl/geo-layers": "^9.2.11",
-    "@deck.gl/layers": "^9.2.11",
-    "@deck.gl/react": "^9.2.11",
     "clsx": "^2.1.1",
-    "deck.gl": "^9.2.11",
-    "flexlayout-react": "^0.7.15",
-    "h3-js": "^4.4.0",
-    "lucide-react": "^0.378.0",
-    "maplibre-gl": "^5.20.1",
-    "milsymbol": "^3.0.4",
-    "react-map-gl": "^8.1.0",
-    "react-virtuoso": "^4.18.1",
-    "reactflow": "^11.11.4",
     "tailwind-merge": "^2.3.0",
+    "lucide-react": "^0.378.0",
+    "react-virtuoso": "^4.18.1",
+    "flexlayout-react": "^0.7.15",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@deck.gl/geo-layers": "^9.2.11",
+    "@deck.gl/layers": "^9.2.11",
+    "@deck.gl/react": "^9.2.11",
     "@playwright/test": "^1.58.2",
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-interactions": "^8.6.14",
@@ -69,12 +66,18 @@
     "@typescript-eslint/parser": "^7.8.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.19",
+    "deck.gl": "^9.2.11",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
+    "h3-js": "^4.4.0",
     "jsdom": "^29.1.1",
+    "maplibre-gl": "^5.20.1",
+    "milsymbol": "^3.0.4",
     "playwright": "^1.58.2",
     "postcss": "^8.4.38",
+    "react-map-gl": "^8.1.0",
+    "reactflow": "^11.11.4",
     "storybook": "^8.6.17",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.4.5",
@@ -85,5 +88,20 @@
   "overrides": {
     "react": "$react",
     "react-dom": "$react-dom"
-  }
+  },
+  "description": "React component library for building IDE-style application shells: menu bar, activity bar, sidebar, docking layout, terminal, chat and status bar.",
+  "keywords": [
+    "react",
+    "component-library",
+    "ui",
+    "shell",
+    "ide",
+    "storybook",
+    "tailwind",
+    "vscode"
+  ],
+  "license": "MIT",
+  "sideEffects": [
+    "*.css"
+  ]
 }
