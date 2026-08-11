@@ -1,64 +1,57 @@
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { useThemeStore } from '../../core/services/ThemeService';
 
-const meta: Meta<typeof ThemeSwitcher> = {
-  title: 'Widgets/Shell/ThemeSwitcher',
+const meta = {
+  title: 'Primitives/ThemeSwitcher',
   component: ThemeSwitcher,
+  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component:
+          'A compact segmented control for switching themes. Controlled: it renders `value` and reports changes through `onChange`, applying nothing to the document itself. Use `ConnectedThemeSwitcher` if you want it wired to `useThemeStore`, which also sets the `theme-*` class on `<html>` and persists the choice.',
+      },
+    },
+  },
+  argTypes: {
+    value: { control: 'text', description: 'Selected theme id.' },
+    onChange: { action: 'onChange' },
+  },
+} satisfies Meta<typeof ThemeSwitcher>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: { value: 'light', onChange: () => {} },
+};
+
+/** Drive it from state to see the selection actually move. */
+export const Interactive: Story = {
+  args: { value: 'light', onChange: () => {} },
+  render: function Render() {
+    const [theme, setTheme] = useState('light');
+    return (
+      <div className="flex flex-col items-center gap-3">
+        <ThemeSwitcher value={theme} onChange={setTheme} />
+        <p className="text-xs text-muted-foreground">
+          Selected: <span className="font-mono">{theme}</span>
+        </p>
+      </div>
+    );
   },
 };
 
-export default meta;
-type Story = StoryObj<typeof ThemeSwitcher>;
-
-const InteractiveThemeSwitcherWrapper = () => {
-  const theme = useThemeStore((state) => state.theme);
-  
-  return (
-    <div className={`theme-${theme} p-8 rounded-xl border border-border bg-background text-foreground transition-all duration-300 w-[300px] flex flex-col items-center gap-4`}>
-      <span className="text-xs font-bold font-mono uppercase tracking-wider text-muted-foreground">
-        Active Theme: {theme}
-      </span>
-      <ThemeSwitcher />
-    </div>
-  );
-};
-
-export const Interactive: Story = {
-  render: () => <InteractiveThemeSwitcherWrapper />,
-};
-
-export const StaticLight: Story = {
-  render: () => (
-    <div className="theme-light p-8 rounded-xl border border-border bg-background text-foreground w-[300px] flex flex-col items-center gap-4">
-      <span className="text-xs font-bold font-mono uppercase tracking-wider text-muted-foreground">
-        Light Preview
-      </span>
-      <ThemeSwitcher />
-    </div>
-  ),
-};
-
-export const StaticDark: Story = {
-  render: () => (
-    <div className="theme-dark p-8 rounded-xl border border-border bg-background text-foreground w-[300px] flex flex-col items-center gap-4">
-      <span className="text-xs font-bold font-mono uppercase tracking-wider text-muted-foreground">
-        Dark Preview
-      </span>
-      <ThemeSwitcher />
-    </div>
-  ),
-};
-
-export const StaticGeorgiaTech: Story = {
-  render: () => (
-    <div className="theme-gt p-8 rounded-xl border border-border bg-background text-foreground w-[300px] flex flex-col items-center gap-4">
-      <span className="text-xs font-bold font-mono uppercase tracking-wider text-muted-foreground">
-        GT Preview
-      </span>
-      <ThemeSwitcher />
-    </div>
-  ),
+/** `options` replaces the default set entirely — the control is not tied to the bundled themes. */
+export const CustomOptions: Story = {
+  args: {
+    value: 'solar',
+    onChange: () => {},
+    options: [
+      { id: 'solar', label: 'Solar' },
+      { id: 'mono', label: 'Mono' },
+    ],
+  },
 };

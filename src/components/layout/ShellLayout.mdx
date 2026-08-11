@@ -1,96 +1,122 @@
-import { Meta, Canvas, Controls } from '@storybook/blocks';
+import { Meta, Canvas, Controls, Primary } from '@storybook/blocks';
 import * as ShellLayoutStories from './ShellLayout.stories';
 
 <Meta of={ShellLayoutStories} />
 
-# 🖥️ ShellLayout
+# ShellLayout
 
-`ShellLayout` is the master application layout container and IDE-like workbench for Nexus Shell. It provides a modular, dockable tab interface powered by `flexlayout-react`, wrapped with key workspace features like a MenuBar, StatusBar, ActivityBar, Sidebars, Terminal, and Chat panels.
+The complete application frame: menu bar, activity bar, sidebar, a
+`flexlayout-react` docking area, terminal, chat pane and status bar.
 
-It implements Inversion of Control (IoC), accepting dynamic configuration via properties and automatically bootstrapping the global registries.
+<Primary />
 
----
-
-## 🎨 Interactive Preview
-
-<Canvas of={ShellLayoutStories.Default} />
-
----
-
-## 📋 Properties
-
-Below are the props accepted by the `ShellLayout` component:
+## Props
 
 <Controls />
 
-| Property | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `title` | `React.ReactNode` | `undefined` | Title or branding elements to display on the top-left of the MenuBar. |
-| `rightMenuBarContent` | `React.ReactNode` | `undefined` | Custom widgets or profile components placed on the top-right of the MenuBar. |
-| `panels` | `ISidebarPanel[]` | `undefined` | Panels to register in the collapsible left Sidebar. |
-| `slashCommands` | `ISlashCommand[]` | `undefined` | Custom commands to register into the Chat Pane CLI input context. |
-| `menuConfig` | `Record<string, IMenuItem[]>` | `undefined` | Map of menu titles to lists of action items in the top MenuBar. |
-| `statusBarConfig` | `IStatusBarWidget[]` | `undefined` | Custom indicators and buttons aligned in the footer StatusBar. |
-| `layoutModel` | `Model` | `useLayoutStore().model` | Optional pre-configured `flexlayout-react` model instance for custom layouts. |
+## How it differs from the primitives
 
----
+Every component `ShellLayout` renders is also exported on its own, in a pure,
+prop-driven form. `ShellLayout` is the assembled version: it writes the props
+you pass into a set of zustand stores on mount, then renders the `Connected*`
+variants that read from those stores.
 
-## 🛠️ Integration Example
+That indirection buys one thing — plugins and distant code can contribute menu
+items, status bar widgets and sidebar panels without the shell knowing about
+them, and without prop-drilling through your component tree.
 
-Here is how you can initialize the `ShellLayout` with custom Sidebar panels, custom Menu commands, and a customized Status Bar:
+It costs the usual price of global state: two shells on one page share it. If
+that matters, compose the primitives yourself.
+
+## Configuration flows through registries
+
+Three registries decouple the shell from what it renders:
+
+| Registry | What it holds | Referenced by |
+| :-- | :-- | :-- |
+| `componentRegistry` | React components, by id | `component` on a layout model tab |
+| `commandRegistry` | Executable commands, by id | `commandId` on menu and status bar items |
+| `menuRegistry` | Menu structure | Populated from `menuConfig` |
+
+So a tab in your layout model names a component id, not an import:
 
 ```tsx
-import React from 'react';
-import { ShellLayout, UserProfile, ThemeSwitcher } from 'nexus-shell';
-import { Home, Settings, Info } from 'lucide-react';
+componentRegistry.register('editor', Editor);
 
-const myPanels = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    icon: Home,
-    component: () => <div className="p-4">Overview Dashboard</div>
+Model.fromJson({
+  layout: {
+    type: 'row',
+    children: [{
+      type: 'tabset',
+      children: [{ type: 'tab', name: 'App.tsx', component: 'editor' }],
+    }],
   },
-  {
-    id: 'settings',
-    label: 'Settings',
-    icon: Settings,
-    component: () => <div className="p-4">App Settings</div>
-  }
-];
+});
+```
 
-const myMenus = {
-  'File': [
-    { id: 'file.new', label: 'New Project', commandId: 'project.new' },
-    { id: 'file.sep', label: '---' },
-    { id: 'file.exit', label: 'Exit Application', commandId: 'app.exit' }
-  ],
-  'Help': [
-    { id: 'help.about', label: 'About', commandId: 'app.about' }
-  ]
-};
+And a menu item names a command id, not a function:
 
-export default function WorkspaceApp() {
+```tsx
+commandRegistry.registerCommand({
+  id: 'file.save',
+  label: 'File: Save',
+  keybinding: '⌘S',
+  execute: () => save(),
+});
+
+<ShellLayout menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }} />;
+```
+
+## Controlled vs. persisted layout
+
+By default the docking model lives in `useLayoutStore` and persists across
+reloads. Passing `layoutModel` takes control: the shell renders your model and
+stops writing changes back to the store.
+
+The stories on this page all pass `layoutModel` so each renders a clean layout
+rather than inheriting the last one you dragged.
+
+## Dirty tabs
+
+Mark a tab dirty and closing it prompts first:
+
+```tsx
+useLayoutStore.getState().setTabDirty(tabId, true);
+```
+
+The confirmation goes through `useModalStore`, so mount `<ConnectedModal />`
+near your root for the prompt to appear.
+
+## Full example
+
+<Canvas of={ShellLayoutStories.Branded} />
+
+```tsx
+import { Files, GitBranch } from 'lucide-react';
+import { ShellLayout, ThemeSwitcher, componentRegistry } from 'nexus-shell';
+
+componentRegistry.register('editor', Editor);
+
+export const App = () => {
+  const [theme, setTheme] = useState('light');
+
   return (
     <ShellLayout
-      title={<span className="font-bold text-primary">Nexus Workbench</span>}
-      panels={myPanels}
-      menuConfig={myMenus}
-      rightMenuBarContent={
-        <div className="flex items-center space-x-2">
-          <ThemeSwitcher />
-          <UserProfile showName={false} />
-        </div>
-      }
+      title={<Logo />}
+      rightMenuBarContent={<ThemeSwitcher value={theme} onChange={setTheme} />}
+      panels={[
+        { id: 'files', label: 'Explorer', icon: Files, component: FileExplorer },
+      ]}
+      menuConfig={{
+        File: [{ id: 'save', label: 'Save', commandId: 'file.save' }],
+      }}
       statusBarConfig={[
-        {
-          id: 'status-info',
-          label: 'System OK',
-          icon: Info,
-          alignment: 'left'
-        }
+        { id: 'branch', label: 'main', icon: GitBranch, alignment: 'left' },
+      ]}
+      slashCommands={[
+        { command: 'clear', description: 'Clear the chat', execute: () => clear() },
       ]}
     />
   );
-}
+};
 ```

@@ -1,9 +1,59 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useTerminalStore } from '../../core/services/TerminalService';
-import { X, Terminal as TerminalIcon, ChevronUp } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronUp, Terminal as TerminalIcon, X } from 'lucide-react';
+import { cn } from '../../lib/cn';
 
-export const TerminalPane = () => {
-  const { isOpen, setOpen, history, addHistory, clearHistory } = useTerminalStore();
+export interface TerminalPaneProps {
+  /** Lines already written to the terminal, oldest first. */
+  history?: string[];
+  /**
+   * Called with the trimmed command text when the user presses Enter. Empty
+   * input is swallowed and never reaches this handler.
+   *
+   * The component does not echo the command or interpret it — append the echo
+   * and any output to `history` yourself. This keeps command semantics
+   * (`clear`, `help`, anything app-specific) entirely in your hands.
+   */
+  onCommand?: (command: string) => void;
+  /** Called when the collapse or close button is pressed. */
+  onClose?: () => void;
+  /** Height of the pane, as a CSS length. Defaults to `"250px"`. */
+  height?: string;
+  /** Prompt string shown before the input. Defaults to `"$"`. */
+  prompt?: string;
+  /** Title shown in the pane header. Defaults to `"Terminal"`. */
+  title?: string;
+  /** Extra classes merged onto the root element. */
+  className?: string;
+}
+
+/**
+ * A bottom-docked terminal pane: a scrolling output log over a single-line
+ * input.
+ *
+ * Presentational and fully controlled — it owns only the in-progress input
+ * text. Visibility, history and command execution all belong to the caller.
+ * For the store-backed variant with built-in `clear`/`help` handling, see
+ * `ConnectedTerminalPane`.
+ *
+ * @example
+ * ```tsx
+ * const [history, setHistory] = useState<string[]>([]);
+ * <TerminalPane
+ *   history={history}
+ *   onCommand={(cmd) => setHistory((h) => [...h, `$ ${cmd}`, run(cmd)])}
+ *   onClose={() => setOpen(false)}
+ * />
+ * ```
+ */
+export const TerminalPane = ({
+  history = [],
+  onCommand,
+  onClose,
+  height = '250px',
+  prompt = '$',
+  title = 'Terminal',
+  className,
+}: TerminalPaneProps) => {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -14,77 +64,78 @@ export const TerminalPane = () => {
     }
   }, [history]);
 
-  useEffect(() => {
-    if (isOpen) {
-      inputRef.current?.focus();
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleCommand = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      const cmd = input.trim();
-      if (!cmd) return;
-
-      addHistory(`$ ${cmd}`);
-      
-      const lowerCmd = cmd.toLowerCase();
-      if (lowerCmd === 'clear') {
-        clearHistory();
-      } else if (lowerCmd === 'help') {
-        addHistory('Available commands: help, clear, echo [text], date, theme');
-      } else if (lowerCmd.startsWith('echo ')) {
-        addHistory(cmd.slice(5));
-      } else if (lowerCmd === 'date') {
-        addHistory(new Date().toLocaleString());
-      } else {
-        addHistory(`Command not found: ${cmd}`);
-      }
-
-      setInput('');
-    }
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter') return;
+    const command = input.trim();
+    if (!command) return;
+    onCommand?.(command);
+    setInput('');
   };
 
   return (
-    <div className="h-[250px] bg-background border-t border-border flex flex-col select-text animate-in slide-in-from-bottom duration-300">
-      {/* Header */}
-      <div className="h-9 border-b border-border/50 flex items-center justify-between px-4 bg-muted/30">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-[11px] font-bold text-muted-foreground uppercase tracking-widest border-b-2 border-primary pb-2.5 pt-2.5 mt-0.5">
-            <TerminalIcon size={14} />
-            <span>Terminal</span>
+    <div
+      style={{ height }}
+      className={cn(
+        'bg-card border-t border-border flex flex-col shrink-0 font-mono text-xs',
+        className,
+      )}
+    >
+      <div className="h-8 flex items-center justify-between px-3 border-b border-border/50 shrink-0">
+        <div className="flex items-center space-x-2 text-muted-foreground">
+          <TerminalIcon size={13} />
+          <span className="text-[11px] font-bold uppercase tracking-widest">
+            {title}
+          </span>
+        </div>
+        {onClose && (
+          <div className="flex items-center space-x-1">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Collapse Terminal"
+              className="p-1 rounded hover:bg-accent hover:text-foreground text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <ChevronUp size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close Terminal"
+              className="p-1 rounded hover:bg-accent hover:text-foreground text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <X size={14} />
+            </button>
           </div>
-          <div className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors">Output</div>
-          <div className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors">Debug Console</div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button className="p-1 hover:bg-accent rounded text-muted-foreground"><ChevronUp size={14} /></button>
-          <button onClick={() => setOpen(false)} className="p-1 hover:bg-accent rounded text-muted-foreground"><X size={14} /></button>
-        </div>
+        )}
       </div>
 
-      {/* Output */}
-      <div 
+      <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-3 font-mono text-xs space-y-1 bg-black/5 dark:bg-black/20"
+        role="log"
+        aria-label={`${title} output`}
+        className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5"
+        onClick={() => inputRef.current?.focus()}
       >
         {history.map((line, i) => (
-          <div key={i} className="whitespace-pre-wrap break-all opacity-90">{line}</div>
+          <div key={i} className="whitespace-pre-wrap break-all text-foreground/90">
+            {line}
+          </div>
         ))}
-        <div className="flex items-center space-x-2 pt-1">
-          <span className="text-primary font-bold">$</span>
-          <input
-            ref={inputRef}
-            type="text"
-            className="flex-1 bg-transparent border-none outline-none text-xs font-mono"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleCommand}
-            spellCheck={false}
-            autoComplete="off"
-          />
-        </div>
+      </div>
+
+      <div className="flex items-center px-3 py-2 border-t border-border/50 shrink-0">
+        <span className="text-primary mr-2 select-none">{prompt}</span>
+        <input
+          ref={inputRef}
+          type="text"
+          aria-label={`${title} input`}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          spellCheck={false}
+          autoComplete="off"
+          className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+        />
       </div>
     </div>
   );

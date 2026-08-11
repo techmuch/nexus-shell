@@ -1,63 +1,96 @@
-import { Settings } from "lucide-react"
-import { useSidebarStore } from "../../core/services/SidebarService"
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import type { LucideIcon } from 'lucide-react';
+import { Settings } from 'lucide-react';
+import { cn } from '../../lib/cn';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+/** A single icon button in the {@link ActivityBar}. */
+export interface IActivityBarItem {
+  /** Stable identifier reported to `onSelect`. */
+  id: string;
+  /** Accessible label and tooltip text. */
+  label: string;
+  /** `lucide-react` icon rendered at 20px. */
+  icon: LucideIcon;
 }
 
-export const ActivityBar = () => {
-  const { activeSidebar, toggleSidebar, panels } = useSidebarStore()
+export interface ActivityBarProps {
+  /** Items rendered in the main (top) group, in order. */
+  items?: IActivityBarItem[];
+  /**
+   * Items rendered in the bottom group, below the flex spacer. Defaults to a
+   * single Settings item. Pass `[]` to render no bottom group.
+   */
+  bottomItems?: IActivityBarItem[];
+  /** Id of the currently active item, or `null` when nothing is selected. */
+  activeId?: string | null;
+  /**
+   * Called with the clicked item's id. Toggling — clicking the active item to
+   * deselect it — is the caller's decision, not the component's.
+   */
+  onSelect?: (id: string) => void;
+  /** Extra classes merged onto the root `<aside>`. */
+  className?: string;
+  /** Accessible label for the landmark. Defaults to `"Activity Bar"`. */
+  'aria-label'?: string;
+}
+
+const DEFAULT_BOTTOM_ITEMS: IActivityBarItem[] = [
+  { id: 'settings', label: 'Settings', icon: Settings },
+];
+
+/**
+ * The narrow vertical icon rail on the left edge of the shell, used to switch
+ * which panel the sidebar shows.
+ *
+ * Controlled — it holds no selection state. For the store-backed variant used
+ * by `ShellLayout`, see `ConnectedActivityBar`.
+ *
+ * @example
+ * ```tsx
+ * <ActivityBar
+ *   items={[{ id: 'files', label: 'Explorer', icon: Files }]}
+ *   activeId={active}
+ *   onSelect={(id) => setActive(id === active ? null : id)}
+ * />
+ * ```
+ */
+export const ActivityBar = ({
+  items = [],
+  bottomItems = DEFAULT_BOTTOM_ITEMS,
+  activeId = null,
+  onSelect,
+  className,
+  'aria-label': ariaLabel = 'Activity Bar',
+}: ActivityBarProps) => {
+  const renderItem = ({ id, label, icon: Icon }: IActivityBarItem) => (
+    <button
+      key={id}
+      type="button"
+      onClick={() => onSelect?.(id)}
+      aria-label={label}
+      title={label}
+      aria-pressed={activeId === id}
+      className={cn(
+        'p-2 cursor-pointer rounded text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring',
+        activeId === id && 'text-foreground border-l-2 border-primary rounded-none',
+      )}
+    >
+      <Icon size={20} />
+    </button>
+  );
 
   return (
-    <aside role="navigation" aria-label="Activity Bar" className="w-12 h-full bg-muted border-r flex flex-col items-center py-2 select-none">
-      <div className="flex-1 flex flex-col space-y-4">
-        {panels.map((panel) => {
-          const Icon = panel.icon;
-          return (
-            <div
-              key={panel.id}
-              onClick={() => toggleSidebar(panel.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggleSidebar(panel.id);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label={panel.label}
-              aria-pressed={activeSidebar === panel.id}
-              className={cn(
-                "p-2 cursor-pointer rounded text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring",
-                activeSidebar === panel.id && "text-foreground border-l-2 border-primary rounded-none"
-              )}
-            >
-              <Icon size={24} />
-            </div>
-          );
-        })}
-      </div>
-      <div 
-        onClick={() => toggleSidebar('settings')}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleSidebar('settings');
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label="Settings"
-        aria-pressed={activeSidebar === 'settings'}
-        className={cn(
-          "p-2 cursor-pointer rounded text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring",
-          activeSidebar === 'settings' && "text-foreground border-l-2 border-primary rounded-none"
-        )}
-      >
-        <Settings size={24} />
-      </div>
+    <aside
+      role="navigation"
+      aria-label={ariaLabel}
+      className={cn(
+        'w-12 h-full bg-muted border-r flex flex-col items-center py-2 select-none',
+        className,
+      )}
+    >
+      <div className="flex-1 flex flex-col space-y-4">{items.map(renderItem)}</div>
+      {bottomItems.length > 0 && (
+        <div className="flex flex-col space-y-4">{bottomItems.map(renderItem)}</div>
+      )}
     </aside>
-  )
-}
+  );
+};

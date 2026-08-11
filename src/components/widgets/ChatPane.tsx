@@ -1,75 +1,123 @@
-import { useState, useRef, useEffect } from 'react';
-import { useRightSidebarStore } from "../../core/services/RightSidebarService";
-import { useChatStore, ISlashCommand } from "../../core/services/ChatService";
-import { X, Send, User, MessageCircle, Terminal } from "lucide-react";
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import React, { useEffect, useRef, useState } from 'react';
+import { MessageCircle, Send, Terminal, User, X } from 'lucide-react';
+import { cn } from '../../lib/cn';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-interface Message {
-  id: number;
-  sender: 'User' | 'Nexus';
+/** A single message in the {@link ChatPane} transcript. */
+export interface IChatMessage {
+  /** Stable identifier. Used as the React key. */
+  id: string;
+  /** Who sent it. `'user'` right-aligns; anything else left-aligns. */
+  role: 'user' | 'assistant';
+  /** Message body. Rendered as plain text with newlines preserved. */
   text: string;
+  /** Optional display name shown above the bubble. Defaults from `role`. */
+  author?: string;
 }
 
-export const ChatPane = () => {
-  const { isChatOpen, setChatOpen } = useRightSidebarStore();
-  const { slashCommands } = useChatStore();
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 1, sender: 'Nexus', text: 'Welcome to the Nexus Shell chat! How can I help you today?' },
-  ]);
+/** A `/`-prefixed shortcut offered in the composer's autocomplete. */
+export interface ISlashCommand {
+  /** Command word without the leading slash, e.g. `"clear"`. */
+  command: string;
+  /** One-line description shown beside the command in the suggestion list. */
+  description: string;
+}
+
+export interface ChatPaneProps {
+  /** Messages to display, oldest first. */
+  messages?: IChatMessage[];
+  /**
+   * Called with the trimmed message text on send. The component clears its
+   * composer but does not append to `messages` — that is the caller's job.
+   */
+  onSend?: (text: string) => void;
+  /** Slash commands offered once the composer starts with `/`. */
+  slashCommands?: ISlashCommand[];
+  /** Called when a slash command is picked from the suggestion list. */
+  onSlashCommand?: (command: ISlashCommand) => void;
+  /** Called when the close button is pressed. Omit to hide the button. */
+  onClose?: () => void;
+  /** Title shown in the pane header. Defaults to `"Chat"`. */
+  title?: string;
+  /** Placeholder for the composer. */
+  placeholder?: string;
+  /** Shown in place of the transcript when `messages` is empty. */
+  emptyState?: React.ReactNode;
+  /** Extra classes merged onto the root element. */
+  className?: string;
+}
+
+const DEFAULT_EMPTY_STATE = (
+  <div className="h-full flex flex-col items-center justify-center text-center px-6 text-muted-foreground">
+    <MessageCircle size={28} className="mb-3 opacity-40" />
+    <p className="text-xs">No messages yet.</p>
+    <p className="text-[11px] mt-1 opacity-70">
+      Type a message, or <span className="font-mono">/</span> for commands.
+    </p>
+  </div>
+);
+
+/**
+ * A docked chat panel: a scrolling transcript over a composer with slash-command
+ * autocomplete.
+ *
+ * Fully controlled — it owns only the in-progress input and the suggestion
+ * highlight. Messages, sending and visibility belong to the caller, so the same
+ * component works against a local array, a websocket, or an LLM endpoint. For
+ * the store-backed variant used by `ShellLayout`, see `ConnectedChatPane`.
+ *
+ * @example
+ * ```tsx
+ * <ChatPane
+ *   messages={messages}
+ *   onSend={(text) => send(text)}
+ *   slashCommands={[{ command: 'clear', description: 'Clear the transcript' }]}
+ *   onClose={() => setOpen(false)}
+ * />
+ * ```
+ */
+export const ChatPane = ({
+  messages = [],
+  onSend,
+  slashCommands = [],
+  onSlashCommand,
+  onClose,
+  title = 'Chat',
+  placeholder = 'Send a message…',
+  emptyState = DEFAULT_EMPTY_STATE,
+  className,
+}: ChatPaneProps) => {
   const [input, setInput] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const suggestions = slashCommands.filter(cmd => 
-    `/${cmd.command}`.startsWith(input.toLowerCase())
-  );
+  const suggestions = input.startsWith('/')
+    ? slashCommands.filter((cmd) =>
+        `/${cmd.command}`.startsWith(input.toLowerCase().split(' ')[0]),
+      )
+    : [];
+  const showSuggestions = suggestions.length > 0;
 
   useEffect(() => {
-    if (input.startsWith('/') && suggestions.length > 0) {
-      setShowSuggestions(true);
-    } else {
-      setShowSuggestions(false);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [input, suggestions.length]);
+  }, [messages]);
 
-  if (!isChatOpen) return null;
+  useEffect(() => {
+    setSuggestionIndex(0);
+  }, [input]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-
-    if (input.startsWith('/')) {
-      const parts = input.slice(1).split(' ');
-      const commandName = parts[0];
-      const args = parts.slice(1);
-      const cmd = slashCommands.find(c => c.command === commandName);
-      
-      if (cmd) {
-        cmd.execute(args);
-        setMessages(prev => [...prev, { id: Date.now(), sender: 'User', text: input }]);
-        setInput('');
-        return;
-      }
-    }
-
-    const newMessage: Message = { id: Date.now(), sender: 'User', text: input };
-    setMessages(prev => [...prev, newMessage]);
+  const submit = () => {
+    const text = input.trim();
+    if (!text) return;
+    onSend?.(text);
     setInput('');
-    
-    // Simulate Nexus response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'Nexus', text: "I'm a simulated Nexus response. In a real application, I'd be connected to an LLM!" }]);
-    }, 1000);
   };
 
-  const handleSuggestionClick = (cmd: ISlashCommand) => {
+  const pickSuggestion = (cmd: ISlashCommand) => {
+    onSlashCommand?.(cmd);
     setInput(`/${cmd.command} `);
-    setShowSuggestions(false);
     inputRef.current?.focus();
   };
 
@@ -77,105 +125,140 @@ export const ChatPane = () => {
     if (showSuggestions) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSuggestionIndex(prev => (prev + 1) % suggestions.length);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-      } else if (e.key === 'Tab' || e.key === 'Enter') {
-        e.preventDefault();
-        handleSuggestionClick(suggestions[suggestionIndex]);
-      } else if (e.key === 'Escape') {
-        setShowSuggestions(false);
+        setSuggestionIndex((i) => (i + 1) % suggestions.length);
+        return;
       }
-    } else if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSuggestionIndex((i) => (i - 1 + suggestions.length) % suggestions.length);
+        return;
+      }
+      if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey)) {
+        e.preventDefault();
+        pickSuggestion(suggestions[suggestionIndex]);
+        return;
+      }
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      submit();
     }
   };
 
   return (
-    <div className="w-[350px] h-full bg-muted border-l flex flex-col select-none animate-in slide-in-from-right duration-300">
-      <div className="h-10 flex items-center justify-between px-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50">
-        <div className="flex items-center space-x-2">
-            <MessageCircle size={14} />
-            <span>Chat</span>
+    <aside
+      role="complementary"
+      aria-label={title}
+      className={cn(
+        'w-[320px] h-full bg-muted border-l border-border flex flex-col select-none shrink-0',
+        className,
+      )}
+    >
+      <div className="h-10 flex items-center justify-between px-4 shrink-0">
+        <div className="flex items-center space-x-2 text-muted-foreground">
+          <MessageCircle size={13} />
+          <span className="text-[11px] font-bold uppercase tracking-widest">
+            {title}
+          </span>
         </div>
-        <button 
-          onClick={() => setChatOpen(false)}
-          className="p-1 hover:bg-accent hover:text-foreground rounded transition-colors"
-        >
-          <X size={14} />
-        </button>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div key={msg.id} className={cn(
-            "flex flex-col space-y-1",
-            msg.sender === 'User' ? "items-end" : "items-start"
-          )}>
-            <div className="flex items-center space-x-1 text-[10px] text-muted-foreground">
-              <User size={10} />
-              <span>{msg.sender}</span>
-            </div>
-            <div className={cn(
-              "px-3 py-2 rounded-lg text-sm max-w-[90%]",
-              msg.sender === 'User' 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-accent/50 text-foreground"
-            )}>
-              {msg.text}
-            </div>
-          </div>
-        ))}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close Chat"
+            className="p-1 rounded hover:bg-accent hover:text-foreground text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
-      <div className="p-4 border-t border-border/50 relative">
+      <div
+        ref={scrollRef}
+        role="log"
+        aria-label={`${title} transcript`}
+        className="flex-1 overflow-y-auto border-t border-border/50 bg-background/50 px-3 py-3 space-y-3"
+      >
+        {messages.length === 0
+          ? emptyState
+          : messages.map((message) => {
+              const isUser = message.role === 'user';
+              return (
+                <div
+                  key={message.id}
+                  className={cn('flex flex-col', isUser ? 'items-end' : 'items-start')}
+                >
+                  <div className="flex items-center space-x-1 mb-1 text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
+                    {isUser ? <User size={10} /> : <Terminal size={10} />}
+                    <span>{message.author ?? (isUser ? 'You' : 'Assistant')}</span>
+                  </div>
+                  <div
+                    className={cn(
+                      'max-w-[85%] rounded-lg px-3 py-2 text-xs whitespace-pre-wrap break-words',
+                      isUser
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card border border-border text-foreground',
+                    )}
+                  >
+                    {message.text}
+                  </div>
+                </div>
+              );
+            })}
+      </div>
+
+      <div className="relative border-t border-border/50 p-2 shrink-0">
         {showSuggestions && (
-          <div className="absolute bottom-full left-4 right-4 mb-2 bg-popover border shadow-xl rounded-lg overflow-hidden z-50">
-            <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground border-b bg-muted/30">COMMANDS</div>
-            {suggestions.map((cmd, index) => (
+          <div
+            role="listbox"
+            aria-label="Slash commands"
+            className="absolute bottom-full left-2 right-2 mb-1 bg-popover border border-border rounded-md shadow-lg overflow-hidden z-20"
+          >
+            {suggestions.map((cmd, i) => (
               <div
                 key={cmd.command}
+                role="option"
+                aria-selected={i === suggestionIndex}
+                onMouseEnter={() => setSuggestionIndex(i)}
+                onClick={() => pickSuggestion(cmd)}
                 className={cn(
-                  "px-3 py-2 cursor-pointer flex items-center justify-between text-xs",
-                  index === suggestionIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                  'px-3 py-1.5 text-xs cursor-pointer flex items-baseline justify-between gap-3',
+                  i === suggestionIndex
+                    ? 'bg-accent text-accent-foreground'
+                    : 'hover:bg-accent/50',
                 )}
-                onClick={() => handleSuggestionClick(cmd)}
-                onMouseEnter={() => setSuggestionIndex(index)}
               >
-                <div className="flex items-center space-x-2">
-                  <Terminal size={12} className="text-primary" />
-                  <span className="font-semibold">/{cmd.command}</span>
-                </div>
-                <span className="text-[10px] text-muted-foreground">{cmd.description}</span>
+                <span className="font-mono">/{cmd.command}</span>
+                <span className="text-[10px] text-muted-foreground truncate">
+                  {cmd.description}
+                </span>
               </div>
             ))}
           </div>
         )}
-        
-        <div className="relative">
+
+        <div className="flex items-end space-x-2">
           <textarea
             ref={inputRef}
+            rows={1}
             value={input}
+            aria-label={`${title} message`}
+            placeholder={placeholder}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Nexus... (Type / for commands)"
-            className="w-full bg-secondary/50 border border-border rounded-md p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none min-h-[80px]"
+            className="flex-1 resize-none bg-background border border-border rounded-md px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 max-h-32"
           />
-          <button 
-            onClick={handleSend}
-            className="absolute right-3 bottom-3 inline-flex items-center justify-center p-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-colors"
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!input.trim()}
+            aria-label="Send message"
+            className="p-2 rounded-md bg-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <Send size={14} />
           </button>
         </div>
-        <div className="mt-1.5 flex items-center space-x-1.5 text-[10px] text-muted-foreground opacity-70">
-          <Terminal size={10} />
-          <span>Use <kbd className="bg-muted px-1 rounded border border-border/50 font-sans">/</kbd> to trigger slash commands</span>
-        </div>
       </div>
-    </div>
+    </aside>
   );
 };
-

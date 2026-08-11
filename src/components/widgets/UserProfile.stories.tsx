@@ -1,79 +1,101 @@
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { UserProfile } from './UserProfile';
+import { LogOut, Settings, UserCog } from 'lucide-react';
+import { UserProfile, type IUserProfile } from './UserProfile';
 
-const meta: Meta<typeof UserProfile> = {
-  title: 'Widgets/Shell/UserProfile',
-  component: UserProfile,
-  argTypes: {
-    showName: { control: 'boolean' },
-    name: { control: 'text' },
-    role: { control: 'text' },
-    email: { control: 'text' },
-    avatarUrl: { control: 'text' },
+const PROFILE: IUserProfile = {
+  name: 'Ada Lovelace',
+  role: 'Principal Engineer',
+  email: 'ada@example.com',
+};
+
+const ACTIONS = [
+  { id: 'account', label: 'Account Settings', icon: Settings, onSelect: () => {} },
+  { id: 'prefs', label: 'Preferences', icon: UserCog, onSelect: () => {} },
+  {
+    id: 'signout',
+    label: 'Sign Out',
+    icon: LogOut,
+    onSelect: () => {},
+    destructive: true,
+    divider: true,
   },
+];
+
+const meta = {
+  title: 'Primitives/UserProfile',
+  component: UserProfile,
+  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component:
+          'An avatar and identity widget with a dropdown menu, sized for a menu bar\'s right slot.\n\nFully controlled — the identity comes in as `profile`, edits go out through `onProfileChange`, and the menu is whatever you pass as `actions`. It prescribes no menu items of its own: "Sign Out" and "Account Settings" mean different things in every app. See `ConnectedUserProfile` for the variant bound to `useUserProfileStore`.\n\nClick the widget to open the dropdown.',
+      },
+    },
   },
-};
+} satisfies Meta<typeof UserProfile>;
 
 export default meta;
-type Story = StoryObj<typeof UserProfile>;
+type Story = StoryObj<typeof meta>;
 
+/** Name and role beside the avatar. Click to open the menu. */
 export const Default: Story = {
-  args: {
-    name: 'David techmuch',
-    role: 'Principal Engineer',
-  },
-  render: (args) => (
-    <div className="theme-light p-4 pb-32 w-80 border rounded bg-background">
-      <UserProfile {...args} />
-    </div>
-  )
+  args: { profile: PROFILE, actions: ACTIONS },
 };
 
-export const WithAvatar: Story = {
-  args: {
-    name: 'Jane Doe',
-    role: 'Product Designer',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-  },
-  render: (args) => (
-    <div className="theme-light p-4 pb-32 w-80 border rounded bg-background">
-      <UserProfile {...args} />
-    </div>
-  )
+/** Compact mode: avatar only, for a tight menu bar. */
+export const AvatarOnly: Story = {
+  args: { profile: PROFILE, actions: ACTIONS, showName: false },
 };
 
-export const Compact: Story = {
+/** With an image avatar. */
+export const WithImage: Story = {
   args: {
-    name: 'Jane Doe',
-    showName: false,
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+    profile: {
+      ...PROFILE,
+      avatarUrl:
+        'data:image/svg+xml;utf8,' +
+        encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%236366f1"/><text x="32" y="42" font-size="28" font-family="sans-serif" fill="white" text-anchor="middle">AL</text></svg>`,
+        ),
+    },
+    actions: ACTIONS,
   },
-  render: (args) => (
-    <div className="theme-light p-4 pb-32 w-20 border rounded bg-background flex justify-center">
-      <UserProfile {...args} />
-    </div>
-  )
 };
 
-export const DarkTheme: Story = {
-  args: {
-    name: 'Alex Smith',
-    role: 'Admin',
-  },
-  render: (args) => (
-    <div className="theme-dark p-4 pb-32 w-80 border rounded bg-slate-900 text-slate-100">
-      <UserProfile {...args} />
-    </div>
-  )
+/** No `actions`, no `onProfileChange`: a read-only identity card. */
+export const ReadOnly: Story = {
+  args: { profile: PROFILE },
 };
 
-export const FromStore: Story = {
-  args: {},
-  render: () => (
-    <div className="theme-light p-4 pb-32 w-80 border rounded bg-background">
-      <UserProfile />
-    </div>
-  )
+/** Omitting `role` and `email` collapses the widget to just a name. */
+export const NameOnly: Story = {
+  args: { profile: { name: 'Ada Lovelace' }, actions: ACTIONS },
+};
+
+/** `onClick` bypasses the dropdown entirely — use it to open a settings tab. */
+export const AsButton: Story = {
+  args: { profile: PROFILE, onClick: () => {} },
+};
+
+/** Edit the name and role inline; the parent owns the result. */
+export const Editable: Story = {
+  args: { profile: PROFILE },
+  render: function Render() {
+    const [profile, setProfile] = useState<IUserProfile>(PROFILE);
+    return (
+      <div className="flex flex-col items-center gap-3">
+        <UserProfile
+          profile={profile}
+          actions={ACTIONS}
+          onProfileChange={(next) => setProfile((p) => ({ ...p, ...next }))}
+        />
+        <p className="text-xs text-muted-foreground">
+          {profile.name} — {profile.role || 'no role'}
+        </p>
+      </div>
+    );
+  },
 };

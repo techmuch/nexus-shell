@@ -4,10 +4,17 @@ import { File, Folder, Code, Terminal, Globe, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 const meta: Meta<typeof SearchWidget> = {
-  title: 'Widgets/General/SearchWidget',
+  title: 'Primitives/SearchWidget',
   component: SearchWidget,
+  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component:
+          'A full-height search panel: an input with autocomplete over a scrolling result list. Sized for the sidebar, unlike the compact `QuickSearch` that sits in the menu bar.\n\nIt owns the query text and debounces it to `onSearch`, but never filters `results` itself — that keeps async and remote search straightforward.',
+      },
+    },
   },
 };
 

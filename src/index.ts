@@ -1,47 +1,69 @@
-// Core Framework Components
-export { ShellLayout } from './components/layout/ShellLayout';
-export { MenuBar } from './components/widgets/MenuBar';
-export { StatusBar } from './components/widgets/StatusBar';
-export { ActivityBar } from './components/widgets/ActivityBar';
-export { SidebarPane } from './components/widgets/SidebarPane';
-export { TreeWidget } from './components/widgets/TreeWidget';
-export { SearchWidget, type ISearchResult, type SearchWidgetProps } from './components/widgets/SearchWidget';
-export { CommandPalette } from './components/widgets/CommandPalette';
-export { UserProfile, type UserProfileProps } from './components/widgets/UserProfile';
-export { ChatPane } from './components/widgets/ChatPane';
-export { TerminalPane } from './components/widgets/TerminalPane';
-export { AgentManager, type Agent, type AgentManagerProps } from './components/widgets/AgentManager';
-export { WargameMap, type WargameMapProps, type UnitData, type AttackData, type TerrainHexData } from './components/widgets/WargameMap';
-export { DataGrid, type DataGridProps, type IDataGridColumn } from './components/widgets/DataGrid';
-export { MockupReviewWidget } from './components/widgets/MockupReviewWidget';
-export { useMockupReviewStore, type IMockupAnnotation, type IMockupVersion, type IMockupView } from './core/services/MockupReviewService';
-export { DialogueMappingWidget } from './components/widgets/DialogueMappingWidget';
-export { DialogueMapperLibraryWidget } from './components/widgets/DialogueMapperLibraryWidget';
-export { ArgumentInspectorWidget } from './components/widgets/ArgumentInspectorWidget';
-export { DialogueMapperLibrary, type DialogueMapperLibraryProps } from './components/widgets/DialogueMapperLibrary';
-export { FlowControlToolbar, type FlowControlToolbarProps } from './components/widgets/FlowControlToolbar';
-export { NexusWorkspaceShell, type NexusWorkspaceShellProps } from './components/layout/NexusWorkspaceShell';
-export { ThemeSwitcher, type ThemeSwitcherProps } from './components/widgets/ThemeSwitcher';
-export { NexusWorkspaceTitle, type NexusWorkspaceTitleProps } from './components/widgets/NexusWorkspaceTitle';
-export { useDialogueMappingStore, type IDialogueNodeData, type IbisNodeType } from './core/services/DialogueMappingService';
+/**
+ * Nexus Shell — a React component library for building IDE-style application
+ * shells.
+ *
+ * The surface is deliberately two-tier:
+ *
+ * 1. **Primitives** — pure, prop-driven components with no global state. Use
+ *    these to build your own layout. They are the supported public API.
+ * 2. **Shell** — `ShellLayout` plus the stores and registries behind it, for
+ *    when you want the whole assembled application frame.
+ *
+ * Import the stylesheet once in your app entry:
+ * ```ts
+ * import 'nexus-shell/style.css';
+ * ```
+ */
 
-// Registries (Public Singleton Instances)
-export { commandRegistry, type ICommand } from './core/registry/CommandRegistry';
-export { menuRegistry, type IMenuItem } from './core/registry/MenuRegistry';
+// ---------------------------------------------------------------------------
+// Primitives — pure, controlled, no store access
+// ---------------------------------------------------------------------------
+
+export { ActivityBar, type ActivityBarProps, type IActivityBarItem } from './components/widgets/ActivityBar';
+export { ChatPane, type ChatPaneProps, type IChatMessage, type ISlashCommand } from './components/widgets/ChatPane';
+export { CommandPalette, type CommandPaletteProps, type ICommandItem } from './components/widgets/CommandPalette';
+export { ContextMenu, type ContextMenuProps, type IContextMenuItem } from './components/widgets/ContextMenu';
+export { DataGrid, type DataGridProps, type IDataGridColumn } from './components/widgets/DataGrid';
+export { MenuBar, type MenuBarProps, type IMenuItem } from './components/widgets/MenuBar';
+export { Modal, type ModalProps, type ModalType } from './components/widgets/Modal';
+export { QuickSearch, type QuickSearchProps, type IQuickSearchResult } from './components/widgets/QuickSearch';
+export { SearchWidget, type SearchWidgetProps, type ISearchResult } from './components/widgets/SearchWidget';
+export { SettingsPanel, type SettingsPanelProps, type ISettingsThemeOption, DEFAULT_SETTINGS_THEMES } from './components/widgets/SettingsPanel';
+export { SidebarPane, type SidebarPaneProps } from './components/widgets/SidebarPane';
+export { StatusBar, type StatusBarProps, type IStatusBarWidget } from './components/widgets/StatusBar';
+export { TerminalPane, type TerminalPaneProps } from './components/widgets/TerminalPane';
+export { ThemeSwitcher, type ThemeSwitcherProps, type IThemeOption, DEFAULT_THEME_OPTIONS } from './components/widgets/ThemeSwitcher';
+export { TreeWidget, type TreeWidgetProps, type ITreeNode, type ITreeAction, type ITreeContext } from './components/widgets/TreeWidget';
+export { UserProfile, type UserProfileProps, type IUserProfile, type IUserProfileAction } from './components/widgets/UserProfile';
+export { AppTitle, type AppTitleProps } from './components/widgets/AppTitle';
+
+// Utilities
+export { cn } from './lib/cn';
+
+// ---------------------------------------------------------------------------
+// Shell — the assembled layout and its store-connected pieces
+// ---------------------------------------------------------------------------
+
+export { ShellLayout, type ShellLayoutProps } from './components/layout/ShellLayout';
+export * from './connected';
+
+// Registries — singletons the shell reads from
+export { commandRegistry, CommandRegistry, type ICommand } from './core/registry/CommandRegistry';
+export { menuRegistry, MenuRegistry, type IMenuItemConfig } from './core/registry/MenuRegistry';
 export { pluginRegistry, type IPlugin, type PluginStatus } from './core/registry/PluginRegistry';
 export { componentRegistry, type ComponentConstructor } from './core/registry/ComponentRegistry';
 
-// Services & Hooks
-export { initializeShell } from './core/Boot';
+// Stores — shell state, all zustand hooks
+export { useChatStore, type ISlashCommandConfig } from './core/services/ChatService';
 export { useLayoutStore } from './core/services/LayoutService';
-export { useThemeStore, type ThemeType } from './core/services/ThemeService';
-export { useSidebarStore, type ISidebarPanel } from './core/services/SidebarService';
+export { useModalStore, type ModalType as ModalStoreType } from './core/services/ModalStoreService';
 export { useRightSidebarStore } from './core/services/RightSidebarService';
+export { useSidebarStore, type ISidebarPanel } from './core/services/SidebarService';
+export { useStatusBarStore, type IStatusBarWidgetConfig } from './core/services/StatusBarService';
 export { useTerminalStore } from './core/services/TerminalService';
-export { useChatStore, type ISlashCommand } from './core/services/ChatService';
-export { useStatusBarStore, type IStatusBarWidget } from './core/services/StatusBarService';
-export { useKeyboardShortcuts } from './core/services/KeyboardService';
+export { useThemeStore, type ThemeType } from './core/services/ThemeService';
 export { useUserProfileStore, type UserProfileState } from './core/services/UserProfileService';
+export { useKeyboardShortcuts } from './core/services/KeyboardService';
 
-// Styles (Import this in your app to get the theme/base styles)
+// Styles — bundled into dist/style.css by the library build
 import './index.css';

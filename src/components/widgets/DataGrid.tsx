@@ -1,34 +1,73 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { TableVirtuoso } from 'react-virtuoso';
 import { ChevronUp, ChevronDown, ChevronsUpDown, Search, X, Loader2 } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '../../lib/cn';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
+/** A column definition for {@link DataGrid}. */
 export interface IDataGridColumn<T = any> {
+  /** Property on the row object to read. Also used as the React key. */
   key: string;
+  /** Header text. */
   header: string;
+  /** Fixed column width as a CSS length or px number. Omit to size flexibly. */
   width?: string | number;
+  /** Allow clicking the header to sort by this column. Defaults to `false`. */
   sortable?: boolean;
+  /**
+   * Custom cell renderer. Receives the cell value and the whole row, so you can
+   * render badges, links or derived values. Defaults to the raw value.
+   */
   render?: (value: any, row: T) => React.ReactNode;
 }
 
 export interface DataGridProps<T = any> {
+  /** Columns, in display order. */
   columns: IDataGridColumn<T>[];
+  /** Rows to display. Sorting and filtering are applied on top of this array. */
   data: T[];
+  /** Called with the clicked row. */
   onRowClick?: (row: T) => void;
+  /** Value of `rowKey` on the row to highlight as selected. */
   selectedRowId?: string | number;
+  /** Property used as each row's identity. Defaults to `"id"`. */
   rowKey?: keyof T;
+  /**
+   * Virtualise rows with `react-virtuoso`. Leave on for large datasets; turn it
+   * off when the grid must print or be fully present in the DOM. Defaults to
+   * `true`.
+   */
   virtualized?: boolean;
+  /** Show the built-in filter box above the grid. Defaults to `true`. */
   showFilter?: boolean;
+  /** Show a loading indicator in place of rows. Defaults to `false`. */
   loading?: boolean;
+  /** Message shown when there are no rows. */
   placeholder?: string;
+  /** Extra classes merged onto the root element. */
   className?: string;
 }
 
+/**
+ * A sortable, filterable data table with optional row virtualisation.
+ *
+ * Filtering and sorting are handled internally against the `data` you pass — a
+ * case-insensitive match across all values, and click-to-sort on columns marked
+ * `sortable`. For server-side paging or sorting, filter upstream and set
+ * `showFilter={false}`.
+ *
+ * @example
+ * ```tsx
+ * <DataGrid
+ *   columns={[
+ *     { key: 'name', header: 'Name', sortable: true },
+ *     { key: 'status', header: 'Status', width: 120,
+ *       render: (v) => <Badge>{v}</Badge> },
+ *   ]}
+ *   data={rows}
+ *   onRowClick={(row) => select(row.id)}
+ * />
+ * ```
+ */
 export const DataGrid = <T extends Record<string, any>>({
   columns,
   data,

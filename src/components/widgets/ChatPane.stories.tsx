@@ -1,55 +1,112 @@
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { ChatPane } from './ChatPane';
-import { useRightSidebarStore } from '../../core/services/RightSidebarService';
-import { useChatStore } from '../../core/services/ChatService';
-import { useEffect } from 'react';
+import { ChatPane, type IChatMessage } from './ChatPane';
 
-const meta: Meta<typeof ChatPane> = {
-  title: 'Widgets/Shell/ChatPane',
+const MESSAGES: IChatMessage[] = [
+  { id: '1', role: 'assistant', text: 'Welcome to Nexus Shell. How can I help?' },
+  { id: '2', role: 'user', text: 'What does ShellLayout do?' },
+  {
+    id: '3',
+    role: 'assistant',
+    text: 'It composes the menu bar, activity bar, sidebar, docking area, terminal, chat pane and status bar into one frame, wired to the shell stores.',
+  },
+];
+
+const SLASH_COMMANDS = [
+  { command: 'clear', description: 'Clear the transcript' },
+  { command: 'help', description: 'List available commands' },
+  { command: 'explain', description: 'Explain the selected code' },
+];
+
+const meta = {
+  title: 'Primitives/ChatPane',
   component: ChatPane,
+  tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'fullscreen',
+    docs: {
+      description: {
+        component:
+          'A docked chat panel: a scrolling transcript over a composer with slash-command autocomplete. Fully controlled — it owns only the draft input and the suggestion highlight, so the same component backs a local array, a websocket or an LLM endpoint. Type `/` to see the autocomplete. See `ConnectedChatPane` for the variant bound to `useChatStore`.',
+      },
+    },
+  },
+  decorators: [
+    (Story) => (
+      <div className="h-[460px] flex justify-end bg-background">
+        <Story />
+      </div>
+    ),
+  ],
+} satisfies Meta<typeof ChatPane>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: { messages: MESSAGES, slashCommands: SLASH_COMMANDS, onClose: () => {} },
+};
+
+/** The empty state. Override it with the `emptyState` prop. */
+export const Empty: Story = {
+  args: { messages: [], slashCommands: SLASH_COMMANDS, onClose: () => {} },
+};
+
+/** Send messages and watch them append. Type `/` to trigger the command list. */
+export const Interactive: Story = {
+  args: {},
+  render: function Render() {
+    const [messages, setMessages] = useState<IChatMessage[]>([]);
+
+    const send = (text: string) => {
+      const id = String(Date.now());
+      setMessages((m) => [
+        ...m,
+        { id, role: 'user', text },
+        { id: `${id}-r`, role: 'assistant', text: `You said: ${text}` },
+      ]);
+    };
+
+    return (
+      <ChatPane
+        messages={messages}
+        slashCommands={SLASH_COMMANDS}
+        onSend={send}
+        onClose={() => {}}
+      />
+    );
   },
 };
 
-export default meta;
-type Story = StoryObj<typeof ChatPane>;
-
-const ChatPaneWrapper = ({ theme, customCommands }: { theme: string, customCommands?: boolean }) => {
-  const { setChatOpen } = useRightSidebarStore();
-  const { setSlashCommands } = useChatStore();
-  
-  useEffect(() => {
-    setChatOpen(true);
-    if (customCommands) {
-      setSlashCommands([
-        { command: 'help', description: 'Show help', execute: () => {} },
-        { command: 'clear', description: 'Clear history', execute: () => {} },
-        { command: 'status', description: 'System status', execute: () => {} },
-        { command: 'joke', description: 'Tell a joke', execute: () => {} },
-      ]);
-    }
-  }, [setChatOpen, setSlashCommands, customCommands]);
-
-  return (
-    <div className={`${theme} h-[600px] border flex`}>
-      <ChatPane />
-    </div>
-  );
+/** `author` overrides the label above a bubble, for multi-agent transcripts. */
+export const NamedAuthors: Story = {
+  args: {
+    onClose: () => {},
+    messages: [
+      { id: '1', role: 'user', text: 'Who is reviewing this?', author: 'David' },
+      { id: '2', role: 'assistant', text: 'I have the diff open.', author: 'Reviewer' },
+      { id: '3', role: 'assistant', text: 'Tests are green.', author: 'CI' },
+    ],
+  },
 };
 
-export const Light: Story = {
-  render: () => <ChatPaneWrapper theme="theme-light" />,
+/** Long messages wrap and preserve newlines; the transcript pins to the bottom. */
+export const LongTranscript: Story = {
+  args: {
+    onClose: () => {},
+    slashCommands: SLASH_COMMANDS,
+    messages: Array.from({ length: 12 }, (_, i) => ({
+      id: String(i),
+      role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
+      text:
+        i % 2 === 0
+          ? `Question number ${i / 2 + 1}?`
+          : 'A deliberately long answer that wraps across several lines so the bubble\nsizing and scroll pinning can be checked under pressure.',
+    })),
+  },
 };
 
-export const Dark: Story = {
-  render: () => <ChatPaneWrapper theme="theme-dark" />,
-};
-
-export const GeorgiaTech: Story = {
-  render: () => <ChatPaneWrapper theme="theme-gt" />,
-};
-
-export const SlashCommands: Story = {
-  render: () => <ChatPaneWrapper theme="theme-light" customCommands />,
+/** Omitting `onClose` hides the close button, for a pane that is always present. */
+export const NotClosable: Story = {
+  args: { messages: MESSAGES, slashCommands: SLASH_COMMANDS },
 };

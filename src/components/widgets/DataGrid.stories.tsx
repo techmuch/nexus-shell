@@ -4,10 +4,17 @@ import { useState } from 'react';
 import { Play, RotateCcw, CheckCircle, ShieldAlert } from 'lucide-react';
 
 const meta: Meta<typeof DataGrid> = {
-  title: 'Widgets/General/DataGrid',
+  title: 'Primitives/DataGrid',
   component: DataGrid,
+  tags: ['autodocs'],
   parameters: {
     layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A sortable, filterable data table with optional row virtualisation. Filtering and sorting run internally against the `data` you pass — a case-insensitive match across all values, and click-to-sort on columns marked `sortable`. For server-side paging or sorting, filter upstream and set `showFilter={false}`.',
+      },
+    },
   },
 };
 

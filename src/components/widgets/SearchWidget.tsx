@@ -1,30 +1,61 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Loader2, X, Clock } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '../../lib/cn';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
+/** A result row in {@link SearchWidget}. */
 export interface ISearchResult {
+  /** Stable identifier. Used as the React key. */
   id: string;
+  /** Primary line. */
   title: string;
+  /** Secondary line, truncated to one line. */
   description?: string;
+  /** Icon component rendered at 14px in the leading badge. */
   icon?: React.ComponentType<any>;
+  /** Short tag rendered right-aligned on the title row, e.g. `"FILE"`. */
   category?: string;
 }
 
 export interface SearchWidgetProps {
+  /** Placeholder for the input. Defaults to `"Search..."`. */
   placeholder?: string;
+  /**
+   * Called with the current query, debounced by 300ms. Do your matching here
+   * and feed the outcome back through `results`.
+   */
   onSearch: (query: string) => void;
+  /** Results for the current query. The widget renders them as given. */
   results: ISearchResult[];
+  /** Called with the clicked result. */
   onSelect: (result: ISearchResult) => void;
+  /** Past or suggested queries offered as autocomplete below the input. */
   suggestions?: string[];
+  /** Swap the search icon for a spinner while a query is in flight. */
   loading?: boolean;
+  /** Extra classes merged onto the root element. */
   className?: string;
 }
 
+/**
+ * A full-height search panel: an input with autocomplete over a scrolling
+ * result list. Sized for the sidebar, unlike the compact {@link QuickSearch}
+ * that sits in the menu bar.
+ *
+ * Controlled with respect to results — it owns the query text and debounces it
+ * to `onSearch`, but never filters `results` itself. That keeps async and
+ * remote search straightforward.
+ *
+ * @example
+ * ```tsx
+ * <SearchWidget
+ *   onSearch={setQuery}
+ *   results={hits}
+ *   loading={isFetching}
+ *   suggestions={recentQueries}
+ *   onSelect={(hit) => open(hit.id)}
+ * />
+ * ```
+ */
 export const SearchWidget: React.FC<SearchWidgetProps> = ({
   placeholder = "Search...",
   onSearch,

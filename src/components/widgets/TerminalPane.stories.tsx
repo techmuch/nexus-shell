@@ -1,48 +1,80 @@
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { TerminalPane } from './TerminalPane';
-import { useTerminalStore } from '../../core/services/TerminalService';
-import { useEffect } from 'react';
 
-const meta: Meta<typeof TerminalPane> = {
-  title: 'Widgets/Shell/TerminalPane',
+const meta = {
+  title: 'Primitives/TerminalPane',
   component: TerminalPane,
+  tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'fullscreen',
+    docs: {
+      description: {
+        component:
+          'A bottom-docked terminal: a scrolling output log over a single-line input. It owns only the in-progress input — it does not echo commands or interpret them, so `clear`, `help` and anything app-specific stay yours. See `ConnectedTerminalPane` for the variant bound to `useTerminalStore` with `clear` and `help` built in.',
+      },
+    },
+  },
+} satisfies Meta<typeof TerminalPane>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    history: [
+      'Welcome to Nexus Shell Terminal v0.1.0',
+      'Type "help" for a list of commands.',
+    ],
   },
 };
 
-export default meta;
-type Story = StoryObj<typeof TerminalPane>;
-
-const TerminalWrapper = ({ theme }: { theme: string }) => {
-  const { setOpen, addHistory } = useTerminalStore();
-  
-  useEffect(() => {
-    setOpen(true);
-    // Add some dummy history for the story
-    addHistory('ls -la');
-    addHistory('total 48');
-    addHistory('drwxr-xr-x  10 user  staff   320 Feb 19 15:45 .');
-    addHistory('drwxr-xr-x   5 user  staff   160 Feb 19 10:20 ..');
-    addHistory('-rw-r--r--   1 user  staff  1024 Feb 19 15:45 package.json');
-  }, [setOpen, addHistory]);
-
-  return (
-    <div className={`${theme} w-[800px] border flex flex-col bg-background text-foreground`}>
-      <div className="h-40 bg-muted/20 flex items-center justify-center italic text-muted-foreground">Main Content Area Area Above</div>
-      <TerminalPane />
-    </div>
-  );
+/** A fresh terminal with nothing written yet. */
+export const Empty: Story = {
+  args: { history: [] },
 };
 
-export const Light: Story = {
-  render: () => <TerminalWrapper theme="theme-light" />,
+/** Type a command and press Enter. This story implements `clear` and `echo` itself. */
+export const Interactive: Story = {
+  args: {},
+  render: function Render() {
+    const [history, setHistory] = useState<string[]>([
+      'Try: help, echo hello, clear',
+    ]);
+
+    const run = (command: string) => {
+      const [verb, ...args] = command.split(/\s+/);
+      if (verb === 'clear') return setHistory([]);
+
+      const output =
+        verb === 'help'
+          ? 'Available: help, echo, clear'
+          : verb === 'echo'
+            ? args.join(' ')
+            : `command not found: ${verb}`;
+
+      setHistory((h) => [...h, `$ ${command}`, output]);
+    };
+
+    return <TerminalPane history={history} onCommand={run} onClose={() => {}} />;
+  },
 };
 
-export const Dark: Story = {
-  render: () => <TerminalWrapper theme="theme-dark" />,
+/** Long output scrolls and pins to the bottom as lines arrive. */
+export const LongOutput: Story = {
+  args: {
+    history: Array.from({ length: 60 }, (_, i) =>
+      i % 3 === 0 ? `$ step ${i / 3}` : `  processed module-${i}.ts`,
+    ),
+  },
 };
 
-export const GeorgiaTech: Story = {
-  render: () => <TerminalWrapper theme="theme-gt" />,
+/** Omitting `onClose` hides the header buttons; `prompt` and `title` are overridable. */
+export const CustomPrompt: Story = {
+  args: {
+    title: 'Python',
+    prompt: '>>>',
+    height: '200px',
+    history: ['Python 3.12.0', 'Type "help", "copyright", "credits" or "license".'],
+  },
 };

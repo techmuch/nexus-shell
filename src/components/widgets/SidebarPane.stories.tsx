@@ -1,44 +1,114 @@
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { SidebarPane } from './SidebarPane';
-import { useSidebarStore } from '../../core/services/SidebarService';
-import { Home } from 'lucide-react';
-import { useEffect } from 'react';
+import { SettingsPanel } from './SettingsPanel';
+import { TreeWidget, type ITreeNode } from './TreeWidget';
 
-const meta: Meta<typeof SidebarPane> = {
-  title: 'Widgets/Shell/SidebarPane',
+const meta = {
+  title: 'Primitives/SidebarPane',
   component: SidebarPane,
+  tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'fullscreen',
+    docs: {
+      description: {
+        component:
+          'The collapsible panel beside the activity bar: a titled header with an optional close button, over a scrolling body. A pure container — it decides nothing about which panel is showing. See `ConnectedSidebarPane` for the variant that resolves the active panel from `useSidebarStore`.',
+      },
+    },
+  },
+  decorators: [
+    (Story) => (
+      <div className="h-[420px] flex">
+        <Story />
+      </div>
+    ),
+  ],
+} satisfies Meta<typeof SidebarPane>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+const FILES: ITreeNode[] = [
+  {
+    id: 'src',
+    label: 'src',
+    type: 'folder',
+    isOpen: true,
+    children: [
+      { id: 'app', label: 'App.tsx', type: 'file' },
+      { id: 'main', label: 'main.tsx', type: 'file' },
+    ],
+  },
+  { id: 'readme', label: 'README.md', type: 'file' },
+];
+
+export const Default: Story = {
+  args: {
+    title: 'Explorer',
+    onClose: () => {},
+    children: (
+      <div className="p-4 text-sm text-muted-foreground">Panel content goes here.</div>
+    ),
   },
 };
 
-export default meta;
-type Story = StoryObj<typeof SidebarPane>;
-
-const SidebarPaneWrapper = ({ theme }: { theme: string }) => {
-  useEffect(() => {
-    useSidebarStore.getState().setPanels([
-      {
-        id: 'home',
-        label: 'Home',
-        icon: Home,
-        component: () => <div className="p-4">Dynamic Home Content</div>,
-      },
-    ]);
-    useSidebarStore.getState().setActiveSidebar('home');
-  }, []);
-
-  return (
-    <div className={`${theme} bg-background text-foreground h-[600px] border flex`}>
-      <SidebarPane />
-    </div>
-  );
+/** Omitting `onClose` hides the close button, for panes that are always visible. */
+export const NotClosable: Story = {
+  args: {
+    title: 'Outline',
+    children: <div className="p-4 text-sm text-muted-foreground">No close button.</div>,
+  },
 };
 
-export const Light: Story = {
-  render: () => <SidebarPaneWrapper theme="theme-light" />,
+/** The pane is a container: drop any component in as `children`. */
+export const WithFileTree: Story = {
+  args: { title: 'Explorer', onClose: () => {} },
+  render: function Render(args) {
+    const [nodes, setNodes] = useState(FILES);
+    const toggle = (items: ITreeNode[], id: string): ITreeNode[] =>
+      items.map((n) =>
+        n.id === id
+          ? { ...n, isOpen: !n.isOpen }
+          : { ...n, children: n.children && toggle(n.children, id) },
+      );
+
+    return (
+      <SidebarPane {...args}>
+        <TreeWidget data={nodes} onToggle={(n) => setNodes(toggle(nodes, n.id))} />
+      </SidebarPane>
+    );
+  },
 };
 
-export const Dark: Story = {
-  render: () => <SidebarPaneWrapper theme="theme-dark" />,
+/** The Settings panel body is its own component, so the pane stays generic. */
+export const WithSettings: Story = {
+  args: { title: 'Settings', onClose: () => {} },
+  render: function Render(args) {
+    const [theme, setTheme] = useState('light');
+    return (
+      <SidebarPane {...args}>
+        <SettingsPanel theme={theme} onThemeChange={setTheme} />
+      </SidebarPane>
+    );
+  },
+};
+
+/** Long titles truncate rather than pushing the close button off the edge. */
+export const LongTitle: Story = {
+  args: {
+    title: 'A Panel With An Unreasonably Long Title',
+    onClose: () => {},
+    children: <div className="p-4 text-sm text-muted-foreground">Content.</div>,
+  },
+};
+
+/** `width` accepts any CSS length. */
+export const Wide: Story = {
+  args: {
+    title: 'Inspector',
+    width: '420px',
+    onClose: () => {},
+    children: <div className="p-4 text-sm text-muted-foreground">A wider pane.</div>,
+  },
 };

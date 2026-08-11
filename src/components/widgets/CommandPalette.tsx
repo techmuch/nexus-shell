@@ -1,113 +1,182 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { commandRegistry, ICommand } from '../../core/registry/CommandRegistry';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
+import { cn } from '../../lib/cn';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+/** An entry in the {@link CommandPalette} list. */
+export interface ICommandItem {
+  /** Stable identifier. Also matched against the query. */
+  id: string;
+  /** Human-readable name shown in the list and matched against the query. */
+  label: string;
+  /** Optional keybinding hint rendered on the right, e.g. `"⌘K"`. */
+  keybinding?: string;
 }
 
-interface CommandPaletteProps {
-  commands?: ICommand[];
-  forcedOpen?: boolean;
+export interface CommandPaletteProps<T extends ICommandItem = ICommandItem> {
+  /** Whether the palette is showing. */
+  open: boolean;
+  /** Commands to offer. Filtered against the query by `label` and `id`. */
+  commands: T[];
+  /** Called with the chosen command on click or Enter. */
+  onSelect: (command: T) => void;
+  /** Called on Escape and on backdrop click. */
+  onClose?: () => void;
+  /**
+   * Render inline instead of as a fixed overlay. Useful for documenting the
+   * palette in Storybook, or embedding it in a page. Defaults to `false`.
+   */
+  inline?: boolean;
+  /** Placeholder for the query input. */
+  placeholder?: string;
+  /**
+   * Custom filter. Receives every command and the current query; return `true`
+   * to keep. Defaults to a case-insensitive substring match on `label` and `id`.
+   */
+  filter?: (command: T, query: string) => boolean;
+  /** Extra classes merged onto the palette surface. */
+  className?: string;
 }
 
-export const CommandPalette = ({ commands: customCommands, forcedOpen = false }: CommandPaletteProps) => {
-  const [isOpen, setIsOpen] = useState(forcedOpen);
+const defaultFilter = (command: ICommandItem, query: string) => {
+  const q = query.toLowerCase();
+  return (
+    command.label.toLowerCase().includes(q) || command.id.toLowerCase().includes(q)
+  );
+};
+
+/**
+ * A VS Code-style command palette: a fuzzy-filtered, keyboard-navigable list of
+ * commands over a dimmed backdrop.
+ *
+ * Fully controlled — it owns only the query text and the highlighted row.
+ * Visibility, the command list and execution are the caller's. It also binds no
+ * global keyboard shortcut; for the store-backed variant that reads the
+ * {@link commandRegistry} and binds `Cmd/Ctrl+Shift+P`, see
+ * `ConnectedCommandPalette`.
+ *
+ * Arrow keys move the highlight, Enter selects, Escape closes.
+ *
+ * @example
+ * ```tsx
+ * <CommandPalette
+ *   open={open}
+ *   commands={[{ id: 'file.save', label: 'Save File', keybinding: '⌘S' }]}
+ *   onSelect={(cmd) => { run(cmd.id); setOpen(false); }}
+ *   onClose={() => setOpen(false)}
+ * />
+ * ```
+ */
+export const CommandPalette = <T extends ICommandItem = ICommandItem>({
+  open,
+  commands,
+  onSelect,
+  onClose,
+  inline = false,
+  placeholder = 'Type a command to run…',
+  filter = defaultFilter as (command: T, query: string) => boolean,
+  className,
+}: CommandPaletteProps<T>) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const availableCommands = (customCommands || commandRegistry.getCommands()).filter(cmd => 
-    cmd.label.toLowerCase().includes(query.toLowerCase()) ||
-    cmd.id.toLowerCase().includes(query.toLowerCase())
+  const matches = useMemo(
+    () => commands.filter((c) => filter(c, query)),
+    [commands, query, filter],
   );
 
   useEffect(() => {
-    setIsOpen(forcedOpen);
-  }, [forcedOpen]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
-        e.preventDefault();
-        setIsOpen(prev => !prev);
-        setQuery('');
-        setSelectedIndex(0);
-      } else if (e.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
+    if (open) {
+      setQuery('');
+      setSelectedIndex(0);
       inputRef.current?.focus();
     }
-  }, [isOpen]);
+  }, [open]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
+  if (!open) return null;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % availableCommands.length);
+      setSelectedIndex((i) => (matches.length ? (i + 1) % matches.length : 0));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + availableCommands.length) % availableCommands.length);
+      setSelectedIndex((i) =>
+        matches.length ? (i - 1 + matches.length) % matches.length : 0,
+      );
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (availableCommands[selectedIndex]) {
-        executeCommand(availableCommands[selectedIndex]);
-      }
+      if (matches[selectedIndex]) onSelect(matches[selectedIndex]);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onClose?.();
     }
   };
 
-  const executeCommand = (command: ICommand) => {
-    command.execute();
-    if (!forcedOpen) setIsOpen(false);
-  };
-
-  if (!isOpen) return null;
-
   return (
-    <div className={cn(
-      "z-[100] flex items-start justify-center pt-[10vh]",
-      forcedOpen ? "relative pt-0 w-full max-w-xl" : "fixed inset-0 bg-black/50 backdrop-blur-sm"
-    )}>
-      <div className="w-full max-w-xl bg-popover text-popover-foreground border shadow-2xl rounded-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div
+      onClick={inline ? undefined : onClose}
+      className={cn(
+        'z-[100] flex items-start justify-center',
+        inline
+          ? 'relative w-full max-w-xl'
+          : 'fixed inset-0 pt-[10vh] bg-black/50 backdrop-blur-sm',
+      )}
+    >
+      <div
+        role="dialog"
+        aria-modal={!inline}
+        aria-label="Command Palette"
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          'w-full max-w-xl bg-popover text-popover-foreground border shadow-2xl rounded-xl overflow-hidden animate-in fade-in zoom-in duration-200',
+          className,
+        )}
+      >
         <div className="flex items-center px-4 border-b">
           <Search size={18} className="text-muted-foreground mr-3" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Type a command to run..."
-            className="flex-1 h-14 bg-transparent outline-none text-base text-foreground placeholder:text-muted-foreground"
+            role="combobox"
+            aria-expanded
+            aria-controls="command-palette-list"
+            aria-label="Command"
+            placeholder={placeholder}
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelectedIndex(0);
-            }}
+            onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
+            className="flex-1 h-14 bg-transparent outline-none text-base text-foreground placeholder:text-muted-foreground"
           />
         </div>
-        <div className="max-h-[300px] overflow-y-auto py-2">
-          {availableCommands.length === 0 ? (
+
+        <div
+          id="command-palette-list"
+          role="listbox"
+          className="max-h-[300px] overflow-y-auto py-2"
+        >
+          {matches.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              No commands found matching "{query}"
+              {query ? `No commands found matching "${query}"` : 'No commands available.'}
             </div>
           ) : (
-            availableCommands.map((cmd, index) => (
+            matches.map((cmd, index) => (
               <div
                 key={cmd.id}
-                className={cn(
-                  "px-4 py-2 cursor-pointer flex justify-between items-center text-sm",
-                  index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
-                )}
-                onClick={() => executeCommand(cmd)}
+                role="option"
+                aria-selected={index === selectedIndex}
+                onClick={() => onSelect(cmd)}
                 onMouseEnter={() => setSelectedIndex(index)}
+                className={cn(
+                  'px-4 py-2 cursor-pointer flex justify-between items-center text-sm',
+                  index === selectedIndex
+                    ? 'bg-accent text-accent-foreground'
+                    : 'hover:bg-accent/50',
+                )}
               >
                 <span>{cmd.label}</span>
                 {cmd.keybinding && (
@@ -119,12 +188,19 @@ export const CommandPalette = ({ commands: customCommands, forcedOpen = false }:
             ))
           )}
         </div>
+
         <div className="px-4 py-2 border-t bg-muted/30 flex justify-between items-center text-[10px] text-muted-foreground">
           <div className="flex gap-3">
-            <span><kbd className="bg-muted px-1 rounded border">↑↓</kbd> to navigate</span>
-            <span><kbd className="bg-muted px-1 rounded border">Enter</kbd> to select</span>
+            <span>
+              <kbd className="bg-muted px-1 rounded border">↑↓</kbd> to navigate
+            </span>
+            <span>
+              <kbd className="bg-muted px-1 rounded border">Enter</kbd> to select
+            </span>
           </div>
-          <span><kbd className="bg-muted px-1 rounded border">Esc</kbd> to close</span>
+          <span>
+            <kbd className="bg-muted px-1 rounded border">Esc</kbd> to close
+          </span>
         </div>
       </div>
     </div>
