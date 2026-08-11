@@ -1,0 +1,1016 @@
+{
+  "components": [
+    {
+      "name": "ActivityBar",
+      "file": "src/components/widgets/ActivityBar.tsx",
+      "description": "The narrow vertical icon rail on the left edge of the shell, used to switch\nwhich panel the sidebar shows.\n\nControlled — it holds no selection state. For the store-backed variant used\nby `ShellLayout`, see `ConnectedActivityBar`.",
+      "example": "<ActivityBar\n  items={[{ id: 'files', label: 'Explorer', icon: Files }]}\n  activeId={active}\n  onSelect={(id) => setActive(id === active ? null : id)}\n/>",
+      "props": [
+        {
+          "name": "activeId",
+          "required": false,
+          "type": "string | null",
+          "description": "Id of the currently active item, or `null` when nothing is selected.",
+          "default": null
+        },
+        {
+          "name": "aria-label",
+          "required": false,
+          "type": "string",
+          "description": "Accessible label for the landmark. Defaults to `\"Activity Bar\"`.",
+          "default": "\"Activity Bar\""
+        },
+        {
+          "name": "bottomItems",
+          "required": false,
+          "type": "IActivityBarItem[]",
+          "description": "Items rendered in the bottom group, below the flex spacer. Defaults to a\nsingle Settings item. Pass `[]` to render no bottom group.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root `<aside>`.",
+          "default": null
+        },
+        {
+          "name": "items",
+          "required": false,
+          "type": "IActivityBarItem[]",
+          "description": "Items rendered in the main (top) group, in order.",
+          "default": null
+        },
+        {
+          "name": "onSelect",
+          "required": false,
+          "type": "(id: string) => void",
+          "description": "Called with the clicked item's id. Toggling — clicking the active item to\ndeselect it — is the caller's decision, not the component's.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "AppTitle",
+      "file": "src/components/widgets/AppTitle.tsx",
+      "description": "A branding lockup — icon badge, title and subtitle — sized for the\n{@link MenuBar}'s `title` slot.\n\nPurely presentational. Pass whatever branding your app needs; the library\nsupplies no default copy.",
+      "example": "<MenuBar\n  title={<AppTitle title=\"Acme Studio\" subtitle=\"Design System\" icon={<Boxes size={16} />} />}\n/>",
+      "props": [
+        {
+          "name": "title",
+          "required": true,
+          "type": "string",
+          "description": "Primary line. Rendered uppercase in a mono face.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "icon",
+          "required": false,
+          "type": "React.ReactNode",
+          "description": "Element shown in the leading badge, typically a 16px `lucide-react` icon.\nOmit to render no badge at all.",
+          "default": null
+        },
+        {
+          "name": "subtitle",
+          "required": false,
+          "type": "string",
+          "description": "Secondary line beneath the title. Omit to render a single line.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "ChatPane",
+      "file": "src/components/widgets/ChatPane.tsx",
+      "description": "A docked chat panel: a scrolling transcript over a composer with slash-command\nautocomplete.\n\nFully controlled — it owns only the in-progress input and the suggestion\nhighlight. Messages, sending and visibility belong to the caller, so the same\ncomponent works against a local array, a websocket, or an LLM endpoint. For\nthe store-backed variant used by `ShellLayout`, see `ConnectedChatPane`.",
+      "example": "<ChatPane\n  messages={messages}\n  onSend={(text) => send(text)}\n  slashCommands={[{ command: 'clear', description: 'Clear the transcript' }]}\n  onClose={() => setOpen(false)}\n/>",
+      "props": [
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "emptyState",
+          "required": false,
+          "type": "React.ReactNode",
+          "description": "Shown in place of the transcript when `messages` is empty.",
+          "default": null
+        },
+        {
+          "name": "messages",
+          "required": false,
+          "type": "IChatMessage[]",
+          "description": "Messages to display, oldest first.",
+          "default": null
+        },
+        {
+          "name": "onClose",
+          "required": false,
+          "type": "() => void",
+          "description": "Called when the close button is pressed. Omit to hide the button.",
+          "default": null
+        },
+        {
+          "name": "onSend",
+          "required": false,
+          "type": "(text: string) => void",
+          "description": "Called with the trimmed message text on send. The component clears its\ncomposer but does not append to `messages` — that is the caller's job.",
+          "default": null
+        },
+        {
+          "name": "onSlashCommand",
+          "required": false,
+          "type": "(command: ISlashCommand) => void",
+          "description": "Called when a slash command is picked from the suggestion list.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Placeholder for the composer.",
+          "default": null
+        },
+        {
+          "name": "slashCommands",
+          "required": false,
+          "type": "ISlashCommand[]",
+          "description": "Slash commands offered once the composer starts with `/`.",
+          "default": null
+        },
+        {
+          "name": "title",
+          "required": false,
+          "type": "string",
+          "description": "Title shown in the pane header. Defaults to `\"Chat\"`.",
+          "default": "\"Chat\""
+        }
+      ]
+    },
+    {
+      "name": "CommandPalette",
+      "file": "src/components/widgets/CommandPalette.tsx",
+      "description": "A VS Code-style command palette: a fuzzy-filtered, keyboard-navigable list of\ncommands over a dimmed backdrop.\n\nFully controlled — it owns only the query text and the highlighted row.\nVisibility, the command list and execution are the caller's. It also binds no\nglobal keyboard shortcut; for the store-backed variant that reads the\n{@link commandRegistry} and binds `Cmd/Ctrl+Shift+P`, see\n`ConnectedCommandPalette`.\n\nArrow keys move the highlight, Enter selects, Escape closes.",
+      "example": "<CommandPalette\n  open={open}\n  commands={[{ id: 'file.save', label: 'Save File', keybinding: '⌘S' }]}\n  onSelect={(cmd) => { run(cmd.id); setOpen(false); }}\n  onClose={() => setOpen(false)}\n/>",
+      "props": [
+        {
+          "name": "commands",
+          "required": true,
+          "type": "T[]",
+          "description": "Commands to offer. Filtered against the query by `label` and `id`.",
+          "default": null
+        },
+        {
+          "name": "onSelect",
+          "required": true,
+          "type": "(command: T) => void",
+          "description": "Called with the chosen command on click or Enter.",
+          "default": null
+        },
+        {
+          "name": "open",
+          "required": true,
+          "type": "boolean",
+          "description": "Whether the palette is showing.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the palette surface.",
+          "default": null
+        },
+        {
+          "name": "filter",
+          "required": false,
+          "type": "(command: T, query: string) => boolean",
+          "description": "Custom filter. Receives every command and the current query; return `true`\nto keep. Defaults to a case-insensitive substring match on `label` and `id`.",
+          "default": null
+        },
+        {
+          "name": "inline",
+          "required": false,
+          "type": "boolean",
+          "description": "Render inline instead of as a fixed overlay. Useful for documenting the\npalette in Storybook, or embedding it in a page. Defaults to `false`.",
+          "default": "false"
+        },
+        {
+          "name": "onClose",
+          "required": false,
+          "type": "() => void",
+          "description": "Called on Escape and on backdrop click.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Placeholder for the query input.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "ContextMenu",
+      "file": "src/components/widgets/ContextMenu.tsx",
+      "description": "A floating menu positioned at viewport coordinates, for right-click menus.\n\nRenders `position: fixed` at the given point and closes on outside click or\nEscape. It does not decide when to appear — mount it conditionally from your\nown `onContextMenu` handler and store the coordinates yourself.",
+      "example": "{menu && (\n  <ContextMenu\n    x={menu.x}\n    y={menu.y}\n    items={[{ label: 'Delete', onClick: () => remove(menu.id) }]}\n    onClose={() => setMenu(null)}\n  />\n)}",
+      "props": [
+        {
+          "name": "items",
+          "required": true,
+          "type": "IContextMenuItem[]",
+          "description": "Entries to show, in order.",
+          "default": null
+        },
+        {
+          "name": "onClose",
+          "required": true,
+          "type": "() => void",
+          "description": "Called on outside click, on Escape, and after any entry is chosen.",
+          "default": null
+        },
+        {
+          "name": "x",
+          "required": true,
+          "type": "number",
+          "description": "Viewport x coordinate, typically `event.clientX`.",
+          "default": null
+        },
+        {
+          "name": "y",
+          "required": true,
+          "type": "number",
+          "description": "Viewport y coordinate, typically `event.clientY`.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the menu surface.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "DataGrid",
+      "file": "src/components/widgets/DataGrid.tsx",
+      "description": "A sortable, filterable data table with optional row virtualisation.\n\nFiltering and sorting are handled internally against the `data` you pass — a\ncase-insensitive match across all values, and click-to-sort on columns marked\n`sortable`. For server-side paging or sorting, filter upstream and set\n`showFilter={false}`.",
+      "example": "<DataGrid\n  columns={[\n    { key: 'name', header: 'Name', sortable: true },\n    { key: 'status', header: 'Status', width: 120,\n      render: (v) => <Badge>{v}</Badge> },\n  ]}\n  data={rows}\n  onRowClick={(row) => select(row.id)}\n/>",
+      "props": [
+        {
+          "name": "columns",
+          "required": true,
+          "type": "IDataGridColumn<T>[]",
+          "description": "Columns, in display order.",
+          "default": null
+        },
+        {
+          "name": "data",
+          "required": true,
+          "type": "T[]",
+          "description": "Rows to display. Sorting and filtering are applied on top of this array.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "loading",
+          "required": false,
+          "type": "boolean",
+          "description": "Show a loading indicator in place of rows. Defaults to `false`.",
+          "default": "false"
+        },
+        {
+          "name": "onRowClick",
+          "required": false,
+          "type": "(row: T) => void",
+          "description": "Called with the clicked row.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Message shown when there are no rows.",
+          "default": null
+        },
+        {
+          "name": "rowKey",
+          "required": false,
+          "type": "keyof T",
+          "description": "Property used as each row's identity. Defaults to `\"id\"`.",
+          "default": "\"id\""
+        },
+        {
+          "name": "selectedRowId",
+          "required": false,
+          "type": "string | number",
+          "description": "Value of `rowKey` on the row to highlight as selected.",
+          "default": null
+        },
+        {
+          "name": "showFilter",
+          "required": false,
+          "type": "boolean",
+          "description": "Show the built-in filter box above the grid. Defaults to `true`.",
+          "default": "true"
+        },
+        {
+          "name": "virtualized",
+          "required": false,
+          "type": "boolean",
+          "description": "Virtualise rows with `react-virtuoso`. Leave on for large datasets; turn it\noff when the grid must print or be fully present in the DOM. Defaults to\n`true`.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "MenuBar",
+      "file": "src/components/widgets/MenuBar.tsx",
+      "description": "The application menu bar: a row of hover-activated dropdowns with optional\none-level submenus, plus slots for branding, a centre widget and right-hand\nactions.\n\nPresentational and fully controlled — menus come in as data and selections go\nout through `onSelect`. It reads no registry. For the variant wired to the\n{@link menuRegistry} and {@link commandRegistry}, see `ConnectedMenuBar`.",
+      "example": "<MenuBar\n  menus={{ File: [{ id: 'save', label: 'Save', keybinding: '⌘S' }] }}\n  onSelect={(item) => run(item.id)}\n  right={<ThemeSwitcher value={theme} onChange={setTheme} />}\n/>",
+      "props": [
+        {
+          "name": "center",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Slot between the menus and the right edge, sized for a search input. The\nbar renders whatever you pass — it does not embed a search component.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root `<header>`.",
+          "default": null
+        },
+        {
+          "name": "menus",
+          "required": false,
+          "type": "Record<string, IMenuItem[]>",
+          "description": "Menus keyed by top-level label, e.g. `{ File: [...], Edit: [...] }`.\nInsertion order determines display order.",
+          "default": null
+        },
+        {
+          "name": "onSelect",
+          "required": false,
+          "type": "(item: IMenuItem) => void",
+          "description": "Called with the chosen leaf item. Items with a `submenu` never fire this.",
+          "default": null
+        },
+        {
+          "name": "right",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Slot at the far right, for a theme switcher, avatar, or actions.",
+          "default": null
+        },
+        {
+          "name": "title",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Branding shown at the far left. Pass a string, a logo element, or omit it\nfor the default wordmark. Providing a `title` switches the bar to its\ntaller, translucent variant.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "Modal",
+      "file": "src/components/widgets/Modal.tsx",
+      "description": "A centered modal dialog covering the three common blocking interactions:\nalert, confirm and prompt.\n\nFully controlled — it owns only the prompt's draft text. Escape, backdrop\nclick and the close button all route to `onCancel`; Enter routes to\n`onConfirm`. For the promise-based variant driven by `useModalStore` (so you\ncan `await openConfirm(...)` from anywhere), see `ConnectedModal`.",
+      "example": "<Modal\n  open={open}\n  type=\"prompt\"\n  title=\"Rename file\"\n  message=\"Enter a new name.\"\n  defaultValue=\"untitled.ts\"\n  onConfirm={(name) => rename(name)}\n  onCancel={() => setOpen(false)}\n/>",
+      "props": [
+        {
+          "name": "open",
+          "required": true,
+          "type": "boolean",
+          "description": "Whether the dialog is mounted. Nothing renders when `false`.",
+          "default": null
+        },
+        {
+          "name": "title",
+          "required": true,
+          "type": "string",
+          "description": "Heading text.",
+          "default": null
+        },
+        {
+          "name": "cancelLabel",
+          "required": false,
+          "type": "string",
+          "description": "Label for the cancel button. Defaults to `\"Cancel\"`.",
+          "default": "\"Cancel\""
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the dialog surface.",
+          "default": null
+        },
+        {
+          "name": "confirmLabel",
+          "required": false,
+          "type": "string",
+          "description": "Label for the confirm button. Defaults to `\"OK\"` / `\"Confirm\"` by `type`.",
+          "default": "\"OK\""
+        },
+        {
+          "name": "defaultValue",
+          "required": false,
+          "type": "string",
+          "description": "Initial value of the input when `type` is `\"prompt\"`.",
+          "default": null
+        },
+        {
+          "name": "message",
+          "required": false,
+          "type": "string",
+          "description": "Body text. Newlines are preserved.",
+          "default": null
+        },
+        {
+          "name": "onCancel",
+          "required": false,
+          "type": "() => void",
+          "description": "Called on Cancel, on the close button, on Escape, and on backdrop click.",
+          "default": null
+        },
+        {
+          "name": "onConfirm",
+          "required": false,
+          "type": "(value?: string) => void",
+          "description": "Called on Confirm/OK and on Enter. Receives the input text for `prompt`,\nand `undefined` for `alert` and `confirm`.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Placeholder for the prompt input.",
+          "default": null
+        },
+        {
+          "name": "type",
+          "required": false,
+          "type": "ModalType",
+          "description": "Dialog shape. Defaults to `\"alert\"`.",
+          "default": "\"alert\""
+        }
+      ]
+    },
+    {
+      "name": "QuickSearch",
+      "file": "src/components/widgets/QuickSearch.tsx",
+      "description": "A compact search field with a grouped results dropdown, sized to sit inside a\n{@link MenuBar}.\n\nPresentational and fully controlled — it owns the query text, the open state\nand the keyboard highlight, and nothing else. Searching is entirely yours:\nresults are pushed in via `results`, so the same component backs a local\narray, a registry lookup, or a remote index.\n\nArrow keys move the highlight across groups, Enter selects, Escape closes.",
+      "example": "<QuickSearch\n  results={hits}\n  categories={['Actions', 'Files']}\n  onQueryChange={setQuery}\n  onSelect={(hit) => open(hit.id)}\n/>",
+      "props": [
+        {
+          "name": "onSelect",
+          "required": true,
+          "type": "(result: T) => void",
+          "description": "Called when a row is clicked or chosen with Enter.",
+          "default": null
+        },
+        {
+          "name": "results",
+          "required": true,
+          "type": "T[]",
+          "description": "Results for the current query. `QuickSearch` does no filtering — it renders\nexactly what you give it, so you control matching, ranking and async\nloading.",
+          "default": null
+        },
+        {
+          "name": "categories",
+          "required": false,
+          "type": "string[]",
+          "description": "Explicit category order. Categories absent from this list are dropped, so\nit doubles as a whitelist. Defaults to first-seen order.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "debounceMs",
+          "required": false,
+          "type": "number",
+          "description": "Delay before `onQueryChange` fires, in ms. Defaults to `200`.",
+          "default": "200"
+        },
+        {
+          "name": "onQueryChange",
+          "required": false,
+          "type": "(query: string) => void",
+          "description": "Called on every keystroke, debounced by `debounceMs`.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Placeholder for the input. Defaults to `\"Search…\"`.",
+          "default": "\"Search…\""
+        }
+      ]
+    },
+    {
+      "name": "SearchWidget",
+      "file": "src/components/widgets/SearchWidget.tsx",
+      "description": "A full-height search panel: an input with autocomplete over a scrolling\nresult list. Sized for the sidebar, unlike the compact {@link QuickSearch}\nthat sits in the menu bar.\n\nControlled with respect to results — it owns the query text and debounces it\nto `onSearch`, but never filters `results` itself. That keeps async and\nremote search straightforward.",
+      "example": "<SearchWidget\n  onSearch={setQuery}\n  results={hits}\n  loading={isFetching}\n  suggestions={recentQueries}\n  onSelect={(hit) => open(hit.id)}\n/>",
+      "props": [
+        {
+          "name": "onSearch",
+          "required": true,
+          "type": "(query: string) => void",
+          "description": "Called with the current query, debounced by 300ms. Do your matching here\nand feed the outcome back through `results`.",
+          "default": null
+        },
+        {
+          "name": "onSelect",
+          "required": true,
+          "type": "(result: ISearchResult) => void",
+          "description": "Called with the clicked result.",
+          "default": null
+        },
+        {
+          "name": "results",
+          "required": true,
+          "type": "ISearchResult[]",
+          "description": "Results for the current query. The widget renders them as given.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "loading",
+          "required": false,
+          "type": "boolean",
+          "description": "Swap the search icon for a spinner while a query is in flight.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Placeholder for the input. Defaults to `\"Search...\"`.",
+          "default": "\"Search...\""
+        },
+        {
+          "name": "suggestions",
+          "required": false,
+          "type": "string[]",
+          "description": "Past or suggested queries offered as autocomplete below the input.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "SettingsPanel",
+      "file": "src/components/widgets/SettingsPanel.tsx",
+      "description": "Sidebar body for the Settings panel: a vertical list of theme choices.\n\nSplit out of {@link SidebarPane} so the pane stays a generic container. Pass\nthis (or your own component) as the sidebar's `children`.",
+      "example": "<SidebarPane title=\"Settings\" onClose={close}>\n  <SettingsPanel theme={theme} onThemeChange={setTheme} />\n</SidebarPane>",
+      "props": [
+        {
+          "name": "onThemeChange",
+          "required": true,
+          "type": "(theme: T) => void",
+          "description": "Called with the newly selected theme id.",
+          "default": null
+        },
+        {
+          "name": "theme",
+          "required": true,
+          "type": "T",
+          "description": "Currently selected theme id.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "themes",
+          "required": false,
+          "type": "ISettingsThemeOption<T>[]",
+          "description": "Theme choices to offer. Defaults to the three bundled themes.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "ShellLayout",
+      "file": "src/components/layout/ShellLayout.tsx",
+      "description": "The complete application shell: menu bar, activity bar, sidebar, a\n`flexlayout-react` docking area, terminal, chat pane and status bar.\n\nThis is the batteries-included composition. It registers whatever you pass\ninto the shell stores on mount, then renders the `Connected*` component\nvariants, which read from those stores. Tab contents come from the\n{@link componentRegistry}, so plugins can contribute views without the shell\nimporting them.\n\nIf you want the pieces without the wiring, import the individual components\nand compose them yourself — every one of them is prop-driven and works\nstandalone.\n\nClosing a tab marked dirty via `useLayoutStore().setTabDirty` prompts for\nconfirmation before the tab is removed.",
+      "example": "<ShellLayout\n  title={<Logo />}\n  panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }]}\n  menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}\n  statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}\n/>",
+      "props": [
+        {
+          "name": "centerMenuBarContent",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Widget rendered between the menus and the right slot, sized for search.",
+          "default": null
+        },
+        {
+          "name": "layoutModel",
+          "required": false,
+          "type": "Model",
+          "description": "Take control of the docking layout. When provided, the shell renders this\nmodel and stops writing changes to `useLayoutStore` — useful for tests and\nstories. Omit it to use the store's persisted model.",
+          "default": null
+        },
+        {
+          "name": "menuConfig",
+          "required": false,
+          "type": "Record<string, IMenuItemConfig[]>",
+          "description": "Menu structure, keyed by top-level menu name. Items dispatch by `commandId`.",
+          "default": null
+        },
+        {
+          "name": "panels",
+          "required": false,
+          "type": "ISidebarPanel[]",
+          "description": "Sidebar panels to register. Each becomes an icon in the activity bar and\nrenders its `component` in the sidebar when selected.",
+          "default": null
+        },
+        {
+          "name": "rightMenuBarContent",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Slot at the far right of the menu bar, for actions or a theme switcher.",
+          "default": null
+        },
+        {
+          "name": "slashCommands",
+          "required": false,
+          "type": "ISlashCommandConfig[]",
+          "description": "Slash commands available in the chat pane.",
+          "default": null
+        },
+        {
+          "name": "statusBarConfig",
+          "required": false,
+          "type": "IStatusBarWidgetConfig[]",
+          "description": "Items for the status bar, grouped by their `alignment`.",
+          "default": null
+        },
+        {
+          "name": "title",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Branding shown at the far left of the menu bar.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "SidebarPane",
+      "file": "src/components/widgets/SidebarPane.tsx",
+      "description": "The collapsible panel beside the {@link ActivityBar}: a titled header with an\noptional close button, over a scrolling body.\n\nA pure container — it decides nothing about which panel is showing and holds\nno state. Render whatever you like as `children`. For the store-backed\nvariant that resolves the active panel from `useSidebarStore`, see\n`ConnectedSidebarPane`.",
+      "example": "<SidebarPane title=\"Explorer\" onClose={() => setActive(null)}>\n  <TreeWidget data={files} />\n</SidebarPane>",
+      "props": [
+        {
+          "name": "title",
+          "required": true,
+          "type": "string",
+          "description": "Heading text. Rendered uppercase with letter-spacing; pass it in natural\ncase and let the component style it.",
+          "default": null
+        },
+        {
+          "name": "children",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Panel body. Scrolls independently of the header.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root `<aside>`.",
+          "default": null
+        },
+        {
+          "name": "onClose",
+          "required": false,
+          "type": "() => void",
+          "description": "Called when the close button is pressed. Omit it to hide the close button\nentirely — useful when the pane is always visible.",
+          "default": null
+        },
+        {
+          "name": "width",
+          "required": false,
+          "type": "string",
+          "description": "Fixed pane width, as a CSS length. Defaults to `\"300px\"`.",
+          "default": "\"300px\""
+        }
+      ]
+    },
+    {
+      "name": "StatusBar",
+      "file": "src/components/widgets/StatusBar.tsx",
+      "description": "A VS Code-style status bar: a fixed-height footer with left, center and right\nitem groups. Items may be static labels or interactive buttons.\n\nThis component is fully controlled — it holds no state and reads no global\nstore. For the store-backed variant used by `ShellLayout`, see\n{@link ConnectedStatusBar}.",
+      "example": "<StatusBar\n  widgets={[\n    { id: 'branch', label: 'main', icon: GitBranch, alignment: 'left', onClick: openBranches },\n    { id: 'ln', label: 'Ln 12, Col 4', alignment: 'right' },\n  ]}\n/>",
+      "props": [
+        {
+          "name": "aria-label",
+          "required": false,
+          "type": "string",
+          "description": "Accessible label for the landmark. Defaults to `\"Status Bar\"`.",
+          "default": "\"Status Bar\""
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root `<footer>`.",
+          "default": null
+        },
+        {
+          "name": "widgets",
+          "required": false,
+          "type": "IStatusBarWidget[]",
+          "description": "Items to display. They are grouped by `alignment` and sorted by descending\n`priority` within each group.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "TerminalPane",
+      "file": "src/components/widgets/TerminalPane.tsx",
+      "description": "A bottom-docked terminal pane: a scrolling output log over a single-line\ninput.\n\nPresentational and fully controlled — it owns only the in-progress input\ntext. Visibility, history and command execution all belong to the caller.\nFor the store-backed variant with built-in `clear`/`help` handling, see\n`ConnectedTerminalPane`.",
+      "example": "const [history, setHistory] = useState<string[]>([]);\n<TerminalPane\n  history={history}\n  onCommand={(cmd) => setHistory((h) => [...h, `$ ${cmd}`, run(cmd)])}\n  onClose={() => setOpen(false)}\n/>",
+      "props": [
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "height",
+          "required": false,
+          "type": "string",
+          "description": "Height of the pane, as a CSS length. Defaults to `\"250px\"`.",
+          "default": "\"250px\""
+        },
+        {
+          "name": "history",
+          "required": false,
+          "type": "string[]",
+          "description": "Lines already written to the terminal, oldest first.",
+          "default": null
+        },
+        {
+          "name": "onClose",
+          "required": false,
+          "type": "() => void",
+          "description": "Called when the collapse or close button is pressed.",
+          "default": null
+        },
+        {
+          "name": "onCommand",
+          "required": false,
+          "type": "(command: string) => void",
+          "description": "Called with the trimmed command text when the user presses Enter. Empty\ninput is swallowed and never reaches this handler.\n\nThe component does not echo the command or interpret it — append the echo\nand any output to `history` yourself. This keeps command semantics\n(`clear`, `help`, anything app-specific) entirely in your hands.",
+          "default": null
+        },
+        {
+          "name": "prompt",
+          "required": false,
+          "type": "string",
+          "description": "Prompt string shown before the input. Defaults to `\"$\"`.",
+          "default": "\"$\""
+        },
+        {
+          "name": "title",
+          "required": false,
+          "type": "string",
+          "description": "Title shown in the pane header. Defaults to `\"Terminal\"`.",
+          "default": "\"Terminal\""
+        }
+      ]
+    },
+    {
+      "name": "ThemeSwitcher",
+      "file": "src/components/widgets/ThemeSwitcher.tsx",
+      "description": "A compact segmented control for switching themes.\n\nControlled — it renders `value` and reports changes through `onChange`, and\napplies no classes to the document itself. For the store-backed variant that\nalso sets the theme class on `<html>`, see `ConnectedThemeSwitcher`.",
+      "example": "const [theme, setTheme] = useState('light');\n<ThemeSwitcher value={theme} onChange={setTheme} />",
+      "props": [
+        {
+          "name": "onChange",
+          "required": true,
+          "type": "(theme: T) => void",
+          "description": "Called with the newly selected theme id.",
+          "default": null
+        },
+        {
+          "name": "value",
+          "required": true,
+          "type": "T",
+          "description": "Currently selected theme id.",
+          "default": null
+        },
+        {
+          "name": "aria-label",
+          "required": false,
+          "type": "string",
+          "description": "Accessible label for the group. Defaults to `\"Theme\"`.",
+          "default": "\"Theme\""
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "options",
+          "required": false,
+          "type": "IThemeOption<T>[]",
+          "description": "Selectable themes. Defaults to Light / Dark / Georgia Tech, matching the\nthemes shipped in the library's stylesheet.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "TreeWidget",
+      "file": "src/components/widgets/TreeWidget.tsx",
+      "description": "A virtualised file-explorer tree with drag-to-move and a right-click menu.\n\nRows are virtualised via `react-virtuoso`, so very large trees stay\nresponsive. The component is controlled: expansion lives on your nodes as\n`isOpen` and changes are reported through `onToggle`, so the tree never holds\na second copy of your data.\n\nThe context menu is data-driven. The defaults cover the usual file\noperations; pass `actions` to replace them with your own commands rather than\nadding one-off props.",
+      "example": "<TreeWidget\n  data={nodes}\n  onToggle={(n) => setNodes(toggle(nodes, n.id))}\n  onActivate={(n) => open(n.id)}\n  actions={[\n    { id: 'new-map', label: 'New Map', icon: <Map size={14} />,\n      showFor: ['folder', 'background'], onSelect: (ctx) => createMap(ctx.nodeId) },\n  ]}\n/>",
+      "props": [
+        {
+          "name": "data",
+          "required": true,
+          "type": "ITreeNode[]",
+          "description": "Root nodes. Expansion state lives on the nodes themselves via `isOpen`.",
+          "default": null
+        },
+        {
+          "name": "actions",
+          "required": false,
+          "type": "ITreeAction[]",
+          "description": "Entries for the right-click menu. Defaults to New File, New Folder, Rename\nand Delete, which map to the `onNew*` / `onRename` / `onDelete` props.\n\nPass your own array to replace that set entirely — this is the extension\npoint for app-specific commands, so the tree itself stays generic.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "indent",
+          "required": false,
+          "type": "number",
+          "description": "Indentation added per depth level, in px. Defaults to `12`.",
+          "default": "12"
+        },
+        {
+          "name": "onActivate",
+          "required": false,
+          "type": "(node: ITreeNode) => void",
+          "description": "Called when a node is double-clicked. Typically opens the item.",
+          "default": null
+        },
+        {
+          "name": "onDelete",
+          "required": false,
+          "type": "(nodeId: string) => void",
+          "description": "Handler for the built-in \"Delete\" action.",
+          "default": null
+        },
+        {
+          "name": "onMoveNode",
+          "required": false,
+          "type": "(draggedId: string, targetFolderId: string) => void",
+          "description": "Called after a node is dragged onto a folder.",
+          "default": null
+        },
+        {
+          "name": "onNewFile",
+          "required": false,
+          "type": "(parentId: string | null) => void",
+          "description": "Handler for the built-in \"New File\" action.",
+          "default": null
+        },
+        {
+          "name": "onNewFolder",
+          "required": false,
+          "type": "(parentId: string | null) => void",
+          "description": "Handler for the built-in \"New Folder\" action.",
+          "default": null
+        },
+        {
+          "name": "onRename",
+          "required": false,
+          "type": "(nodeId: string) => void",
+          "description": "Handler for the built-in \"Rename\" action.",
+          "default": null
+        },
+        {
+          "name": "onToggle",
+          "required": false,
+          "type": "(node: ITreeNode) => void",
+          "description": "Called when a folder is clicked. Flip that node's `isOpen` in your own\nstate — the tree renders expansion but does not own it.",
+          "default": null
+        },
+        {
+          "name": "virtualized",
+          "required": false,
+          "type": "boolean",
+          "description": "Virtualise rows with `react-virtuoso`. Leave on for large trees; turn it\noff when every row must be present in the DOM — printing, full-text browser\nsearch, or a test environment that can't measure layout. Defaults to `true`.",
+          "default": "true"
+        }
+      ]
+    },
+    {
+      "name": "UserProfile",
+      "file": "src/components/widgets/UserProfile.tsx",
+      "description": "An avatar and identity widget with a dropdown menu, sized for a menu bar's\nright slot.\n\nFully controlled — it owns only its open/editing UI state. The identity comes\nin as `profile`, edits go out through `onProfileChange`, and the menu is\nwhatever you pass as `actions`. It reads no store and prescribes no menu\nitems, so it works the same against a session hook, an auth provider, or\nstatic props.",
+      "example": "<UserProfile\n  profile={{ name: 'Ada Lovelace', role: 'Engineer', email: 'ada@example.com' }}\n  onProfileChange={(next) => save(next)}\n  actions={[\n    { id: 'settings', label: 'Account Settings', icon: Settings, onSelect: openSettings },\n    { id: 'out', label: 'Sign Out', icon: LogOut, onSelect: signOut, destructive: true, divider: true },\n  ]}\n/>",
+      "props": [
+        {
+          "name": "profile",
+          "required": true,
+          "type": "IUserProfile",
+          "description": "The identity to display.",
+          "default": null
+        },
+        {
+          "name": "actions",
+          "required": false,
+          "type": "IUserProfileAction[]",
+          "description": "Actions listed in the dropdown. Empty by default — the component prescribes\nno menu, since \"Sign Out\" and \"Account Settings\" mean different things in\nevery app.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the trigger button.",
+          "default": null
+        },
+        {
+          "name": "onAvatarChange",
+          "required": false,
+          "type": "(file: File) => void",
+          "description": "Called with a file the user picked for their avatar. Read it and update\n`profile.avatarUrl` yourself — the component neither reads files nor holds\nthe result. Omit it to hide the upload affordance.",
+          "default": null
+        },
+        {
+          "name": "onClick",
+          "required": false,
+          "type": "() => void",
+          "description": "Bypass the dropdown entirely and just report the click. Useful when the\nprofile should open a full settings tab instead of a menu.",
+          "default": null
+        },
+        {
+          "name": "onProfileChange",
+          "required": false,
+          "type": "(profile: Pick<IUserProfile, 'name' | 'role'>) => void",
+          "description": "Called with the new name and role when the inline editor is saved.\nOmit it to hide the edit affordance entirely.",
+          "default": null
+        },
+        {
+          "name": "showName",
+          "required": false,
+          "type": "boolean",
+          "description": "Show the name and role beside the avatar. Defaults to `true`.",
+          "default": "true"
+        }
+      ]
+    }
+  ]
+}

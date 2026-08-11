@@ -1,0 +1,79 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Allows a manual redeploy from the Actions tab without pushing a commit.
+  workflow_dispatch:
+
+# Least privilege for the official Pages deployment action. `id-token` is
+# required — deploy-pages authenticates with OIDC rather than a PAT.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race. In-progress runs finish so a half-uploaded
+# artifact is never published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      # `base_path` is `/<repo>` for a project site and empty for a user or
+      # custom-domain site, so the same workflow works either way.
+      - name: Build site
+        env:
+          SITE_BASE: ${{ steps.pages.outputs.base_path }}/
+        run: npm run site:build
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Assemble artifact
+        run: |
+          mkdir -p _site
+          cp -r website/dist/. _site/
+          mkdir -p _site/storybook
+          cp -r storybook-static/. _site/storybook/
+          # Jekyll would otherwise strip files and folders beginning with an
+          # underscore, which Vite and Storybook both emit.
+          touch _site/.nojekyll
+
+      - name: Verify artifact
+        run: |
+          test -f _site/index.html
+          test -f _site/404.html
+          test -f _site/storybook/index.html
+          echo "artifact contents:"
+          ls -la _site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

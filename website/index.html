@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" class="theme-light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus Shell — React components for IDE-style app shells</title>
+    <meta
+      name="description"
+      content="A React component library for building IDE-style application shells: menu bar, activity bar, sidebar, docking layout, terminal, chat pane and status bar. Pure, prop-driven, fully typed."
+    />
+    <meta property="og:title" content="Nexus Shell" />
+    <meta
+      property="og:description"
+      content="React components for building IDE-style application shells."
+    />
+    <meta property="og:type" content="website" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem('nexus-site-theme') || 'dark';
+          document.documentElement.className = 'theme-' + t;
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

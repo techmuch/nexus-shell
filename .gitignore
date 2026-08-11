@@ -137,3 +137,7 @@ take_screenshot.js
 
 # Playwright (e2e lives under examples/showcase/e2e)
 examples/showcase/e2e/test-results/
+
+# Docs site build output
+website/dist/
+_site/

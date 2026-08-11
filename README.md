@@ -3,6 +3,9 @@
 React components for building IDE-style application shells — menu bar, activity
 bar, sidebar, docking layout, terminal, chat pane and status bar.
 
+**[Documentation and live examples →](https://techmuch.github.io/nexus-shell/)** ·
+[Storybook](https://techmuch.github.io/nexus-shell/storybook/)
+
 ```bash
 npm install nexus-shell
 ```
@@ -96,13 +99,17 @@ Add your own by defining a `.theme-yourname` block with the same properties.
 
 ```bash
 npm install
-npm run storybook      # docs and component workbench at :6006
+
+npm run site           # documentation site at :5173
+npm run storybook      # component workbench at :6006
 npm run dev            # showcase app at :5173
 
 npm run typecheck      # library sources
 npm test               # vitest — unit and architecture tests
+npm run site:test      # renders every site route and demo
 npm run build          # library build to dist/
 npm run build-storybook
+npm run site:build     # documentation site to website/dist/
 npm run e2e            # Playwright against the showcase app
 ```
 
@@ -131,7 +138,39 @@ examples/
     wargame/
     e2e/            Playwright specs for the showcase app
   basic-app/        Minimal integration example
+website/
+  src/demos/        Live examples — the source shown on the site
+  src/content/      The component gallery, as data
+  scripts/          Generates the props tables from the library's types
 ```
+
+### Documentation site
+
+`website/` is a Vite app that imports the library from `../src`, not from
+`dist`. Every example on the site is rendered by the current source, so a demo
+that no longer compiles against the real API fails the build rather than
+quietly documenting an API that no longer exists.
+
+Two generation steps keep it honest:
+
+- **Props tables** come from `website/scripts/generate-api.mjs`, which parses
+  the component sources for prop names, types, defaults and JSDoc. Nothing is
+  hand-written.
+- **Code samples** are extracted from the demo files by `#region` marker, so the
+  snippet a visitor copies is provably the code that produced the thing they
+  just interacted with.
+
+Adding a component to the site is one entry in `website/src/content/components.ts`
+plus a demo file. There is no per-component page to keep in sync.
+
+The site ships no dependencies of its own — routing, syntax highlighting and the
+copy button are all local, so the docs can't drag the repo's install surface
+around.
+
+**Deployment.** `.github/workflows/deploy-pages.yml` builds the site and
+Storybook on every push to `main` and publishes them as one Pages artifact — the
+site at the root, Storybook under `/storybook/`. First-time setup needs your
+credentials: run `./scripts/setup-pages.sh`.
 
 The split between `components/` and `connected/` is the load-bearing one. A
 component that reads a global store can't be configured by its caller, rendered

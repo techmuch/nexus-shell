@@ -1,0 +1,572 @@
+/**
+ * The component gallery, as data.
+ *
+ * Each entry names a demo file, and each demo names an exported component plus
+ * the `#region` marker that wraps its source. `ComponentPage` renders all of
+ * them, so adding a component to the site is one entry here plus a demo file —
+ * there is no per-component page to keep in sync.
+ */
+
+export interface DemoEntry {
+  /** Exported component name in the demo file. */
+  export: string;
+  /** `#region` marker wrapping this demo's source. Defaults to the export name. */
+  region?: string;
+  title: string;
+  description: string;
+  /** Drop the preview's padding — for bars, rails and docked panes. */
+  flush?: boolean;
+  /** Fixed preview height, as a CSS length. */
+  height?: string;
+}
+
+export interface ComponentEntry {
+  /** URL segment, e.g. `/components/status-bar`. */
+  slug: string;
+  /** Component name, matching the generated API entry. */
+  name: string;
+  /** One line shown in the sidebar and on the index card. */
+  tagline: string;
+  category: string;
+  /** File under `src/demos/`, without the extension. */
+  demoFile: string;
+  demos: DemoEntry[];
+  /** Extra prose rendered above the demos. Markdown-ish: `code` spans only. */
+  notes?: string[];
+}
+
+export const CATEGORIES = [
+  'Shell',
+  'Chrome',
+  'Data',
+  'Overlays',
+  'Search',
+  'Panels',
+  'Identity',
+] as const;
+
+export const COMPONENTS: ComponentEntry[] = [
+  /* ------------------------------------------------------------------ Shell */
+  {
+    slug: 'shell-layout',
+    name: 'ShellLayout',
+    tagline: 'The complete application frame, batteries included',
+    category: 'Shell',
+    demoFile: 'ShellLayout',
+    notes: [
+      'This is the assembled composition. It writes the props you pass into the shell stores on mount, then renders the `Connected*` variants that read from them.',
+      'That indirection buys one thing: plugins and distant code can contribute menu items, status bar widgets and sidebar panels without prop-drilling. It costs the usual price of global state — two shells on one page share it. If that matters, compose the primitives yourself.',
+    ],
+    demos: [
+      {
+        export: 'Full',
+        region: 'full',
+        title: 'A configured workbench',
+        description:
+          'Menu bar, activity bar, sidebar, docking area, terminal, chat pane and status bar. Drag the tabs to split the workspace.',
+        flush: true,
+        height: '560px',
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- Chrome */
+  {
+    slug: 'menu-bar',
+    name: 'MenuBar',
+    tagline: 'Application menus with submenus and content slots',
+    category: 'Chrome',
+    demoFile: 'MenuBar',
+    notes: [
+      'Menus come in as data and selections go out through `onSelect`. The bar reads no registry — see `ConnectedMenuBar` for the variant wired to `menuRegistry`.',
+    ],
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'Menus and submenus',
+        description: 'Hover a menu to open it. Items with a `submenu` are not themselves selectable.',
+        flush: true,
+      },
+      {
+        export: 'WithSlots',
+        region: 'slots',
+        title: 'Branding, search and actions',
+        description:
+          'Three slots: `title` at the left, `center` sized for a search field, and `right` for actions. Providing `title` switches the bar to its taller variant.',
+        flush: true,
+        height: '220px',
+      },
+    ],
+  },
+  {
+    slug: 'activity-bar',
+    name: 'ActivityBar',
+    tagline: 'The vertical icon rail for switching panels',
+    category: 'Chrome',
+    demoFile: 'ActivityBar',
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'Selecting a panel',
+        description:
+          'Controlled — it holds no selection state, so clicking the active item to deselect is your decision, not the component’s.',
+        flush: true,
+        height: '320px',
+      },
+      {
+        export: 'WithSidebar',
+        region: 'withSidebar',
+        title: 'Paired with a sidebar',
+        description: 'The usual arrangement: the rail picks which pane the sidebar shows.',
+        flush: true,
+        height: '360px',
+      },
+      {
+        export: 'BottomItems',
+        region: 'bottomItems',
+        title: 'Custom bottom group',
+        description: '`bottomItems` replaces the default Settings item. Pass `[]` to remove the group.',
+        flush: true,
+        height: '320px',
+      },
+    ],
+  },
+  {
+    slug: 'sidebar-pane',
+    name: 'SidebarPane',
+    tagline: 'Titled, closable container for sidebar content',
+    category: 'Chrome',
+    demoFile: 'SidebarPane',
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'Any content',
+        description: 'A pure container — it owns the header, close button and scrolling, and nothing about what goes inside.',
+        flush: true,
+        height: '340px',
+      },
+      {
+        export: 'WithSettings',
+        region: 'settings',
+        title: 'The settings panel',
+        description: '`SettingsPanel` is a separate component so the pane itself stays generic.',
+        flush: true,
+        height: '300px',
+      },
+      {
+        export: 'NotClosable',
+        region: 'notClosable',
+        title: 'Without a close button',
+        description: 'Omitting `onClose` hides the button entirely.',
+        flush: true,
+        height: '220px',
+      },
+    ],
+  },
+  {
+    slug: 'status-bar',
+    name: 'StatusBar',
+    tagline: 'Footer with left, center and right item groups',
+    category: 'Chrome',
+    demoFile: 'StatusBar',
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'Three alignment groups',
+        description: 'Items are grouped by `alignment` and sorted by descending `priority` within each group.',
+        flush: true,
+      },
+      {
+        export: 'Interactive',
+        region: 'interactive',
+        title: 'Interactive items',
+        description:
+          'An item with an `onClick` becomes a keyboard-focusable button. Without one it renders as a static label.',
+        flush: true,
+      },
+      {
+        export: 'Styled',
+        region: 'styled',
+        title: 'Per-item accents',
+        description: 'The `className` on an item is merged onto it, so status colours are yours to set.',
+        flush: true,
+      },
+      {
+        export: 'Priority',
+        region: 'priority',
+        title: 'Ordering by priority',
+        description: 'Declaration order does not matter; higher `priority` sorts earlier.',
+        flush: true,
+      },
+    ],
+  },
+  {
+    slug: 'app-title',
+    name: 'AppTitle',
+    tagline: 'Branding lockup for the menu bar',
+    category: 'Chrome',
+    demoFile: 'Misc',
+    demos: [
+      {
+        export: 'AppTitleBasic',
+        region: 'appTitle',
+        title: 'Variations',
+        description:
+          'Purely presentational. The library supplies no default copy — pass whatever branding your app needs.',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------- Data */
+  {
+    slug: 'tree-widget',
+    name: 'TreeWidget',
+    tagline: 'Virtualised file tree with a data-driven context menu',
+    category: 'Data',
+    demoFile: 'TreeWidget',
+    notes: [
+      'Expansion lives on your nodes as `isOpen` and changes are reported through `onToggle`, so the tree never holds a second copy of your data.',
+      'The context menu is data-driven. If you find yourself wanting a prop named after a feature, add an `actions` entry instead — that is the extension point.',
+    ],
+    demos: [
+      {
+        export: 'Basic',
+        region: 'toggle',
+        title: 'Expansion is controlled',
+        description:
+          'Click a folder to expand it, double-click a file to activate it. The toggle helper is the one piece of boilerplate this design asks for.',
+        flush: true,
+        height: '340px',
+      },
+      {
+        export: 'CustomActions',
+        region: 'actions',
+        title: 'App-specific commands',
+        description:
+          '`actions` replaces the default menu entirely. `showFor` limits an entry to files, folders, or a right-click on empty space.',
+        flush: true,
+        height: '360px',
+      },
+      {
+        export: 'DragToMove',
+        region: 'dragToMove',
+        title: 'Drag to move',
+        description: 'Drag a file onto a folder. Only folders accept drops.',
+        flush: true,
+        height: '340px',
+      },
+      {
+        export: 'LargeTree',
+        region: 'large',
+        title: '2,000 nodes',
+        description: 'Rows are virtualised via react-virtuoso, so large trees stay responsive.',
+        flush: true,
+        height: '340px',
+      },
+    ],
+  },
+  {
+    slug: 'data-grid',
+    name: 'DataGrid',
+    tagline: 'Sortable, filterable table with virtualisation',
+    category: 'Data',
+    demoFile: 'DataGrid',
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'Sort, filter and select',
+        description:
+          'Click a sortable header to sort; type in the filter box to match across all values. Both run internally against the `data` you pass.',
+        flush: true,
+        height: '420px',
+      },
+      {
+        export: 'ServerSide',
+        region: 'noFilter',
+        title: 'Server-side filtering',
+        description: 'Filtering upstream? Turn off the built-in box so the page does not show two.',
+        flush: true,
+        height: '260px',
+      },
+      {
+        export: 'Loading',
+        region: 'loading',
+        title: 'Loading and empty states',
+        description: 'A spinner replaces the rows while `loading`; `placeholder` covers the empty case.',
+        flush: true,
+        height: '240px',
+      },
+    ],
+  },
+
+  /* --------------------------------------------------------------- Overlays */
+  {
+    slug: 'modal',
+    name: 'Modal',
+    tagline: 'Alert, confirm and prompt dialogs',
+    category: 'Overlays',
+    demoFile: 'Modal',
+    notes: [
+      'Escape, backdrop click and the close button all route to `onCancel`; Enter routes to `onConfirm`.',
+      'For a promise-based API you can `await` from anywhere — including outside React — mount `<ConnectedModal />` once and call `useModalStore.getState().openConfirm(…)`.',
+    ],
+    demos: [
+      {
+        export: 'Prompt',
+        region: 'prompt',
+        title: 'Prompt',
+        description: 'Adds a text input, autofocused and selected. `onConfirm` receives its value.',
+      },
+      {
+        export: 'Confirm',
+        region: 'confirm',
+        title: 'Confirm',
+        description: 'Two buttons, with overridable labels for when "Confirm" is too vague.',
+      },
+      {
+        export: 'Alert',
+        region: 'alert',
+        title: 'Alert',
+        description: 'A single button. Newlines in `message` are preserved.',
+      },
+    ],
+  },
+  {
+    slug: 'command-palette',
+    name: 'CommandPalette',
+    tagline: 'Filterable, keyboard-navigable command list',
+    category: 'Overlays',
+    demoFile: 'CommandPalette',
+    notes: [
+      'Arrow keys move the highlight, Enter selects, Escape closes. The component binds no global shortcut — `ConnectedCommandPalette` adds `Cmd/Ctrl+Shift+P` and reads the command registry.',
+    ],
+    demos: [
+      {
+        export: 'Inline',
+        region: 'inline',
+        title: 'Inline',
+        description: 'Rendered in place rather than as a fullscreen overlay, so it can be documented here.',
+      },
+      {
+        export: 'Overlay',
+        region: 'overlay',
+        title: 'As an overlay',
+        description: 'How it appears in a real app: dimmed backdrop, dismissed with Escape.',
+      },
+      {
+        export: 'CustomFilter',
+        region: 'customFilter',
+        title: 'Custom matching',
+        description: 'Replace the default substring match with fuzzy, scored, or remote matching.',
+      },
+    ],
+  },
+  {
+    slug: 'context-menu',
+    name: 'ContextMenu',
+    tagline: 'Floating menu at viewport coordinates',
+    category: 'Overlays',
+    demoFile: 'Misc',
+    demos: [
+      {
+        export: 'ContextMenuBasic',
+        region: 'contextMenu',
+        title: 'Right-click menu',
+        description:
+          'Closes on outside click and on Escape. It does not decide when to appear — you capture the coordinates and mount it conditionally.',
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- Search */
+  {
+    slug: 'quick-search',
+    name: 'QuickSearch',
+    tagline: 'Compact search field with grouped results',
+    category: 'Search',
+    demoFile: 'QuickSearch',
+    notes: [
+      'It does no filtering. Results are pushed in via `results`, which is what lets the same component back a local array, a registry lookup, or a remote index.',
+    ],
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'Grouped results',
+        description: 'Arrow keys move the highlight across group boundaries; Enter selects.',
+        height: '380px',
+      },
+      {
+        export: 'FilteredCategories',
+        region: 'categories',
+        title: 'Category order and whitelist',
+        description: '`categories` sets the group order and drops anything not listed.',
+        height: '320px',
+      },
+    ],
+  },
+  {
+    slug: 'search-widget',
+    name: 'SearchWidget',
+    tagline: 'Full-height search panel for the sidebar',
+    category: 'Search',
+    demoFile: 'SearchWidget',
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'Async search',
+        description:
+          '`onSearch` is debounced by 300ms. The widget never filters `results` itself, so remote search needs no special handling.',
+        flush: true,
+        height: '420px',
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- Panels */
+  {
+    slug: 'chat-pane',
+    name: 'ChatPane',
+    tagline: 'Docked transcript with slash-command autocomplete',
+    category: 'Panels',
+    demoFile: 'ChatPane',
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'Sending messages',
+        description: 'Type a message and press Enter. Type `/` to trigger the command list.',
+        flush: true,
+        height: '440px',
+      },
+      {
+        export: 'NamedAuthors',
+        region: 'authors',
+        title: 'Multi-agent transcripts',
+        description: '`author` overrides the label above a bubble.',
+        flush: true,
+        height: '360px',
+      },
+      {
+        export: 'EmptyState',
+        region: 'empty',
+        title: 'Custom empty state',
+        description: 'Replace the default placeholder with your own node.',
+        flush: true,
+        height: '360px',
+      },
+    ],
+  },
+  {
+    slug: 'terminal-pane',
+    name: 'TerminalPane',
+    tagline: 'Bottom-docked terminal log and input',
+    category: 'Panels',
+    demoFile: 'TerminalPane',
+    notes: [
+      'The component does not echo commands or interpret them. `clear`, `help` and anything app-specific stay yours — which is what makes it equally usable for a shell, a REPL, or a log viewer.',
+    ],
+    demos: [
+      {
+        export: 'Basic',
+        region: 'basic',
+        title: 'A working shell',
+        description: 'This demo implements `help`, `echo` and `clear` itself. Try them.',
+        flush: true,
+        height: '300px',
+      },
+      {
+        export: 'CustomPrompt',
+        region: 'customPrompt',
+        title: 'A different prompt',
+        description: '`title` and `prompt` are overridable, so it need not look like bash.',
+        flush: true,
+        height: '260px',
+      },
+    ],
+  },
+
+  /* --------------------------------------------------------------- Identity */
+  {
+    slug: 'user-profile',
+    name: 'UserProfile',
+    tagline: 'Avatar and identity widget with a dropdown',
+    category: 'Identity',
+    demoFile: 'Misc',
+    demos: [
+      {
+        export: 'UserProfileBasic',
+        region: 'userProfile',
+        title: 'With a menu',
+        description:
+          'Click to open. The component prescribes no menu items — "Sign Out" and "Account Settings" mean different things in every app.',
+        height: '300px',
+      },
+      {
+        export: 'UserProfileCompact',
+        region: 'userProfileCompact',
+        title: 'Avatar only',
+        description: '`showName={false}` for a tight menu bar.',
+        height: '260px',
+      },
+    ],
+  },
+  {
+    slug: 'settings-panel',
+    name: 'SettingsPanel',
+    tagline: 'Theme picker body for the settings sidebar',
+    category: 'Identity',
+    demoFile: 'Misc',
+    demos: [
+      {
+        export: 'SettingsPanelBasic',
+        region: 'settingsPanel',
+        title: 'Default themes',
+        description: 'The three themes bundled in the library stylesheet.',
+      },
+      {
+        export: 'SettingsPanelCustom',
+        region: 'settingsPanelCustom',
+        title: 'Your own themes',
+        description: 'Supply `themes` when your app ships more than the bundled three.',
+      },
+    ],
+  },
+  {
+    slug: 'theme-switcher',
+    name: 'ThemeSwitcher',
+    tagline: 'Compact segmented theme control',
+    category: 'Identity',
+    demoFile: 'Misc',
+    demos: [
+      {
+        export: 'ThemeSwitcherBasic',
+        region: 'themeSwitcher',
+        title: 'Controlled',
+        description:
+          'It renders `value` and reports changes, applying nothing to the document. `ConnectedThemeSwitcher` binds it to the theme store, which also sets the class on `<html>`.',
+      },
+      {
+        export: 'ThemeSwitcherCustom',
+        region: 'themeSwitcherCustom',
+        title: 'Custom options',
+        description: '`options` replaces the default set entirely.',
+      },
+    ],
+  },
+];
+
+export const componentBySlug = (slug: string): ComponentEntry | undefined =>
+  COMPONENTS.find((c) => c.slug === slug);
+
+export const componentsByCategory = () =>
+  CATEGORIES.map((category) => ({
+    category,
+    items: COMPONENTS.filter((c) => c.category === category),
+  })).filter((group) => group.items.length > 0);

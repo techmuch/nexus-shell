@@ -26,13 +26,24 @@ jobs:
       - name: Typecheck (library + examples)
         run: npx tsc --noEmit -p tsconfig.examples.json
 
+      - name: Typecheck (website)
+        run: npx tsc --noEmit -p website/tsconfig.json
+
       # Includes the architecture boundary tests, which fail if anything under
       # src/components starts reading a store or registry.
-      - name: Test
+      - name: Test (library)
         run: npm test
+
+      # Renders every site route and asserts every demo region still resolves,
+      # which a bundle-only build would not catch.
+      - name: Test (website)
+        run: npm run site:test
 
       - name: Build library
         run: npm run build
 
       - name: Build Storybook
         run: npm run build-storybook
+
+      - name: Build site
+        run: npm run site:build
