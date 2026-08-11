@@ -1,6 +1,7 @@
-import { GraduationCap, Moon, Sun } from 'lucide-react';
+import { GraduationCap, Moon, Palette, Sun } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/cn';
+import { BUNDLED_THEMES } from '../../lib/themes';
 
 /** A theme choice offered by {@link SettingsPanel}. */
 export interface ISettingsThemeOption<T extends string = string> {
@@ -9,18 +10,31 @@ export interface ISettingsThemeOption<T extends string = string> {
   icon: LucideIcon;
 }
 
-export const DEFAULT_SETTINGS_THEMES: ISettingsThemeOption[] = [
-  { id: 'light', label: 'Light', icon: Sun },
-  { id: 'dark', label: 'Dark', icon: Moon },
-  { id: 'gt', label: 'Georgia Tech', icon: GraduationCap },
-];
+/** Icons for the bundled themes; anything unlisted falls back to a palette. */
+const THEME_ICONS: Record<string, LucideIcon> = {
+  light: Sun,
+  dark: Moon,
+  gt: GraduationCap,
+  tamu: GraduationCap,
+};
+
+/**
+ * The themes bundled in the library stylesheet, with their full labels.
+ * Derived from the theme registry, so a new bundled theme appears here without
+ * a code change.
+ */
+export const DEFAULT_SETTINGS_THEMES: ISettingsThemeOption[] = BUNDLED_THEMES.map((t) => ({
+  id: t.id,
+  label: t.label,
+  icon: THEME_ICONS[t.id] ?? Palette,
+}));
 
 export interface SettingsPanelProps<T extends string = string> {
   /** Currently selected theme id. */
   theme: T;
   /** Called with the newly selected theme id. */
   onThemeChange: (theme: T) => void;
-  /** Theme choices to offer. Defaults to the three bundled themes. */
+  /** Theme choices to offer. Defaults to every bundled theme. */
   themes?: ISettingsThemeOption<T>[];
   /** Extra classes merged onto the root element. */
   className?: string;

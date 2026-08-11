@@ -37,7 +37,8 @@
     "test": "vitest run",
     "e2e": "playwright test --config examples/showcase/e2e/playwright.config.ts",
     "e2e:update": "playwright test --config examples/showcase/e2e/playwright.config.ts --update-snapshots",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:themes": "node scripts/check-themes-bundled.mjs"
   },
   "peerDependencies": {
     "react": "^19.0.0",

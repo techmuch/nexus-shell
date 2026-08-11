@@ -539,7 +539,7 @@ export const COMPONENTS: ComponentEntry[] = [
         export: 'SettingsPanelBasic',
         region: 'settingsPanel',
         title: 'Default themes',
-        description: 'The three themes bundled in the library stylesheet.',
+        description: 'Every theme bundled in the library stylesheet, listed with its full label.',
       },
       {
         export: 'SettingsPanelCustom',

@@ -7,88 +7,6 @@
     --radius: 0.5rem;
   }
 
-  .theme-light {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 90%; /* Slightly darker than muted for contrast */
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-  }
-
-  .theme-dark {
-    /* Backgrounds: Shifted to soothing dark grays (#18181B base) */
-    --background: 240 5% 10%; 
-    --foreground: 240 5% 85%; /* Softer white to prevent text glare */
-    
-    /* Cards & Popovers: Slightly elevated from background (#1E1E24) */
-    --card: 240 5% 13%;
-    --card-foreground: 240 5% 85%;
-    --popover: 240 5% 13%;
-    --popover-foreground: 240 5% 85%;
-    
-    /* Primary: Changed from glaring white to a readable, muted Indigo/Blue (#6366F1) */
-    --primary: 234 89% 65%;
-    --primary-foreground: 0 0% 100%; /* Pure white text is safe ON a colored button */
-    
-    /* Secondary: Muted interactive elements */
-    --secondary: 240 5% 20%;
-    --secondary-foreground: 240 5% 85%;
-    
-    /* Muted: For sidebars and inactive areas (#27272A) */
-    --muted: 240 5% 16%;
-    --muted-foreground: 240 5% 65%;
-    
-    /* Accent: Hover states - needs to be distinct from muted */
-    --accent: 240 5% 24%;
-    --accent-foreground: 240 5% 96%;
-    
-    /* Destructive: Muted red to prevent bleeding (#DC2626) */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    
-    /* Inputs & Borders: Distinct enough to see, soft enough to blend */
-    --border: 240 5% 26%;
-    --input: 240 5% 22%; /* Slightly lighter than background to fill input fields */
-    --ring: 234 89% 65%; /* Matches primary for focus states */
-  }
-
-  /* Georgia Tech Theme: Buzz Gold (#EAAA00) and Tech Tower White */
-  .theme-gt {
-    --background: 45 100% 97%;
-    --foreground: 45 100% 10%;
-    --card: 45 100% 98%;
-    --card-foreground: 45 100% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 45 100% 10%;
-    --primary: 45 100% 46%; 
-    --primary-foreground: 0 0% 0%;
-    --secondary: 45 20% 90%;
-    --secondary-foreground: 45 100% 20%;
-    --muted: 45 30% 92%;
-    --muted-foreground: 45 20% 40%;
-    --accent: 45 100% 46%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 45 30% 85%;
-    --input: 45 30% 85%;
-    --ring: 45 100% 46%;
-  }
-
   * {
     @apply border-border;
   }
@@ -96,6 +14,139 @@
   body {
     @apply bg-background text-foreground transition-colors duration-300;
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Themes
+ *
+ * Deliberately outside `@layer base`. Tailwind tree-shakes unused rules within
+ * a layer, and a theme class is only ever applied at runtime — `theme-${id}` —
+ * so nothing in the content globs references it literally. Inside a layer these
+ * blocks would be dropped from the build and the theme would silently not work.
+ *
+ * Keep in sync with `src/lib/themes.ts`; `src/lib/__tests__/themes.test.ts`
+ * fails if a registered theme has no block here, or omits a token.
+ * ------------------------------------------------------------------------- */
+
+.theme-light {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 45.5%; /* 45.5% clears AA on --muted */
+  --accent: 210 40% 90%; /* Slightly darker than muted for contrast */
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 48.5%; /* 48.5% clears AA against white text */
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+}
+
+.theme-dark {
+  /* Backgrounds: Shifted to soothing dark grays (#18181B base) */
+  --background: 240 5% 10%; 
+  --foreground: 240 5% 85%; /* Softer white to prevent text glare */
+  
+  /* Cards & Popovers: Slightly elevated from background (#1E1E24) */
+  --card: 240 5% 13%;
+  --card-foreground: 240 5% 85%;
+  --popover: 240 5% 13%;
+  --popover-foreground: 240 5% 85%;
+  
+  /* Primary: Changed from glaring white to a readable, muted Indigo/Blue (#6366F1) */
+  --primary: 234 89% 65%;
+  --primary-foreground: 0 0% 100%; /* Pure white text is safe ON a colored button */
+  
+  /* Secondary: Muted interactive elements */
+  --secondary: 240 5% 20%;
+  --secondary-foreground: 240 5% 85%;
+  
+  /* Muted: For sidebars and inactive areas (#27272A) */
+  --muted: 240 5% 16%;
+  --muted-foreground: 240 5% 65%;
+  
+  /* Accent: Hover states - needs to be distinct from muted */
+  --accent: 240 5% 24%;
+  --accent-foreground: 240 5% 96%;
+  
+  /* Destructive: Muted red to prevent bleeding (#DC2626) */
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Inputs & Borders: Distinct enough to see, soft enough to blend */
+  --border: 240 5% 26%;
+  --input: 240 5% 22%; /* Slightly lighter than background to fill input fields */
+  --ring: 234 89% 65%; /* Matches primary for focus states */
+}
+
+/* Georgia Tech Theme: Buzz Gold (#EAAA00) and Tech Tower White */
+.theme-gt {
+  --background: 45 100% 97%;
+  --foreground: 45 100% 10%;
+  --card: 45 100% 98%;
+  --card-foreground: 45 100% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 45 100% 10%;
+  --primary: 45 100% 46%; 
+  --primary-foreground: 0 0% 0%;
+  --secondary: 45 20% 90%;
+  --secondary-foreground: 45 100% 20%;
+  --muted: 45 30% 92%;
+  --muted-foreground: 45 20% 38%; /* 38% clears AA on --muted */
+  --accent: 45 100% 46%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 84.2% 48.5%; /* 48.5% clears AA against white text */
+  --destructive-foreground: 210 40% 98%;
+  --border: 45 30% 85%;
+  --input: 45 30% 85%;
+  --ring: 45 100% 46%;
+}
+
+/* Texas A&M Theme: Aggie Maroon (#500000) on white */
+.theme-tamu {
+  /* A barely-there warm tint, so white surfaces read as deliberate. */
+  --background: 0 20% 98%;
+  --foreground: 0 30% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 30% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 30% 10%;
+
+  /* Aggie Maroon. Dark enough to carry white text at 15.5:1. */
+  --primary: 0 100% 16%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 15% 93%;
+  --secondary-foreground: 0 100% 16%;
+  --muted: 0 12% 95%;
+  --muted-foreground: 0 8% 34%;
+
+  /*
+   * A maroon tint rather than maroon itself. `--accent` is the hover
+   * background for menu items and list rows; full maroon here would turn
+   * every hover into a near-black block in an otherwise light theme.
+   */
+  --accent: 0 30% 89%;
+  --accent-foreground: 0 100% 16%;
+
+  /*
+   * Shifted slightly toward orange and kept much lighter than the primary,
+   * so "delete" never reads as "brand" — the risk with a maroon palette.
+   */
+  --destructive: 4 80% 44%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 15% 87%;
+  --input: 0 15% 87%;
+  --ring: 0 100% 16%;
 }
 
 /* React Flow controls theme override */

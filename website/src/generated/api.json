@@ -622,7 +622,7 @@
           "name": "themes",
           "required": false,
           "type": "ISettingsThemeOption<T>[]",
-          "description": "Theme choices to offer. Defaults to the three bundled themes.",
+          "description": "Theme choices to offer. Defaults to every bundled theme.",
           "default": null
         }
       ]
@@ -879,7 +879,7 @@
           "name": "options",
           "required": false,
           "type": "IThemeOption<T>[]",
-          "description": "Selectable themes. Defaults to Light / Dark / Georgia Tech, matching the\nthemes shipped in the library's stylesheet.",
+          "description": "Selectable themes. Defaults to every theme bundled in the library's\nstylesheet. Supply your own to offer a different set.",
           "default": null
         }
       ]

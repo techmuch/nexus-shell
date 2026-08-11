@@ -43,6 +43,12 @@ jobs:
       - name: Build library
         run: npm run build
 
+      # Theme blocks live outside `@layer base` precisely so Tailwind can't
+      # tree-shake them — a theme class is only ever applied at runtime, so
+      # nothing references it literally. This asserts they survived the build.
+      - name: Check every theme reached the built stylesheet
+        run: node scripts/check-themes-bundled.mjs
+
       - name: Build Storybook
         run: npm run build-storybook
 

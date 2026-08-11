@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cn } from 'nexus-shell';
+import { BUNDLED_THEMES, cn } from 'nexus-shell';
 import { CodeBlock } from '@site/site/CodeBlock';
 import { Callout, H2, P, Paragraphs } from '@site/site/Prose';
 
@@ -71,7 +71,7 @@ const TOKENS: { name: string; role: string }[] = [
   { name: '--radius', role: 'Base corner radius' },
 ];
 
-const THEMES = ['light', 'dark', 'gt'] as const;
+const THEMES = BUNDLED_THEMES;
 
 /** Renders the palette of a theme without changing the surrounding page. */
 const Swatches = ({ theme }: { theme: string }) => (
@@ -119,11 +119,15 @@ export const Theming = () => {
 
       <H2 id="applying">Applying a theme</H2>
       <P>
-        Three themes ship in the stylesheet:{' '}
-        <code className="font-mono text-[14px]">theme-light</code>,{' '}
-        <code className="font-mono text-[14px]">theme-dark</code> and{' '}
-        <code className="font-mono text-[14px]">theme-gt</code>. Put one on{' '}
-        <code className="font-mono text-[14px]">&lt;html&gt;</code>, or on any wrapper.
+        {THEMES.length} themes ship in the stylesheet:{' '}
+        {THEMES.map((theme, i) => (
+          <span key={theme.id}>
+            {i > 0 && (i === THEMES.length - 1 ? ' and ' : ', ')}
+            <code className="font-mono text-[14px]">theme-{theme.id}</code>
+          </span>
+        ))}
+        . Put one on <code className="font-mono text-[14px]">&lt;html&gt;</code>, or on any
+        wrapper.
       </P>
       <div className="mt-4">
         <CodeBlock label="index.html" code={APPLY} />
@@ -141,20 +145,23 @@ export const Theming = () => {
       <div className="flex items-center gap-1 mb-4 p-0.5 rounded-lg border border-border bg-secondary/60 w-fit">
         {THEMES.map((t) => (
           <button
-            key={t}
+            key={t.id}
             type="button"
-            onClick={() => setPreview(t)}
+            onClick={() => setPreview(t.id)}
             className={cn(
               'px-3 py-1 rounded-md text-[11px] font-medium transition-colors',
-              preview === t
+              preview === t.id
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            {t}
+            {t.label}
           </button>
         ))}
       </div>
+      <p className="text-[13px] text-muted-foreground mb-4">
+        {THEMES.find((t) => t.id === preview)?.description}
+      </p>
       <Swatches theme={preview} />
 
       <H2 id="tokens">Tokens</H2>

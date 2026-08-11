@@ -1,3 +1,4 @@
+import { BUNDLED_THEMES } from 'nexus-shell';
 import { CodeBlock } from '@site/site/CodeBlock';
 import { Callout, H2, H3, P, Paragraphs, inline } from '@site/site/Prose';
 import { Link } from '@site/lib/router';
@@ -167,10 +168,15 @@ export const GettingStarted = () => (
     <H2 id="theme">2. Apply a theme</H2>
     <P>
       Colors live on CSS custom properties scoped to a theme class, so switching themes is
-      a class on an ancestor — no context, no provider. Three ship in the stylesheet:{' '}
-      <code className="font-mono text-[14px]">theme-light</code>,{' '}
-      <code className="font-mono text-[14px]">theme-dark</code> and{' '}
-      <code className="font-mono text-[14px]">theme-gt</code>.
+      a class on an ancestor — no context, no provider. {BUNDLED_THEMES.length} ship in the
+      stylesheet:{' '}
+      {BUNDLED_THEMES.map((theme, i) => (
+        <span key={theme.id}>
+          {i > 0 && (i === BUNDLED_THEMES.length - 1 ? ' and ' : ', ')}
+          <code className="font-mono text-[14px]">theme-{theme.id}</code>
+        </span>
+      ))}
+      .
     </P>
     <div className="mt-4">
       <CodeBlock label="index.html" code={THEME_HTML} />
@@ -190,7 +196,7 @@ export const GettingStarted = () => (
     <Callout title="What you get for free">
       <p>
         {inline(
-          '`initializeShell` also registers built-in commands — toggle terminal, toggle chat, toggle sidebar and the three themes — plus a default **View** menu. Pass `defaultCommands: false` to own every id yourself.',
+          '`initializeShell` also registers built-in commands — toggle terminal, toggle chat, toggle sidebar, and one `theme.<id>` per bundled theme — plus a default **View** menu. Pass `defaultCommands: false` to own every id yourself.',
         )}
       </p>
     </Callout>

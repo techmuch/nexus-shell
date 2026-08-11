@@ -31,13 +31,24 @@ All styles map to CSS custom properties defined in `index.css`. The main variabl
 
 ## 🌗 Built-in Themes
 
-Nexus Shell ships with three production-ready themes. To apply a theme, wrap your workstation container in the corresponding class name:
+Nexus Shell ships with four themes. To apply one, put the class on `<html>` — or
+on any wrapper, though portalled UI like modals and the command palette needs it
+high up to inherit it.
 
-| Theme Class | Name | Contrast Target | Description |
-| :--- | :--- | :--- | :--- |
-| `theme-light` | Light Theme | Standard AA | Clean, light gray workbench optimized for bright environments. |
-| `theme-dark` | Dark Theme | High Contrast | Soft dark theme. Avoids pure white text (`hsl(240, 5%, 85%)`) to prevent glare and reduce eye strain. |
-| `theme-gt` | Georgia Tech Theme | Specialized Gold/Blue | Gold primary accents (`hsl(45, 100%, 46%)`) matched with deep navy accents. |
+| Theme Class | Name | Description |
+| :--- | :--- | :--- |
+| `theme-light` | Light | Clean, light grey workbench for bright environments. |
+| `theme-dark` | Dark | Soft dark theme. Avoids pure white text (`hsl(240 5% 85%)`) to reduce glare. |
+| `theme-gt` | Georgia Tech | Buzz Gold (`#EAAA00`) on Tech Tower White. |
+| `theme-tamu` | Texas A&M | Aggie Maroon (`#500000`) on white. |
+
+Every one is verified against WCAG AA on all nine of its foreground/background
+pairs by `src/lib/__tests__/themes.test.ts`, which also fails if a theme omits a
+token the components read.
+
+The list is generated from `BUNDLED_THEMES`, exported from the package — the
+theme switcher, the settings panel, the `theme.*` commands and the View menu all
+derive from it, so a new theme is a CSS block plus one entry.
 
 ### Usage Example
 ```tsx

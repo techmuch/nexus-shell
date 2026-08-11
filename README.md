@@ -133,7 +133,8 @@ shell's own frame and keep every registration working.
 
 ## Theming
 
-Three themes ship in the stylesheet: `theme-light`, `theme-dark`, `theme-gt`.
+Four themes ship in the stylesheet: `theme-light`, `theme-dark`, `theme-gt`
+(Georgia Tech) and `theme-tamu` (Texas A&M).
 Colors are CSS custom properties scoped to those classes, so switching themes is
 a class on an ancestor — no React context, no provider.
 

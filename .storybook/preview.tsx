@@ -1,9 +1,10 @@
 import React from 'react';
 import type { Preview, Decorator } from '@storybook/react';
+import { BUNDLED_THEMES } from '../src/lib/themes';
 import '../src/index.css';
 
-const THEMES = ['light', 'dark', 'gt'] as const;
-type ThemeName = (typeof THEMES)[number];
+const THEME_IDS = BUNDLED_THEMES.map((t) => t.id);
+type ThemeName = (typeof BUNDLED_THEMES)[number]['id'];
 
 /**
  * Applies the selected theme class to both the preview root element and the
@@ -16,7 +17,7 @@ const withTheme: Decorator = (Story, context) => {
 
   React.useEffect(() => {
     const root = document.documentElement;
-    THEMES.forEach((t) => root.classList.remove(`theme-${t}`));
+    THEME_IDS.forEach((t) => root.classList.remove(`theme-${t}`));
     root.classList.add(`theme-${theme}`);
   }, [theme]);
 
@@ -37,11 +38,7 @@ const preview: Preview = {
         title: 'Theme',
         icon: 'paintbrush',
         dynamicTitle: true,
-        items: [
-          { value: 'light', title: 'Light' },
-          { value: 'dark', title: 'Dark' },
-          { value: 'gt', title: 'Georgia Tech' },
-        ],
+        items: BUNDLED_THEMES.map((t) => ({ value: t.id, title: t.label })),
       },
     },
   },

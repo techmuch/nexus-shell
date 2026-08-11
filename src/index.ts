@@ -90,6 +90,13 @@ export { UserProfile, type UserProfileProps, type IUserProfile, type IUserProfil
 
 // Utilities
 export { cn } from './lib/cn';
+export {
+  BUNDLED_THEMES,
+  BUNDLED_THEME_CLASSES,
+  themeClass,
+  type IBundledTheme,
+  type BundledThemeId,
+} from './lib/themes';
 
 // Styles — bundled into dist/style.css by the library build
 import './index.css';

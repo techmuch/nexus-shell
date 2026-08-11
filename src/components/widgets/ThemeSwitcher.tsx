@@ -1,4 +1,5 @@
 import { cn } from '../../lib/cn';
+import { BUNDLED_THEMES } from '../../lib/themes';
 
 /** An option in the {@link ThemeSwitcher} segmented control. */
 export interface IThemeOption<T extends string = string> {
@@ -8,11 +9,15 @@ export interface IThemeOption<T extends string = string> {
   label: string;
 }
 
-export const DEFAULT_THEME_OPTIONS: IThemeOption[] = [
-  { id: 'light', label: 'Light' },
-  { id: 'dark', label: 'Dark' },
-  { id: 'gt', label: 'GT' },
-];
+/**
+ * The themes bundled in the library stylesheet, using their abbreviated labels
+ * because the segments are narrow. Derived from the theme registry, so a new
+ * bundled theme appears here without a code change.
+ */
+export const DEFAULT_THEME_OPTIONS: IThemeOption[] = BUNDLED_THEMES.map((t) => ({
+  id: t.id,
+  label: t.shortLabel,
+}));
 
 export interface ThemeSwitcherProps<T extends string = string> {
   /** Currently selected theme id. */
@@ -20,8 +25,8 @@ export interface ThemeSwitcherProps<T extends string = string> {
   /** Called with the newly selected theme id. */
   onChange: (theme: T) => void;
   /**
-   * Selectable themes. Defaults to Light / Dark / Georgia Tech, matching the
-   * themes shipped in the library's stylesheet.
+   * Selectable themes. Defaults to every theme bundled in the library's
+   * stylesheet. Supply your own to offer a different set.
    */
   options?: IThemeOption<T>[];
   /** Extra classes merged onto the root element. */

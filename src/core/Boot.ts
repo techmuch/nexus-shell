@@ -9,6 +9,7 @@ import {
 } from './services/StatusBarService';
 import { useTerminalStore } from './services/TerminalService';
 import { useThemeStore, type ThemeType } from './services/ThemeService';
+import { BUNDLED_THEMES } from '../lib/themes';
 
 export interface InitializeShellOptions {
   /**
@@ -37,17 +38,20 @@ export interface InitializeShellOptions {
   defaultMenus?: boolean;
 }
 
+/** One `theme.<id>` command per bundled theme, generated from the registry. */
+const THEME_COMMANDS: ICommand[] = BUNDLED_THEMES.map((theme) => ({
+  id: `theme.${theme.id}`,
+  label: `Preferences: ${theme.label} Theme`,
+  execute: () => useThemeStore.getState().setTheme(theme.id as ThemeType),
+}));
+
 /** The command ids `initializeShell` registers unless told not to. */
 export const DEFAULT_COMMAND_IDS = [
   'view.toggleTerminal',
   'view.toggleChat',
   'view.toggleSidebar',
-  'theme.light',
-  'theme.dark',
-  'theme.gt',
+  ...THEME_COMMANDS.map((c) => c.id),
 ] as const;
-
-const setTheme = (theme: ThemeType) => () => useThemeStore.getState().setTheme(theme);
 
 const DEFAULT_COMMANDS: ICommand[] = [
   {
@@ -71,9 +75,7 @@ const DEFAULT_COMMANDS: ICommand[] = [
       setActiveSidebar(activeSidebar ? null : (panels[0]?.id ?? null));
     },
   },
-  { id: 'theme.light', label: 'Preferences: Light Theme', execute: setTheme('light') },
-  { id: 'theme.dark', label: 'Preferences: Dark Theme', execute: setTheme('dark') },
-  { id: 'theme.gt', label: 'Preferences: Georgia Tech Theme', execute: setTheme('gt') },
+  ...THEME_COMMANDS,
 ];
 
 const DEFAULT_MENUS: Record<string, IMenuItemConfig[]> = {
@@ -84,11 +86,11 @@ const DEFAULT_MENUS: Record<string, IMenuItemConfig[]> = {
     {
       id: 'view.theme',
       label: 'Theme',
-      submenu: [
-        { id: 'view.theme.light', label: 'Light', commandId: 'theme.light' },
-        { id: 'view.theme.dark', label: 'Dark', commandId: 'theme.dark' },
-        { id: 'view.theme.gt', label: 'Georgia Tech', commandId: 'theme.gt' },
-      ],
+      submenu: BUNDLED_THEMES.map((theme) => ({
+        id: `view.theme.${theme.id}`,
+        label: theme.label,
+        commandId: `theme.${theme.id}`,
+      })),
     },
   ],
 };
