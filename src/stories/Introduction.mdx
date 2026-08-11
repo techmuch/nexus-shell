@@ -2,92 +2,107 @@ import { Meta } from '@storybook/blocks';
 
 <Meta title="Introduction" />
 
-# 🚀 Nexus Shell Component Library & Workbench
+# Nexus Shell
 
-Welcome to the documentation site for **Nexus Shell**, a professional-grade React/TypeScript design system and composite workstation library. 
+A React component library for building IDE-style application shells — menu bar,
+activity bar, sidebar, docking layout, terminal, chat pane and status bar.
 
-This library is built with a **decoupled, registry-driven architecture** (Inversion of Control) and features theme-adaptive styling driven entirely by CSS custom properties and Tailwind CSS.
+## Install
 
----
-
-## 📦 Installation & Setup
-
-Install the package via npm:
 ```bash
 npm install nexus-shell
 ```
 
-Import the global design system styles in your entry file (e.g., `main.tsx` or `index.ts`):
-```typescript
+Import the stylesheet once, in your app entry:
+
+```ts
 import 'nexus-shell/style.css';
 ```
 
----
+React 19 is a peer dependency; bring your own.
 
-## 🎨 Color Ontologies & Theming
+## Two ways to use it
 
-Nexus Shell comes out of the box with three main semantic themes:
-*   **Light Theme** (`theme-light`)
-*   **Dark Theme** (`theme-dark`)
-*   **Georgia Tech Theme** (`theme-gt`)
+The library has a deliberate two-tier surface, and picking the right tier is the
+main decision you'll make.
 
-To activate a theme, wrap your workspace (or document root) in the corresponding class name:
-```html
-<div className="theme-dark bg-background text-foreground">
-  <!-- Content here -->
+### 1. Primitives — you compose
+
+Every component under **Primitives** is pure and prop-driven. No global state,
+no registry lookups, no hidden singletons. You pass data in, you get callbacks
+out.
+
+```tsx
+import { StatusBar, ActivityBar, SidebarPane } from 'nexus-shell';
+
+const [active, setActive] = useState<string | null>('files');
+
+<div className="flex h-screen flex-col">
+  <div className="flex flex-1">
+    <ActivityBar items={panels} activeId={active} onSelect={setActive} />
+    {active && (
+      <SidebarPane title="Explorer" onClose={() => setActive(null)}>
+        <TreeWidget data={files} onToggle={toggle} />
+      </SidebarPane>
+    )}
+    <main className="flex-1">{children}</main>
+  </div>
+  <StatusBar widgets={[{ id: 'branch', label: 'main', alignment: 'left' }]} />
 </div>
 ```
 
----
+This is the supported public API. Use it when you want control over layout and
+state, or when you're adopting one or two pieces into an existing app.
 
-## 🛠 Project Structure Taxonomy
+### 2. Shell — it composes
 
-Our Storybook documentation is organized into three main namespaces to help you find what you need:
-
-### 1. `Compositions/`
-These are full layouts that combine multiple widgets into complete workspaces.
-*   **ShellLayout**: The master IDE/workbench wrapper containing menu bars, terminals, chat panels, and customizable FlexLayout tabs.
-*   **DialogueMappingShell**: A complete standalone workstation page designed for IBIS argumentation modeling.
-
-### 2. `Widgets/Shell/`
-Core infrastructure controls that frame the IDE/workbench layout.
-*   **MenuBar**: The top-header links and menus.
-*   **StatusBar**: The bottom panel displaying connection statuses, git branches, and action toggles.
-*   **ActivityBar & SidebarPane**: Left expandable panel indicators.
-*   **UserProfile**: Decoupled account utility widget with local image uploads and inline edits.
-
-### 3. `Widgets/DialogueMapper/`
-The specialized widget ecosystem for IBIS decision modeling.
-*   **DialogueMappingWidget**: The React Flow graph canvas.
-*   **DialogueMapperLibrary**: The palette containing the IBIS node templates (Questions, Ideas, Pro/Con arguments).
-*   **ArgumentInspector**: The side panel for viewing and modifying node logical states.
-
-### 4. `Widgets/General/`
-Other generic, reusable UI widgets.
-*   **DataGrid**: A premium virtualization table.
-*   **TreeWidget**: Explorer directory files lists.
-*   **WargameMap**: A hexagonal grid gaming canvas.
-
----
-
-## 🚀 Getting Started with Compositions
-
-To instantiate a complete workbench workspace with custom tabs and menus, import the `ShellLayout` component:
+`ShellLayout` assembles the whole frame and wires it to a set of zustand stores
+and registries, so you configure it declaratively instead of prop-drilling.
 
 ```tsx
-import { ShellLayout, UserProfile, ThemeSwitcher } from 'nexus-shell';
+import { ShellLayout } from 'nexus-shell';
 
-function App() {
-  return (
-    <ShellLayout
-      title={<div className="font-bold text-sm">Custom Workspace</div>}
-      rightMenuBarContent={
-        <div className="flex items-center space-x-3">
-          <ThemeSwitcher />
-          <UserProfile showName={false} />
-        </div>
-      }
-    />
-  );
-}
+<ShellLayout
+  title={<Logo />}
+  panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }]}
+  menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}
+  statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}
+/>;
 ```
+
+Use it when you want the full IDE frame and are happy to adopt the shell's state
+model along with it.
+
+### The bridge between them
+
+Each primitive has a `Connected*` counterpart that binds it to the matching
+store — `ConnectedStatusBar` reads `useStatusBarStore`, `ConnectedMenuBar` reads
+`menuRegistry`, and so on. `ShellLayout` is built entirely out of these.
+
+They're exported, so you can mix tiers: take the assembled shell but swap one
+connected piece for a plain one you drive yourself.
+
+## Why the split
+
+A component that reads a global store can't be configured by its caller, can't
+be rendered twice with different data, and can't be documented — its props table
+is empty because it has no props. Splitting presentation from wiring is what
+makes the Storybook pages in this site useful: every control you see maps to a
+real prop.
+
+## Theming
+
+Three themes ship in the stylesheet: `theme-light`, `theme-dark` and `theme-gt`.
+Colors are CSS custom properties scoped to those classes, so theming is a class
+on an ancestor element, not a React context.
+
+Use the **Theme** toolbar control above to switch any story between them. See
+[Theming](/docs/theming--docs) for the full token list.
+
+## Where to start
+
+- **Primitives** — one page per component, each with a live props table.
+- **Layout** — `ShellLayout`, the assembled frame.
+- **Examples** — larger applications built on the library. These are not part of
+  the published package; they exist to prove the primitives are sufficient and
+  to show what a real integration looks like.

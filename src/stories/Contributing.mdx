@@ -1,0 +1,157 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Guides/Contributing" />
+
+# Contributing
+
+The rules that keep this a library rather than an application. Most of them are
+enforced by tests in `src/components/__tests__/architecture.test.ts`, so you'll
+find out quickly if you break one.
+
+## The one rule that matters
+
+**Nothing in `src/components` may import from `src/core/services` or
+`src/core/registry`.**
+
+A component that reads a global store:
+
+- can't be configured by its caller,
+- can't be rendered twice with different data,
+- can't be tested without standing up the store,
+- and can't be documented — Storybook generates an empty props table for a
+  component with no props.
+
+That last point is the visible symptom. If a component's autodocs page has no
+controls, it isn't finished.
+
+Store access belongs in `src/connected`. `ShellLayout` is the single sanctioned
+exception, because composing connected components *is* its job.
+
+## Adding a component
+
+### 1. Write the presentational component
+
+`src/components/widgets/YourThing.tsx`. Props only. Local state is fine for
+transient UI concerns — an open dropdown, a draft input — but anything the
+caller might want to read, set, or persist goes in props.
+
+```tsx
+export interface YourThingProps {
+  /** What it is, and what it defaults to. */
+  value: string;
+  /** When this fires, and what the caller is expected to do about it. */
+  onChange: (value: string) => void;
+}
+
+/**
+ * One line on what it is.
+ *
+ * A paragraph on the contract: what it owns, what it delegates, and why.
+ *
+ * @example
+ * ```tsx
+ * <YourThing value={value} onChange={setValue} />
+ * ```
+ */
+export const YourThing = ({ value, onChange }: YourThingProps) => { /* … */ };
+```
+
+Every prop gets a JSDoc comment. `react-docgen-typescript` lifts them straight
+into the props table, so an undocumented prop is an undocumented component.
+
+### 2. Add the connected variant, if the shell needs one
+
+`src/connected/ConnectedYourThing.tsx`. It should be thin — read from the store,
+pass down, nothing else. If it contains logic, that logic probably belonged in
+the component or the store.
+
+```tsx
+export type ConnectedYourThingProps = Omit<YourThingProps, 'value' | 'onChange'>;
+
+export const ConnectedYourThing = (props: ConnectedYourThingProps) => {
+  const value = useYourStore((s) => s.value);
+  const setValue = useYourStore((s) => s.setValue);
+  return <YourThing {...props} value={value} onChange={setValue} />;
+};
+```
+
+`Omit` the props the wrapper supplies, so callers can't pass them and be
+silently ignored.
+
+### 3. Write the stories
+
+`YourThing.stories.tsx`, titled `Primitives/YourThing`, tagged `['autodocs']`.
+
+Cover, at minimum: the default, the empty state, and any state that's hard to
+reach by clicking. Add an `Interactive` story driven by `useState` when the
+component is controlled — a static story of a controlled component looks broken,
+because clicking it does nothing.
+
+Don't wrap stories in `theme-light` divs. The theme decorator in
+`.storybook/preview.tsx` handles that, and the toolbar switcher lets reviewers
+check all three themes without a story per theme.
+
+### 4. Export it
+
+Add it to `src/index.ts` under Primitives, with its props and any public types.
+
+## Types that exist in two layers
+
+Where a store needs extra fields the component doesn't render — a `commandId` to
+dispatch, an `execute` handler — define the presentational type in the
+component and extend it in the service:
+
+```ts
+// components/widgets/StatusBar.tsx
+export interface IStatusBarWidget { id: string; label: string; /* … */ }
+
+// core/services/StatusBarService.ts
+export interface IStatusBarWidgetConfig extends IStatusBarWidget {
+  commandId?: string;
+}
+```
+
+The connected wrapper resolves the extra field. This is why `MenuBar` takes
+`onSelect` while `ShellLayout` takes `commandId` — the indirection lets plugins
+contribute menu items without holding a function reference, and it stays out of
+the presentational layer.
+
+## Extension points, not props
+
+When an app needs a new command in a component's menu, the answer is a data-driven
+extension point, not a new prop.
+
+`TreeWidget` used to have an `onNewDialogueMap` prop. A generic file tree should
+not know that dialogue maps exist. It now takes an `actions` array, and the app
+contributes its own entries — see `examples/showcase/app/FilesSidebar.tsx`.
+
+If you're about to add a prop named after a feature, add an array instead.
+
+## Examples are not the library
+
+Everything under `examples/` consumes the library. It's built and documented
+alongside the components to prove the primitives are sufficient, but it ships to
+nobody and must not be imported from `src/`.
+
+If an example needs something the primitives can't express, that's a signal to
+generalise a primitive — not to move the example's code into `src/`.
+
+## Dependencies
+
+`package.json` `dependencies` is the install cost every consumer pays. It is
+currently six packages, all of them small and all of them externalised from the
+bundle. Anything a single feature needs belongs in `devDependencies` and gets
+used from `examples/`.
+
+## Before you push
+
+```bash
+npm run typecheck   # library only
+npm test            # includes the architecture boundary tests
+npm run build       # library build must stay small
+npm run build-storybook
+```
+
+The Storybook build fails hard on indexing conflicts — most commonly a story
+file tagged `autodocs` that also has a hand-written `.mdx` docs page. Pick one:
+`autodocs` for a standard props-table page, MDX when you need prose.

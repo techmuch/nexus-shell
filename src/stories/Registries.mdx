@@ -2,9 +2,26 @@ import { Meta } from '@storybook/blocks';
 
 <Meta title="Guides/Registry Architecture (IoC)" />
 
-# 🔌 Registry-Driven Architecture (IoC)
+# Registry-Driven Architecture (IoC)
 
-Nexus Shell operates on a **decoupled, registry-driven architecture** (Inversion of Control). Monolithic layout containers (like `ShellLayout`) should never directly embed custom panels, widgets, or shortcuts. Instead, features must register themselves dynamically via global registry instances.
+The registries are how the **shell tier** stays decoupled from the features it
+hosts. `ShellLayout` never imports a panel or a widget directly; features
+register themselves against a string id, and the shell resolves it at render
+time. That's what lets a plugin add a tab, a command and a menu item without the
+shell knowing it exists.
+
+<div className="sb-unstyled" style={{ borderLeft: '3px solid var(--primary, #888)', paddingLeft: '1rem', margin: '1.5rem 0' }}>
+
+**This page is about the shell tier only.** The primitives — `MenuBar`,
+`StatusBar`, `TreeWidget` and the rest — read no registry. They take data as
+props and report events through callbacks. If you're composing primitives
+yourself, you don't need any of this.
+
+The `Connected*` wrappers are the bridge: `ConnectedMenuBar` reads
+`menuRegistry` and dispatches through `commandRegistry`, then hands plain props
+to `MenuBar`.
+
+</div>
 
 ---
 
@@ -33,7 +50,12 @@ componentRegistry.register('my-unique-widget', () => <MyWidget />);
 ```
 
 ### Step 2: Declare an Action (Command)
-A command defines an executable action and optional keyboard shortcuts. Registered commands automatically populate the **Command Palette** (`Ctrl+Shift+P`).
+A command defines an executable action and an optional keybinding hint.
+Registered commands automatically populate `ConnectedCommandPalette`, which
+binds `Cmd/Ctrl+Shift+P` and reads the registry.
+
+(The presentational `CommandPalette` takes its commands as a prop and binds no
+global shortcut — see its page.)
 
 ```typescript
 import { commandRegistry } from 'nexus-shell';

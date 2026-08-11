@@ -1,0 +1,181 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Getting Started" />
+
+# Getting Started
+
+Build a working shell from primitives, then swap in `ShellLayout` if you want
+the batteries-included version.
+
+## 1. Install
+
+```bash
+npm install nexus-shell
+```
+
+```ts
+// main.tsx
+import 'nexus-shell/style.css';
+```
+
+The stylesheet defines the theme tokens every component reads. Without it,
+components render unstyled.
+
+## 2. Apply a theme
+
+Colors live on CSS custom properties scoped to a theme class. Put one on an
+ancestor — usually `<html>`:
+
+```html
+<html class="theme-light">
+```
+
+Or manage it in React:
+
+```tsx
+useEffect(() => {
+  document.documentElement.className = `theme-${theme}`;
+}, [theme]);
+```
+
+## 3. Compose a shell
+
+Every primitive is controlled, so state stays in your app:
+
+```tsx
+import { useState } from 'react';
+import { Files, GitBranch, Search } from 'lucide-react';
+import {
+  ActivityBar,
+  MenuBar,
+  SidebarPane,
+  StatusBar,
+  ThemeSwitcher,
+  TreeWidget,
+  type ITreeNode,
+} from 'nexus-shell';
+
+const PANELS = [
+  { id: 'files', label: 'Explorer', icon: Files },
+  { id: 'search', label: 'Search', icon: Search },
+];
+
+export function App() {
+  const [theme, setTheme] = useState('light');
+  const [active, setActive] = useState<string | null>('files');
+  const [files, setFiles] = useState<ITreeNode[]>(initialFiles);
+
+  return (
+    <div className={`theme-${theme} flex h-screen flex-col bg-background text-foreground`}>
+      <MenuBar
+        menus={{ File: [{ id: 'save', label: 'Save', keybinding: '⌘S' }] }}
+        onSelect={(item) => console.log(item.id)}
+        right={<ThemeSwitcher value={theme} onChange={setTheme} />}
+      />
+
+      <div className="flex flex-1 overflow-hidden">
+        <ActivityBar
+          items={PANELS}
+          activeId={active}
+          onSelect={(id) => setActive(id === active ? null : id)}
+        />
+
+        {active && (
+          <SidebarPane title="Explorer" onClose={() => setActive(null)}>
+            <TreeWidget
+              data={files}
+              onToggle={(node) => setFiles(toggle(files, node.id))}
+              onActivate={(node) => open(node.id)}
+            />
+          </SidebarPane>
+        )}
+
+        <main className="flex-1 overflow-auto">{/* your editor */}</main>
+      </div>
+
+      <StatusBar
+        widgets={[
+          { id: 'branch', label: 'main', icon: GitBranch, alignment: 'left' },
+          { id: 'pos', label: 'Ln 1, Col 1', alignment: 'right' },
+        ]}
+      />
+    </div>
+  );
+}
+```
+
+### The one gotcha: expansion is yours
+
+`TreeWidget` renders expansion from each node's `isOpen` but does not own it.
+That keeps a single source of truth for your file data, at the cost of writing
+the toggle:
+
+```ts
+const toggle = (items: ITreeNode[], id: string): ITreeNode[] =>
+  items.map((node) =>
+    node.id === id
+      ? { ...node, isOpen: !node.isOpen }
+      : { ...node, children: node.children && toggle(node.children, id) },
+  );
+```
+
+## 4. Or use the assembled shell
+
+If you want the docking layout, terminal and chat pane too, `ShellLayout`
+composes all of it and reads from the shell stores:
+
+```tsx
+import { ShellLayout, componentRegistry, commandRegistry } from 'nexus-shell';
+
+// Tab contents resolve by id, so plugins can contribute views.
+componentRegistry.register('editor', Editor);
+commandRegistry.registerCommand({
+  id: 'file.save',
+  label: 'File: Save',
+  keybinding: '⌘S',
+  execute: () => save(),
+});
+
+<ShellLayout
+  title={<Logo />}
+  panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileExplorer }]}
+  menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}
+  statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}
+/>;
+```
+
+Note the difference: primitives take `onSelect` handlers, the shell takes
+`commandId` strings it resolves against the registry. That indirection is what
+lets plugins add menu items without holding a function reference.
+
+## 5. Mixing the two
+
+`Connected*` components are exported, so you can take the shell and still drive
+one piece yourself — or take a primitive and bind it to a store:
+
+```tsx
+import { ConnectedStatusBar, useStatusBarStore } from 'nexus-shell';
+
+// Anywhere in the app:
+useStatusBarStore.getState().addWidget({
+  id: 'lint',
+  label: '0 problems',
+  alignment: 'left',
+  commandId: 'view.problems',
+});
+```
+
+## Common tasks
+
+**Add a status bar item from a plugin** — `useStatusBarStore.getState().addWidget(...)`.
+Items with a `commandId` dispatch through the command registry when clicked.
+
+**Prompt from non-React code** — `await useModalStore.getState().openConfirm('Are you sure?')`.
+Mount `<ConnectedModal />` once near the root for this to resolve.
+
+**Add a right-click command to the tree** — pass `actions` to `TreeWidget`
+rather than looking for a dedicated prop. Use `showFor` to limit an entry to
+files, folders or the background.
+
+**Custom themes** — define a `.theme-yourname` block with the same custom
+properties as `.theme-light`, then pass your ids to `ThemeSwitcher`'s `options`.

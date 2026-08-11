@@ -1,0 +1,38 @@
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+
+      # Library sources only. `tsconfig.examples.json` additionally covers
+      # examples/, which are not published but must still compile.
+      - name: Typecheck (library)
+        run: npm run typecheck
+
+      - name: Typecheck (library + examples)
+        run: npx tsc --noEmit -p tsconfig.examples.json
+
+      # Includes the architecture boundary tests, which fail if anything under
+      # src/components starts reading a store or registry.
+      - name: Test
+        run: npm test
+
+      - name: Build library
+        run: npm run build
+
+      - name: Build Storybook
+        run: npm run build-storybook
