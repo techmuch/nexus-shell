@@ -182,6 +182,51 @@ export const graphBounds = (nodes: IGraphNode[]): IRect | null => {
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 };
 
+/**
+ * The region of graph space currently visible in an element of the given size.
+ *
+ * This is what a minimap draws as its viewport indicator, and what a culling
+ * pass would test against.
+ */
+export const viewportRect = (
+  viewport: IViewport,
+  size: { width: number; height: number },
+): IRect => ({
+  // Written as a subtraction rather than `-viewport.x / scale` so a pan of zero
+  // yields +0 rather than -0, which otherwise leaks into equality checks.
+  x: (0 - viewport.x) / viewport.scale,
+  y: (0 - viewport.y) / viewport.scale,
+  width: size.width / viewport.scale,
+  height: size.height / viewport.scale,
+});
+
+/**
+ * A viewport that puts a graph-space point at the centre of the element,
+ * keeping the current zoom. Used for jumping somewhere from a minimap or a
+ * search result.
+ */
+export const centerOn = (
+  point: IPoint,
+  size: { width: number; height: number },
+  scale: number,
+): IViewport => ({
+  scale,
+  x: size.width / 2 - point.x * scale,
+  y: size.height / 2 - point.y * scale,
+});
+
+/** The smallest rectangle containing both inputs. */
+export const unionRect = (a: IRect, b: IRect): IRect => {
+  const x = Math.min(a.x, b.x);
+  const y = Math.min(a.y, b.y);
+  return {
+    x,
+    y,
+    width: Math.max(a.x + a.width, b.x + b.width) - x,
+    height: Math.max(a.y + a.height, b.y + b.height) - y,
+  };
+};
+
 /** A viewport that fits `nodes` inside a element of the given size. */
 export const fitViewport = (
   nodes: IGraphNode[],

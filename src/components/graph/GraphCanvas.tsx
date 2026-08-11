@@ -30,6 +30,8 @@ export interface GraphCanvasHandle {
   zoomBy: (factor: number) => void;
   /** Convert a client (page) point into graph space. */
   clientToGraph: (client: IPoint) => IPoint;
+  /** The element's pixel size. A minimap needs this to draw its indicator. */
+  getSize: () => { width: number; height: number };
   /** Move keyboard focus to the canvas. */
   focus: () => void;
 }
@@ -55,6 +57,13 @@ export interface GraphCanvasProps {
   defaultViewport?: IViewport;
   /** Called whenever pan or zoom changes, controlled or not. */
   onViewportChange?: (viewport: IViewport) => void;
+  /**
+   * Called on mount and whenever the element resizes, with its pixel size.
+   *
+   * Pass this to a {@link GraphMiniMap} as `canvasSize` — the indicator cannot
+   * be drawn without knowing how much of the graph is on screen.
+   */
+  onSizeChange?: (size: { width: number; height: number }) => void;
   /**
    * Called with a graph-space point when empty canvas is clicked. Use it to
    * clear selection, or to place a node at the click.
@@ -120,6 +129,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
       viewport: controlledViewport,
       defaultViewport = IDENTITY_VIEWPORT,
       onViewportChange,
+      onSizeChange,
       onCanvasClick,
       onCanvasDoubleClick,
       onCanvasContextMenu,
@@ -160,6 +170,23 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
       const rect = elementRef.current?.getBoundingClientRect();
       return rect ? { x: client.x - rect.left, y: client.y - rect.top } : client;
     }, []);
+
+    /* ---------------------------------------------------------------- size */
+
+    useEffect(() => {
+      const element = elementRef.current;
+      if (!element || !onSizeChange) return;
+
+      const report = () => {
+        const rect = element.getBoundingClientRect();
+        onSizeChange({ width: rect.width, height: rect.height });
+      };
+
+      report();
+      const observer = new ResizeObserver(report);
+      observer.observe(element);
+      return () => observer.disconnect();
+    }, [onSizeChange]);
 
     /* ---------------------------------------------------------------- zoom */
 
@@ -274,6 +301,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
           commit(zoomAt(viewportRef.current, centre, next));
         },
         clientToGraph: (client) => toGraphSpace(toLocal(client), viewportRef.current),
+        getSize: () => {
+          const rect = elementRef.current?.getBoundingClientRect();
+          return { width: rect?.width ?? 0, height: rect?.height ?? 0 };
+        },
         focus: () => elementRef.current?.focus(),
       }),
       [commit, minScale, maxScale, toLocal],

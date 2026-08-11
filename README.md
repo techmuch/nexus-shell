@@ -132,6 +132,7 @@ shell's own frame and keep every registration working.
 | `GraphCanvas` | Infinite pannable, zoomable field for node-and-edge editing |
 | `GraphNode` | Positioned, focusable node with edge ports |
 | `GraphEdge` | Directed edge with bezier / smoothstep / straight routing |
+| `GraphMiniMap` | Scaled graph overview with a viewport indicator |
 | `NodePalette` | Drag-to-create and keyboard-to-create node types |
 | `useGraphKeyboard` | Spatial keyboard navigation and editing for a graph |
 | `UserProfile` | Avatar and identity widget |

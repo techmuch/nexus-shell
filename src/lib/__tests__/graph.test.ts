@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   IDENTITY_VIEWPORT,
+  centerOn,
   clampScale,
   fitViewport,
   findNeighbour,
@@ -15,6 +16,8 @@ import {
   resolvePorts,
   toGraphSpace,
   toScreenSpace,
+  unionRect,
+  viewportRect,
   zoomAt,
   type IGraphEdge,
   type IGraphNode,
@@ -226,5 +229,72 @@ describe('graph queries', () => {
     const existing = [{ id: 'node-1' }, { id: 'node-2' }];
     expect(nextId('node', existing)).toBe('node-3');
     expect(nextId('node', [...existing, { id: 'node-3' }])).toBe('node-4');
+  });
+});
+
+describe('viewport rect', () => {
+  it('reports the whole element at the identity viewport', () => {
+    const rect = viewportRect(IDENTITY_VIEWPORT, { width: 800, height: 600 });
+    expect(rect).toEqual({ x: 0, y: 0, width: 800, height: 600 });
+  });
+
+  it('shrinks as the canvas zooms in', () => {
+    const rect = viewportRect({ x: 0, y: 0, scale: 2 }, { width: 800, height: 600 });
+    expect(rect.width).toBe(400);
+    expect(rect.height).toBe(300);
+  });
+
+  it('matches what the transforms say is on screen', () => {
+    const viewport = { x: -120, y: 60, scale: 1.5 };
+    const size = { width: 800, height: 600 };
+    const rect = viewportRect(viewport, size);
+
+    // The rect's corners must map back to the element's corners.
+    const topLeft = toScreenSpace({ x: rect.x, y: rect.y }, viewport);
+    const bottomRight = toScreenSpace(
+      { x: rect.x + rect.width, y: rect.y + rect.height },
+      viewport,
+    );
+
+    expect(topLeft.x).toBeCloseTo(0);
+    expect(topLeft.y).toBeCloseTo(0);
+    expect(bottomRight.x).toBeCloseTo(size.width);
+    expect(bottomRight.y).toBeCloseTo(size.height);
+  });
+});
+
+describe('centerOn', () => {
+  it('puts the point at the middle of the element', () => {
+    const size = { width: 800, height: 600 };
+    const target = { x: 1234, y: -567 };
+
+    const onScreen = toScreenSpace(target, centerOn(target, size, 1.25));
+
+    expect(onScreen.x).toBeCloseTo(size.width / 2);
+    expect(onScreen.y).toBeCloseTo(size.height / 2);
+  });
+
+  it('preserves the zoom it was given', () => {
+    expect(centerOn({ x: 0, y: 0 }, { width: 100, height: 100 }, 2.5).scale).toBe(2.5);
+  });
+});
+
+describe('unionRect', () => {
+  it('spans both rectangles', () => {
+    const a = { x: 0, y: 0, width: 10, height: 10 };
+    const b = { x: 100, y: 50, width: 10, height: 10 };
+    expect(unionRect(a, b)).toEqual({ x: 0, y: 0, width: 110, height: 60 });
+  });
+
+  it('is unchanged when one contains the other', () => {
+    const outer = { x: 0, y: 0, width: 100, height: 100 };
+    const inner = { x: 10, y: 10, width: 10, height: 10 };
+    expect(unionRect(outer, inner)).toEqual(outer);
+  });
+
+  it('handles negative coordinates', () => {
+    const a = { x: -50, y: -50, width: 10, height: 10 };
+    const b = { x: 0, y: 0, width: 10, height: 10 };
+    expect(unionRect(a, b)).toEqual({ x: -50, y: -50, width: 60, height: 60 });
   });
 });

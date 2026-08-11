@@ -27,10 +27,13 @@ export {
   type UseGraphKeyboardResult,
   type GraphKeyboardActions,
 } from './useGraphKeyboard';
+export { GraphMiniMap, type GraphMiniMapProps } from './GraphMiniMap';
 export {
   NodePalette,
   readPaletteDrag,
   GRAPH_NODE_MIME,
   type NodePaletteProps,
   type INodePaletteItem,
+  type PaletteOrientation,
+  type ResolvedOrientation,
 } from './NodePalette';

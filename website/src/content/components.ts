@@ -161,6 +161,29 @@ export const COMPONENTS: ComponentEntry[] = [
     ],
   },
   {
+    slug: 'graph-minimap',
+    name: 'GraphMiniMap',
+    tagline: 'A scaled overview with a viewport indicator',
+    category: 'Graph',
+    demoFile: 'Graph',
+    notes: [
+      'Click anywhere to jump there, drag to pan continuously, or focus it and use the arrow keys. Zoom is never changed — a minimap answers "where am I", and changing scale on a click makes that answer harder to trust.',
+      'The plotted extent is the union of the graph bounds and the current viewport, so the indicator stays visible even when you have panned far away from every node. Without that, panning into empty space makes the minimap look broken.',
+      'It needs `canvasSize` to know how much of the graph is on screen — take it from `GraphCanvas`’s `onSizeChange`.',
+    ],
+    demos: [
+      {
+        export: 'MiniMap',
+        region: 'minimap',
+        title: 'Navigating a large graph',
+        description:
+          'Click or drag inside the minimap to move the canvas, or pan the canvas and watch the indicator follow. Nodes are coloured by the app’s own `kind`; clicking one highlights it in the overview.',
+        flush: true,
+        height: '480px',
+      },
+    ],
+  },
+  {
     slug: 'node-palette',
     name: 'NodePalette',
     tagline: 'Drag-to-create, and keyboard-to-create',
@@ -169,6 +192,7 @@ export const COMPONENTS: ComponentEntry[] = [
     notes: [
       'Carries only the item’s `kind` on the drag; what a node of that kind actually is gets decided by your drop handler. Pair it with `readPaletteDrag` on the canvas.',
       'Every item is a real button, so the palette works without a pointer — a drag-only palette is unreachable for keyboard users.',
+      '**Orientation** is `horizontal`, `vertical` or `auto`. Auto measures the space its container gives it and picks a row if the items fit the width, otherwise a column if they fit the height, otherwise a wrapping row. A container that shrink-wraps the palette says nothing about available room, so auto measures the nearest ancestor with a size of its own — which is also what stops a vertical palette narrowing its own container and never discovering it has room to go back.',
     ],
     demos: [
       {
@@ -178,6 +202,15 @@ export const COMPONENTS: ComponentEntry[] = [
         description: 'Drag an entry onto the field, or click one to place it. The node lands at the correct graph-space position whatever the pan and zoom.',
         flush: true,
         height: '440px',
+      },
+      {
+        export: 'PaletteOrientations',
+        region: 'orientation',
+        title: 'Fitting the space available',
+        description:
+          'The same palette in a narrow rail and a wide strip. Auto reports the axis it settled on, so surrounding layout can follow. The third is explicitly vertical with icons only, for the narrowest rails.',
+        flush: true,
+        height: '360px',
       },
     ],
   },

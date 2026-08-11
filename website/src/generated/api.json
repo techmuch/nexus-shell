@@ -433,6 +433,13 @@
           "default": null
         },
         {
+          "name": "onSizeChange",
+          "required": false,
+          "type": "(size: { width: number; height: number }) => void",
+          "description": "Called on mount and whenever the element resizes, with its pixel size.\n\nPass this to a {@link GraphMiniMap} as `canvasSize` — the indicator cannot\nbe drawn without knowing how much of the graph is on screen.",
+          "default": null
+        },
+        {
           "name": "onViewportChange",
           "required": false,
           "type": "(viewport: IViewport) => void",
@@ -537,6 +544,98 @@
           "type": "boolean",
           "description": "Draw as selected.",
           "default": null
+        }
+      ]
+    },
+    {
+      "name": "GraphMiniMap",
+      "file": "src/components/graph/GraphMiniMap.tsx",
+      "description": "A scaled overview of the whole graph, with an indicator showing what the\ncanvas is currently looking at.\n\nClick anywhere to jump there, drag to pan continuously, or focus it and use\nthe arrow keys. The zoom level is never changed — a minimap answers \"where am\nI\", and changing scale on a click makes that answer harder to trust.\n\nThe plotted extent is the union of the graph's bounds and the current\nviewport, so the indicator stays visible even when you have panned far away\nfrom every node. Without that, panning into empty space makes the minimap\nappear broken.\n\nFully controlled: it reads `viewport` and reports where you want to go, but\nnever moves the canvas itself.",
+      "example": "const [viewport, setViewport] = useState(IDENTITY_VIEWPORT);\nconst [size, setSize] = useState({ width: 0, height: 0 });\n\n<GraphCanvas\n  viewport={viewport}\n  onViewportChange={setViewport}\n  onSizeChange={setSize}\n  overlay={\n    <GraphMiniMap\n      nodes={nodes}\n      viewport={viewport}\n      canvasSize={size}\n      onViewportChange={setViewport}\n      className=\"absolute bottom-3 right-3\"\n    />\n  }\n>\n  …\n</GraphCanvas>",
+      "props": [
+        {
+          "name": "canvasSize",
+          "required": true,
+          "type": "{ width: number; height: number }",
+          "description": "Pixel size of the canvas the minimap mirrors. Get it from `GraphCanvas`'s\n`onSizeChange`; without it the viewport indicator can't be drawn.",
+          "default": null
+        },
+        {
+          "name": "nodes",
+          "required": true,
+          "type": "IGraphNode[]",
+          "description": "The nodes to plot. Only position and size are read.",
+          "default": null
+        },
+        {
+          "name": "viewport",
+          "required": true,
+          "type": "IViewport",
+          "description": "The canvas's current pan and zoom.",
+          "default": null
+        },
+        {
+          "name": "aria-label",
+          "required": false,
+          "type": "string",
+          "description": "Accessible label. Defaults to `\"Graph minimap\"`.",
+          "default": "\"Graph minimap\""
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "height",
+          "required": false,
+          "type": "number",
+          "description": "Minimap height in pixels. Defaults to `120`.",
+          "default": "120"
+        },
+        {
+          "name": "highlightIds",
+          "required": false,
+          "type": "string[]",
+          "description": "Highlight these node ids — a selection, or search results. Drawn in the\nprimary colour above the rest.",
+          "default": null
+        },
+        {
+          "name": "nodeColor",
+          "required": false,
+          "type": "(node: IGraphNode) => string",
+          "description": "Fill colour for a node, as a CSS colour or Tailwind class. Receives the\nnode, so you can colour by `kind`. Defaults to the muted foreground.",
+          "default": null
+        },
+        {
+          "name": "onViewportChange",
+          "required": false,
+          "type": "(viewport: IViewport) => void",
+          "description": "Called with a viewport that recentres the canvas. Omit it and the minimap\nbecomes a read-only overview.",
+          "default": null
+        },
+        {
+          "name": "padding",
+          "required": false,
+          "type": "number",
+          "description": "Padding around the plotted content, in minimap pixels. Defaults to `8`.",
+          "default": "8"
+        },
+        {
+          "name": "panDistance",
+          "required": false,
+          "type": "number",
+          "description": "How far an arrow key pans, in graph units. Defaults to `80`.",
+          "default": "80"
+        },
+        {
+          "name": "width",
+          "required": false,
+          "type": "number",
+          "description": "Minimap width in pixels. Defaults to `180`.",
+          "default": "180"
         }
       ]
     },
@@ -784,7 +883,7 @@
     {
       "name": "NodePalette",
       "file": "src/components/graph/NodePalette.tsx",
-      "description": "A palette of node types that can be dragged onto a {@link GraphCanvas}, or\nactivated with the keyboard.\n\nThe palette carries only the item's `kind` on the drag; what a node of that\nkind actually *is* is decided by your drop handler. Pair it with\n{@link readPaletteDrag} on the canvas.\n\nEvery item is a real button, so the palette is fully usable without a\npointer — `onSelect` fires on click or Enter.",
+      "description": "A palette of node types that can be dragged onto a {@link GraphCanvas}, or\nactivated with the keyboard.\n\nThe palette carries only the item's `kind` on the drag; what a node of that\nkind actually *is* is decided by your drop handler. Pair it with\n{@link readPaletteDrag} on the canvas.\n\nEvery item is a real button, so the palette is fully usable without a\npointer — `onSelect` fires on click or Enter.\n\n## Orientation\n\n`auto` (the default) measures the space the palette's container gives it and\npicks the axis that fits:\n\n1. a row, if the items fit the available width;\n2. otherwise a column, if they fit the available height;\n3. otherwise a row that wraps.\n\nA container that shrink-wraps its content — an absolutely positioned overlay,\nsay — offers no information about available space, so the palette measures\nthe nearest ancestor that has a size of its own. That is what stops a\nvertical palette from narrowing its own container and then being unable to\ndiscover it has room to go horizontal again.\n\nPass `horizontal` or `vertical` when you already know.",
       "example": "<GraphCanvas\n  onDrop={(point, event) => {\n    const kind = readPaletteDrag(event);\n    if (kind) addNode({ kind, position: point });\n  }}\n  overlay={\n    <NodePalette\n      items={[{ kind: 'task', label: 'Task' }, { kind: 'gate', label: 'Gate' }]}\n      onSelect={(item) => addNodeAtCentre(item.kind)}\n    />\n  }\n/>",
       "props": [
         {
@@ -809,10 +908,24 @@
           "default": null
         },
         {
+          "name": "iconOnly",
+          "required": false,
+          "type": "boolean",
+          "description": "Hide labels and show icons only. Useful for a narrow rail; items keep their\naccessible name, so nothing is lost to a screen reader.",
+          "default": null
+        },
+        {
           "name": "onDragStart",
           "required": false,
           "type": "(item: INodePaletteItem) => void",
           "description": "Called when a drag starts, if you want to show a drop hint.",
+          "default": null
+        },
+        {
+          "name": "onOrientationChange",
+          "required": false,
+          "type": "(orientation: ResolvedOrientation) => void",
+          "description": "Called when `auto` settles on an axis, and whenever it changes. Useful for\nadjusting surrounding layout to match.",
           "default": null
         },
         {
@@ -823,11 +936,11 @@
           "default": null
         },
         {
-          "name": "vertical",
+          "name": "orientation",
           "required": false,
-          "type": "boolean",
-          "description": "Stack vertically instead of wrapping horizontally. Defaults to `false`.",
-          "default": "false"
+          "type": "PaletteOrientation",
+          "description": "Layout axis. Defaults to `\"auto\"`, which measures the available space and\npicks whichever axis fits.",
+          "default": "\"auto\""
         }
       ]
     },

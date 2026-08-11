@@ -4,6 +4,7 @@ import {
   GraphCanvas,
   GraphEdge,
   GraphEdgeLayer,
+  GraphMiniMap,
   GraphNode,
   NodePalette,
   nextId,
@@ -13,6 +14,8 @@ import {
   type GraphCanvasHandle,
   type IGraphEdge,
   type IGraphNode,
+  type IViewport,
+  type ResolvedOrientation,
 } from 'nexus-shell';
 
 /* -------------------------------------------------------------------------- */
@@ -321,6 +324,136 @@ export const EdgeRouting = () => {
         </GraphNode>
       ))}
     </GraphCanvas>
+  );
+};
+// #endregion
+
+/* -------------------------------------------------------------------------- */
+/* Minimap                                                                    */
+/* -------------------------------------------------------------------------- */
+
+// #region minimap
+/** A graph big enough that an overview earns its place. */
+const LARGE: IGraphNode[] = Array.from({ length: 36 }, (_, i) => ({
+  id: `n${i}`,
+  position: { x: (i % 6) * 260, y: Math.floor(i / 6) * 190 },
+  size: { width: 160, height: 64 },
+  kind: ['source', 'step', 'sink'][i % 3],
+  data: { label: `Node ${i}` },
+}));
+
+const LARGE_EDGES: IGraphEdge[] = LARGE.slice(1).map((node, i) => ({
+  id: `e${i}`,
+  source: LARGE[i].id,
+  target: node.id,
+}));
+
+const KIND_FILL: Record<string, string> = {
+  source: 'hsl(var(--primary))',
+  step: 'hsl(var(--muted-foreground))',
+  sink: 'hsl(var(--destructive))',
+};
+
+export const MiniMap = () => {
+  // The minimap is controlled, so the viewport has to live here — this is the
+  // one case where owning it is worth the wiring.
+  const [viewport, setViewport] = useState<IViewport>({ x: 40, y: 40, scale: 0.5 });
+  // `canvasSize` comes from the canvas: without it the indicator can't be drawn.
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const byId = Object.fromEntries(LARGE.map((n) => [n.id, n]));
+
+  return (
+    <GraphCanvas
+      viewport={viewport}
+      onViewportChange={setViewport}
+      onSizeChange={setCanvasSize}
+      onCanvasClick={() => setSelected(null)}
+      overlay={
+        <GraphMiniMap
+          nodes={LARGE}
+          viewport={viewport}
+          canvasSize={canvasSize}
+          onViewportChange={setViewport}
+          // Colour by the app's own node kinds.
+          nodeColor={(node) => KIND_FILL[node.kind ?? 'step']}
+          highlightIds={selected ? [selected] : undefined}
+          className="absolute bottom-3 right-3"
+        />
+      }
+    >
+      <GraphEdgeLayer>
+        {LARGE_EDGES.map((edge) => (
+          <GraphEdge
+            key={edge.id}
+            edge={edge}
+            source={byId[edge.source]}
+            target={byId[edge.target]}
+          />
+        ))}
+      </GraphEdgeLayer>
+
+      {LARGE.map((node) => (
+        <GraphNode
+          key={node.id}
+          node={node}
+          selected={node.id === selected}
+          onSelect={setSelected}
+          draggable={false}
+        >
+          <div className="flex h-full items-center px-3">
+            <p className="text-xs font-medium">{label(node)}</p>
+          </div>
+        </GraphNode>
+      ))}
+    </GraphCanvas>
+  );
+};
+// #endregion
+
+/* -------------------------------------------------------------------------- */
+/* Palette orientation                                                        */
+/* -------------------------------------------------------------------------- */
+
+// #region orientation
+const PALETTE_ITEMS = [
+  { kind: 'service', label: 'Service', icon: <Server size={13} /> },
+  { kind: 'queue', label: 'Queue', icon: <Square size={13} /> },
+  { kind: 'gate', label: 'Gate', icon: <Diamond size={13} /> },
+  { kind: 'store', label: 'Store', icon: <Circle size={13} /> },
+];
+
+export const PaletteOrientations = () => {
+  // `auto` reports what it settled on, so surrounding layout can follow.
+  const [wide, setWide] = useState<ResolvedOrientation>('horizontal');
+  const [rail, setRail] = useState<ResolvedOrientation>('horizontal');
+
+  return (
+    <div className="flex h-full gap-4 p-4">
+      {/* A narrow rail: too tight for a row, so auto stacks it. */}
+      <aside className="w-[150px] shrink-0">
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          150px rail → <span className="font-mono text-foreground">{rail}</span>
+        </p>
+        <NodePalette items={PALETTE_ITEMS} onOrientationChange={setRail} />
+      </aside>
+
+      {/* A wide strip: the items fit a row, so auto keeps them in one. */}
+      <section className="flex-1">
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          Wide strip → <span className="font-mono text-foreground">{wide}</span>
+        </p>
+        <NodePalette items={PALETTE_ITEMS} onOrientationChange={setWide} />
+
+        <p className="mt-6 mb-2 text-[11px] text-muted-foreground">
+          Explicit <code className="font-mono">vertical</code>, icons only
+        </p>
+        <div className="w-[52px]">
+          <NodePalette items={PALETTE_ITEMS} orientation="vertical" iconOnly />
+        </div>
+      </section>
+    </div>
   );
 };
 // #endregion
