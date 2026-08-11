@@ -16,7 +16,7 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm ci || npm install
 
       # Library sources only. `tsconfig.examples.json` additionally covers
       # examples/, which are not published but must still compile.
