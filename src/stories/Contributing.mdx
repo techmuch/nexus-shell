@@ -13,6 +13,10 @@ find out quickly if you break one.
 **Nothing in `src/components` may import from `src/core/services` or
 `src/core/registry`.**
 
+This is an internal discipline, not product guidance. Consumers are expected to
+start from `ShellLayout`; the purity of the layer beneath it is what makes that
+shell testable and documentable in the first place.
+
 A component that reads a global store:
 
 - can't be configured by its caller,

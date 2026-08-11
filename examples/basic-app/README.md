@@ -1,30 +1,45 @@
-# Nexus-Shell Basic Example
+# Basic App
 
-This is a sample application demonstrating how to use the `nexus-shell` library.
+The smallest complete Nexus Shell application, and the shape every app on this
+library starts from:
 
-## 🚀 How to Run
+1. Register your views with `componentRegistry`.
+2. Call `initializeShell` once with your panels, commands, menus and status bar.
+3. Render `ShellLayout`.
 
-1.  **Build the Library:**
-    Ensure you have built the parent library first.
-    ```bash
-    cd ../..
-    npm run build
-    ```
+Everything after that is another registration. The layout in `src/App.tsx` never
+grows — features attach to it by id.
 
-2.  **Install Example Dependencies:**
-    ```bash
-    cd examples/basic-app
-    npm install
-    ```
+## Run it
 
-3.  **Start the Example:**
-    ```bash
-    npm run dev
-    ```
+```bash
+npm run dev
+```
 
-## 📝 What this example shows:
--   **Library Integration:** Importing `ShellLayout` and `initializeShell`.
--   **CSS Setup:** Importing `nexus-shell/style.css`.
--   **Command Registration:** Adding a custom `app.ping` command.
--   **Menu Extension:** Adding a new item to the standard "File" menu.
--   **Programmatic Layout:** Opening a new tab automatically on startup.
+The Vite config aliases `nexus-shell` to `../../src`, so this runs against the
+library source with no build step. A real consumer would drop that alias and let
+node resolution find the installed package.
+
+## What it demonstrates
+
+| | |
+| :-- | :-- |
+| **Views by id** | `componentRegistry.register('editor', Editor)`, opened with `useLayoutStore().addTab` |
+| **Boot configuration** | `initializeShell({ panels, commands, menus, statusBar })` |
+| **A sidebar panel** | `FileExplorer` becomes an activity bar icon and a sidebar pane |
+| **Commands and hotkeys** | `file.new` on `Ctrl+N`; every command appears in the palette on `Cmd/Ctrl+Shift+P` |
+| **Menus by command id** | File menu entries dispatch through `commandId`, never a function reference |
+| **Dialogs from anywhere** | `useModalStore.getState().openAlert(…)`, including outside React |
+| **Late registration** | A command and status bar item added in `useEffect`, behaving identically to the ones in `initializeShell` |
+| **Theming** | `class="theme-dark"` on `<html>` in `index.html` |
+
+## Built in
+
+`initializeShell` also registers toggle-terminal, toggle-chat, toggle-sidebar
+and the three theme commands, plus a default **View** menu. Pass
+`defaultCommands: false` to own every id yourself.
+
+## Verification
+
+This example is typechecked by the repository's `tsconfig.examples.json` and
+runs in CI on every push, so it cannot drift from the library API.

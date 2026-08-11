@@ -18,8 +18,9 @@ jobs:
 
       - run: npm ci || npm install
 
-      # Library sources only. `tsconfig.examples.json` additionally covers
-      # examples/, which are not published but must still compile.
+      # Library sources only. `tsconfig.examples.json` additionally covers the
+      # showcase and basic-app examples — not published, but they are the first
+      # code a new user runs, so they must not silently break.
       - name: Typecheck (library)
         run: npm run typecheck
 

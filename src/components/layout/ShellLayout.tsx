@@ -1,6 +1,13 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { Layout, Actions, Model, TabNode, type Action } from 'flexlayout-react';
+import {
+  Layout,
+  Actions,
+  Model,
+  TabNode,
+  type Action,
+  type IJsonModel,
+} from 'flexlayout-react';
 import 'flexlayout-react/style/light.css';
 import '../../styles/flexlayout-theme.css';
 
@@ -47,36 +54,68 @@ export interface ShellLayoutProps {
    * stories. Omit it to use the store's persisted model.
    */
   layoutModel?: Model;
+  /**
+   * Starting workspace, as a `flexlayout-react` JSON model. Applied once on
+   * mount and only when nothing has been restored from storage, so it seeds a
+   * first run without overwriting a layout the user has since arranged.
+   *
+   * Ignored when `layoutModel` is provided, which takes control outright.
+   */
+  initialLayoutJson?: IJsonModel;
+  /**
+   * Stop persisting the layout to `localStorage`. The workspace then resets to
+   * `initialLayoutJson` on every load — useful for embedded or multi-tenant
+   * shells where a per-browser layout would be wrong. Defaults to `false`.
+   */
   disableLocalStorage?: boolean;
-  initialLayoutJson?: any;
-  onLayoutChange?: (layout: any) => void;
+  /**
+   * Called with the serialised model whenever the user moves, splits, opens or
+   * closes a tab. Use it to persist the layout somewhere of your own — a user
+   * profile on the server, say — instead of, or alongside, `localStorage`.
+   */
+  onLayoutChange?: (layout: IJsonModel) => void;
 }
 
 /**
  * The complete application shell: menu bar, activity bar, sidebar, a
- * `flexlayout-react` docking area, terminal, chat pane and status bar.
+ * `flexlayout-react` docking workspace, terminal, chat pane and status bar.
  *
- * This is the batteries-included composition. It registers whatever you pass
- * into the shell stores on mount, then renders the `Connected*` component
- * variants, which read from those stores. Tab contents come from the
- * {@link componentRegistry}, so plugins can contribute views without the shell
- * importing them.
+ * **This is where an application starts.** Call {@link initializeShell} once to
+ * register your commands, menus and panels, render this component, and add
+ * features by registering them rather than by restructuring the layout. Tab
+ * contents resolve through the {@link componentRegistry}, so a new view is a
+ * registration and a menu entry — the shell never needs to import it.
  *
- * If you want the pieces without the wiring, import the individual components
- * and compose them yourself — every one of them is prop-driven and works
- * standalone.
+ * Configuration can arrive either way. Props are convenient for values that
+ * change with your app's state; {@link initializeShell} is better for the fixed
+ * set, since it runs once and works outside React. Props passed here are
+ * written into the same stores on mount, so the two are interchangeable.
+ *
+ * Internally this composes the `Connected*` component variants, which read from
+ * the shell stores. Those components — and the pure ones beneath them — are
+ * exported too, for the cases where you need to rearrange the frame itself.
  *
  * Closing a tab marked dirty via `useLayoutStore().setTabDirty` prompts for
  * confirmation before the tab is removed.
  *
  * @example
  * ```tsx
- * <ShellLayout
- *   title={<Logo />}
- *   panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }]}
- *   menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}
- *   statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}
- * />
+ * // main.tsx — a complete application
+ * import { initializeShell, ShellLayout, componentRegistry, AppTitle } from 'nexus-shell';
+ * import 'nexus-shell/style.css';
+ *
+ * componentRegistry.register('editor', Editor);
+ *
+ * initializeShell({
+ *   panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }],
+ *   commands: [{ id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save }],
+ *   menus: { File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] },
+ *   statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],
+ * });
+ *
+ * createRoot(document.getElementById('root')!).render(
+ *   <ShellLayout title={<AppTitle title="Acme Studio" icon={<Boxes size={16} />} />} />,
+ * );
  * ```
  */
 export const ShellLayout = ({
@@ -88,8 +127,11 @@ export const ShellLayout = ({
   rightMenuBarContent,
   centerMenuBarContent,
   layoutModel,
+  initialLayoutJson,
+  disableLocalStorage = false,
+  onLayoutChange,
 }: ShellLayoutProps) => {
-  const { model, setModel, isTabDirty, setTabDirty } = useLayoutStore();
+  const { model, setModel, initLayout, isTabDirty, setTabDirty } = useLayoutStore();
   const theme = useThemeStore((s) => s.theme);
   const setPanels = useSidebarStore((s) => s.setPanels);
   const setSlashCommands = useChatStore((s) => s.setSlashCommands);
@@ -110,6 +152,16 @@ export const ShellLayout = ({
   useEffect(() => {
     if (statusBarConfig) setWidgets(statusBarConfig);
   }, [statusBarConfig, setWidgets]);
+
+  // Seed the workspace once on mount. Deliberately not reactive to
+  // `initialLayoutJson`: re-running it would discard the arrangement the user
+  // has since made every time the prop's identity changed.
+  useEffect(() => {
+    if (layoutModel) return;
+    if (!initialLayoutJson && !disableLocalStorage) return;
+    initLayout(initialLayoutJson, disableLocalStorage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Resolves a docked tab to its registered component. */
   const factory = (node: TabNode) => {
@@ -176,6 +228,7 @@ export const ShellLayout = ({
               onModelChange={(m) => {
                 // A caller-supplied model is controlled; don't write it back.
                 if (!layoutModel) setModel(m);
+                onLayoutChange?.(m.toJson());
               }}
               onAction={onAction}
             />

@@ -630,8 +630,8 @@
     {
       "name": "ShellLayout",
       "file": "src/components/layout/ShellLayout.tsx",
-      "description": "The complete application shell: menu bar, activity bar, sidebar, a\n`flexlayout-react` docking area, terminal, chat pane and status bar.\n\nThis is the batteries-included composition. It registers whatever you pass\ninto the shell stores on mount, then renders the `Connected*` component\nvariants, which read from those stores. Tab contents come from the\n{@link componentRegistry}, so plugins can contribute views without the shell\nimporting them.\n\nIf you want the pieces without the wiring, import the individual components\nand compose them yourself — every one of them is prop-driven and works\nstandalone.\n\nClosing a tab marked dirty via `useLayoutStore().setTabDirty` prompts for\nconfirmation before the tab is removed.",
-      "example": "<ShellLayout\n  title={<Logo />}\n  panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }]}\n  menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}\n  statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}\n/>",
+      "description": "The complete application shell: menu bar, activity bar, sidebar, a\n`flexlayout-react` docking workspace, terminal, chat pane and status bar.\n\n**This is where an application starts.** Call {@link initializeShell} once to\nregister your commands, menus and panels, render this component, and add\nfeatures by registering them rather than by restructuring the layout. Tab\ncontents resolve through the {@link componentRegistry}, so a new view is a\nregistration and a menu entry — the shell never needs to import it.\n\nConfiguration can arrive either way. Props are convenient for values that\nchange with your app's state; {@link initializeShell} is better for the fixed\nset, since it runs once and works outside React. Props passed here are\nwritten into the same stores on mount, so the two are interchangeable.\n\nInternally this composes the `Connected*` component variants, which read from\nthe shell stores. Those components — and the pure ones beneath them — are\nexported too, for the cases where you need to rearrange the frame itself.\n\nClosing a tab marked dirty via `useLayoutStore().setTabDirty` prompts for\nconfirmation before the tab is removed.",
+      "example": "// main.tsx — a complete application\nimport { initializeShell, ShellLayout, componentRegistry, AppTitle } from 'nexus-shell';\nimport 'nexus-shell/style.css';\n\ncomponentRegistry.register('editor', Editor);\n\ninitializeShell({\n  panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }],\n  commands: [{ id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save }],\n  menus: { File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] },\n  statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],\n});\n\ncreateRoot(document.getElementById('root')!).render(\n  <ShellLayout title={<AppTitle title=\"Acme Studio\" icon={<Boxes size={16} />} />} />,\n);",
       "props": [
         {
           "name": "centerMenuBarContent",
@@ -644,14 +644,14 @@
           "name": "disableLocalStorage",
           "required": false,
           "type": "boolean",
-          "description": "",
-          "default": null
+          "description": "Stop persisting the layout to `localStorage`. The workspace then resets to\n`initialLayoutJson` on every load — useful for embedded or multi-tenant\nshells where a per-browser layout would be wrong. Defaults to `false`.",
+          "default": "false"
         },
         {
           "name": "initialLayoutJson",
           "required": false,
-          "type": "any",
-          "description": "",
+          "type": "IJsonModel",
+          "description": "Starting workspace, as a `flexlayout-react` JSON model. Applied once on\nmount and only when nothing has been restored from storage, so it seeds a\nfirst run without overwriting a layout the user has since arranged.\n\nIgnored when `layoutModel` is provided, which takes control outright.",
           "default": null
         },
         {
@@ -671,8 +671,8 @@
         {
           "name": "onLayoutChange",
           "required": false,
-          "type": "(layout: any) => void",
-          "description": "",
+          "type": "(layout: IJsonModel) => void",
+          "description": "Called with the serialised model whenever the user moves, splits, opens or\ncloses a tab. Use it to persist the layout somewhere of your own — a user\nprofile on the server, say — instead of, or alongside, `localStorage`.",
           "default": null
         },
         {

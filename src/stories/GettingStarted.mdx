@@ -4,111 +4,188 @@ import { Meta } from '@storybook/blocks';
 
 # Getting Started
 
-Build a working shell from primitives, then swap in `ShellLayout` if you want
-the batteries-included version.
+From an empty directory to a working IDE-style application, then growing it.
 
 ## 1. Install
 
 ```bash
 npm install nexus-shell
+npm install react@^19 react-dom@^19
 ```
+
+Import the stylesheet once, in your entry file. It defines the design tokens
+every component reads — without it, everything renders unstyled.
 
 ```ts
 // main.tsx
 import 'nexus-shell/style.css';
 ```
 
-The stylesheet defines the theme tokens every component reads. Without it,
-components render unstyled.
+If your app uses Tailwind, add the package to your `content` globs so classes
+used inside the library aren't purged:
+
+```js
+// tailwind.config.js
+export default {
+  content: ['./src/**/*.{ts,tsx}', './node_modules/nexus-shell/dist/**/*.js'],
+};
+```
 
 ## 2. Apply a theme
 
-Colors live on CSS custom properties scoped to a theme class. Put one on an
-ancestor — usually `<html>`:
+Colors live on CSS custom properties scoped to a theme class, so switching
+themes is a class on an ancestor — no context, no provider.
 
 ```html
-<html class="theme-light">
+<html class="theme-dark">
 ```
 
-Or manage it in React:
+## 3. Render the shell
+
+This is a complete application.
 
 ```tsx
-useEffect(() => {
-  document.documentElement.className = `theme-${theme}`;
-}, [theme]);
-```
-
-## 3. Compose a shell
-
-Every primitive is controlled, so state stays in your app:
-
-```tsx
-import { useState } from 'react';
-import { Files, GitBranch, Search } from 'lucide-react';
+// main.tsx
+import { createRoot } from 'react-dom/client';
+import { Boxes, Files } from 'lucide-react';
 import {
-  ActivityBar,
-  MenuBar,
-  SidebarPane,
-  StatusBar,
-  ThemeSwitcher,
-  TreeWidget,
-  type ITreeNode,
+  AppTitle,
+  ShellLayout,
+  componentRegistry,
+  initializeShell,
+  useLayoutStore,
 } from 'nexus-shell';
+import 'nexus-shell/style.css';
 
-const PANELS = [
-  { id: 'files', label: 'Explorer', icon: Files },
-  { id: 'search', label: 'Search', icon: Search },
-];
+import { Editor } from './Editor';
+import { FileExplorer } from './FileExplorer';
 
-export function App() {
-  const [theme, setTheme] = useState('light');
-  const [active, setActive] = useState<string | null>('files');
-  const [files, setFiles] = useState<ITreeNode[]>(initialFiles);
+// Views are registered by id, so the shell never imports them.
+componentRegistry.register('editor', Editor);
 
-  return (
-    <div className={`theme-${theme} flex h-screen flex-col bg-background text-foreground`}>
-      <MenuBar
-        menus={{ File: [{ id: 'save', label: 'Save', keybinding: '⌘S' }] }}
-        onSelect={(item) => console.log(item.id)}
-        right={<ThemeSwitcher value={theme} onChange={setTheme} />}
-      />
+initializeShell({
+  panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileExplorer }],
+  commands: [
+    {
+      id: 'file.save',
+      label: 'File: Save',
+      keybinding: 'Control+s',
+      execute: () => save(),
+    },
+  ],
+  menus: {
+    File: [{ id: 'save', label: 'Save', commandId: 'file.save' }],
+  },
+  statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],
+});
 
-      <div className="flex flex-1 overflow-hidden">
-        <ActivityBar
-          items={PANELS}
-          activeId={active}
-          onSelect={(id) => setActive(id === active ? null : id)}
-        />
+// Open something on startup.
+useLayoutStore.getState().addTab('editor', 'App.tsx');
 
-        {active && (
-          <SidebarPane title="Explorer" onClose={() => setActive(null)}>
-            <TreeWidget
-              data={files}
-              onToggle={(node) => setFiles(toggle(files, node.id))}
-              onActivate={(node) => open(node.id)}
-            />
-          </SidebarPane>
-        )}
-
-        <main className="flex-1 overflow-auto">{/* your editor */}</main>
-      </div>
-
-      <StatusBar
-        widgets={[
-          { id: 'branch', label: 'main', icon: GitBranch, alignment: 'left' },
-          { id: 'pos', label: 'Ln 1, Col 1', alignment: 'right' },
-        ]}
-      />
-    </div>
-  );
-}
+createRoot(document.getElementById('root')!).render(
+  <ShellLayout title={<AppTitle title="Acme Studio" icon={<Boxes size={16} />} />} />,
+);
 ```
 
-### The one gotcha: expansion is yours
+You now have dockable tabs, a working command palette on `Cmd/Ctrl+Shift+P`, a
+terminal, a chat pane, and a themable frame.
 
-`TreeWidget` renders expansion from each node's `isOpen` but does not own it.
-That keeps a single source of truth for your file data, at the cost of writing
-the toggle:
+`initializeShell` also registers a small set of built-in commands — toggle
+terminal, toggle chat, toggle sidebar, and the three themes — along with a
+default **View** menu. Pass `defaultCommands: false` to own every id yourself.
+
+## 4. Grow it
+
+Add capability by registering it. None of these change the layout.
+
+### A new view
+
+```ts
+componentRegistry.register('settings', SettingsView);
+useLayoutStore.getState().addTab('settings', 'Settings');
+```
+
+### An action, with a hotkey and a menu entry
+
+```ts
+commandRegistry.registerCommand({
+  id: 'git.commit',
+  label: 'Git: Commit',
+  keybinding: 'Control+Enter',
+  execute: () => commit(),
+});
+
+menuRegistry.registerMenu('Git', {
+  id: 'git.commit',
+  label: 'Commit',
+  commandId: 'git.commit',
+});
+```
+
+Registered commands appear in the command palette automatically.
+
+### A status bar item, from anywhere
+
+```ts
+useStatusBarStore.getState().addWidget({
+  id: 'lint',
+  label: '0 problems',
+  alignment: 'left',
+  commandId: 'view.problems',
+});
+```
+
+### A dialog, from outside React
+
+```ts
+const confirmed = await useModalStore.getState().openConfirm('Discard changes?');
+```
+
+### An unsaved-changes guard
+
+```ts
+useLayoutStore.getState().setTabDirty(tabId, true);
+```
+
+Closing that tab now prompts before discarding it.
+
+## 5. When you need less than the shell
+
+Every component the shell is built from is exported on its own, pure and
+prop-driven. Reach for them when you are embedding one piece into an app you
+already have, or need a frame `ShellLayout` can't express.
+
+```tsx
+import { ActivityBar, SidebarPane, StatusBar, TreeWidget } from 'nexus-shell';
+
+const [active, setActive] = useState<string | null>('files');
+
+<div className="theme-dark flex h-screen flex-col">
+  <div className="flex flex-1">
+    <ActivityBar
+      items={panels}
+      activeId={active}
+      onSelect={(id) => setActive(id === active ? null : id)}
+    />
+    {active && (
+      <SidebarPane title="Explorer" onClose={() => setActive(null)}>
+        <TreeWidget data={files} onToggle={toggle} />
+      </SidebarPane>
+    )}
+    <main className="flex-1">{children}</main>
+  </div>
+  <StatusBar widgets={[{ id: 'branch', label: 'main', alignment: 'left' }]} />
+</div>;
+```
+
+These components are controlled, so state stays in your app. That is a real
+cost — the shell manages this state for you — which is why this is the fallback
+rather than the default.
+
+### The one gotcha
+
+`TreeWidget` renders expansion from each node's `isOpen` but does not own it, so
+your file data stays the single source of truth. You write the toggle:
 
 ```ts
 const toggle = (items: ITreeNode[], id: string): ITreeNode[] =>
@@ -119,63 +196,23 @@ const toggle = (items: ITreeNode[], id: string): ITreeNode[] =>
   );
 ```
 
-## 4. Or use the assembled shell
+## 6. Mixing the two
 
-If you want the docking layout, terminal and chat pane too, `ShellLayout`
-composes all of it and reads from the shell stores:
-
-```tsx
-import { ShellLayout, componentRegistry, commandRegistry } from 'nexus-shell';
-
-// Tab contents resolve by id, so plugins can contribute views.
-componentRegistry.register('editor', Editor);
-commandRegistry.registerCommand({
-  id: 'file.save',
-  label: 'File: Save',
-  keybinding: '⌘S',
-  execute: () => save(),
-});
-
-<ShellLayout
-  title={<Logo />}
-  panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileExplorer }]}
-  menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}
-  statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}
-/>;
-```
-
-Note the difference: primitives take `onSelect` handlers, the shell takes
-`commandId` strings it resolves against the registry. That indirection is what
-lets plugins add menu items without holding a function reference.
-
-## 5. Mixing the two
-
-`Connected*` components are exported, so you can take the shell and still drive
-one piece yourself — or take a primitive and bind it to a store:
+The `Connected*` components are exported, so you can rearrange the shell's own
+parts while keeping its behaviour:
 
 ```tsx
-import { ConnectedStatusBar, useStatusBarStore } from 'nexus-shell';
+import { ConnectedActivityBar, ConnectedStatusBar } from 'nexus-shell';
 
-// Anywhere in the app:
-useStatusBarStore.getState().addWidget({
-  id: 'lint',
-  label: '0 problems',
-  alignment: 'left',
-  commandId: 'view.problems',
-});
+<div className="theme-dark flex h-screen flex-col">
+  <div className="flex flex-1">
+    <ConnectedActivityBar />
+    <YourOwnSidebar />
+    <main className="flex-1">{children}</main>
+  </div>
+  <ConnectedStatusBar />
+</div>;
 ```
 
-## Common tasks
-
-**Add a status bar item from a plugin** — `useStatusBarStore.getState().addWidget(...)`.
-Items with a `commandId` dispatch through the command registry when clicked.
-
-**Prompt from non-React code** — `await useModalStore.getState().openConfirm('Are you sure?')`.
-Mount `<ConnectedModal />` once near the root for this to resolve.
-
-**Add a right-click command to the tree** — pass `actions` to `TreeWidget`
-rather than looking for a dedicated prop. Use `showFor` to limit an entry to
-files, folders or the background.
-
-**Custom themes** — define a `.theme-yourname` block with the same custom
-properties as `.theme-light`, then pass your ids to `ThemeSwitcher`'s `options`.
+These read the same stores `initializeShell` populates, so registrations keep
+working.

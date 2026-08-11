@@ -11,109 +11,6 @@ import 'nexus-shell/style.css';`;
 
 const THEME_HTML = `<html class="theme-dark">`;
 
-const THEME_REACT = `const [theme, setTheme] = useState<'light' | 'dark' | 'gt'>('dark');
-
-useEffect(() => {
-  document.documentElement.className = \`theme-\${theme}\`;
-}, [theme]);`;
-
-const COMPOSE = `import { useState } from 'react';
-import { Files, GitBranch, Search } from 'lucide-react';
-import {
-  ActivityBar,
-  MenuBar,
-  SidebarPane,
-  StatusBar,
-  ThemeSwitcher,
-  TreeWidget,
-  type ITreeNode,
-} from 'nexus-shell';
-
-const PANELS = [
-  { id: 'files', label: 'Explorer', icon: Files },
-  { id: 'search', label: 'Search', icon: Search },
-];
-
-export function App() {
-  const [theme, setTheme] = useState('dark');
-  const [active, setActive] = useState<string | null>('files');
-  const [files, setFiles] = useState<ITreeNode[]>(initialFiles);
-
-  return (
-    <div className={\`theme-\${theme} flex h-screen flex-col bg-background text-foreground\`}>
-      <MenuBar
-        menus={{ File: [{ id: 'save', label: 'Save', keybinding: '⌘S' }] }}
-        onSelect={(item) => run(item.id)}
-        right={<ThemeSwitcher value={theme} onChange={setTheme} />}
-      />
-
-      <div className="flex flex-1 overflow-hidden">
-        <ActivityBar
-          items={PANELS}
-          activeId={active}
-          onSelect={(id) => setActive(id === active ? null : id)}
-        />
-
-        {active && (
-          <SidebarPane title="Explorer" onClose={() => setActive(null)}>
-            <TreeWidget
-              data={files}
-              onToggle={(node) => setFiles(toggle(files, node.id))}
-              onActivate={(node) => open(node.id)}
-            />
-          </SidebarPane>
-        )}
-
-        <main className="flex-1 overflow-auto">{/* your editor */}</main>
-      </div>
-
-      <StatusBar
-        widgets={[
-          { id: 'branch', label: 'main', icon: GitBranch, alignment: 'left' },
-          { id: 'pos', label: 'Ln 1, Col 1', alignment: 'right' },
-        ]}
-      />
-    </div>
-  );
-}`;
-
-const TOGGLE = `const toggle = (items: ITreeNode[], id: string): ITreeNode[] =>
-  items.map((node) =>
-    node.id === id
-      ? { ...node, isOpen: !node.isOpen }
-      : { ...node, children: node.children && toggle(node.children, id) },
-  );`;
-
-const SHELL = `import { ShellLayout, componentRegistry, commandRegistry } from 'nexus-shell';
-
-// Tab contents resolve by id, so plugins can contribute views without
-// the shell importing them.
-componentRegistry.register('editor', Editor);
-
-commandRegistry.registerCommand({
-  id: 'file.save',
-  label: 'File: Save',
-  keybinding: '⌘S',
-  execute: () => save(),
-});
-
-<ShellLayout
-  title={<AppTitle title="Acme Studio" icon={<Boxes size={16} />} />}
-  panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileExplorer }]}
-  menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}
-  statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}
-/>;`;
-
-const MIX = `import { ConnectedStatusBar, useStatusBarStore } from 'nexus-shell';
-
-// From anywhere — a plugin, an effect, a websocket handler:
-useStatusBarStore.getState().addWidget({
-  id: 'lint',
-  label: '0 problems',
-  alignment: 'left',
-  commandId: 'view.problems',
-});`;
-
 const TAILWIND = `// tailwind.config.js
 export default {
   content: [
@@ -122,14 +19,121 @@ export default {
   ],
 };`;
 
+const APP = `// main.tsx — a complete application
+import { createRoot } from 'react-dom/client';
+import { Boxes, Files, GitBranch } from 'lucide-react';
+import {
+  AppTitle,
+  ShellLayout,
+  componentRegistry,
+  initializeShell,
+  useLayoutStore,
+} from 'nexus-shell';
+import 'nexus-shell/style.css';
+
+import { Editor } from './Editor';
+import { FileExplorer } from './FileExplorer';
+
+// Views are registered by id, so the shell never has to import them.
+componentRegistry.register('editor', Editor);
+
+initializeShell({
+  panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileExplorer }],
+  commands: [
+    {
+      id: 'file.save',
+      label: 'File: Save',
+      keybinding: 'Control+s',
+      execute: () => save(),
+    },
+  ],
+  menus: {
+    File: [{ id: 'save', label: 'Save', commandId: 'file.save' }],
+  },
+  statusBar: [{ id: 'branch', label: 'main', icon: GitBranch, alignment: 'left' }],
+});
+
+// Open something on startup.
+useLayoutStore.getState().addTab('editor', 'App.tsx');
+
+createRoot(document.getElementById('root')!).render(
+  <ShellLayout title={<AppTitle title="Acme Studio" icon={<Boxes size={16} />} />} />,
+);`;
+
+const ADD_VIEW = `componentRegistry.register('settings', SettingsView);
+
+// Open it from a command, a menu entry, or on startup.
+useLayoutStore.getState().addTab('settings', 'Settings');`;
+
+const ADD_COMMAND = `commandRegistry.registerCommand({
+  id: 'git.commit',
+  label: 'Git: Commit',
+  keybinding: 'Control+Enter',
+  execute: () => commit(),
+});
+
+menuRegistry.registerMenu('Git', {
+  id: 'git.commit',
+  label: 'Commit',
+  commandId: 'git.commit',
+});`;
+
+const ADD_STATUS = `useStatusBarStore.getState().addWidget({
+  id: 'lint',
+  label: '0 problems',
+  alignment: 'left',
+  commandId: 'view.problems',
+});`;
+
+const ADD_MODAL = `const confirmed = await useModalStore.getState().openConfirm('Discard changes?');`;
+
+const DIRTY = `useLayoutStore.getState().setTabDirty(tabId, true);`;
+
+const PRIMITIVES = `import { ActivityBar, SidebarPane, StatusBar, TreeWidget } from 'nexus-shell';
+
+const [active, setActive] = useState<string | null>('files');
+
+<div className="theme-dark flex h-screen flex-col">
+  <div className="flex flex-1">
+    <ActivityBar
+      items={panels}
+      activeId={active}
+      onSelect={(id) => setActive(id === active ? null : id)}
+    />
+    {active && (
+      <SidebarPane title="Explorer" onClose={() => setActive(null)}>
+        <TreeWidget data={files} onToggle={toggle} />
+      </SidebarPane>
+    )}
+    <main className="flex-1">{children}</main>
+  </div>
+  <StatusBar widgets={[{ id: 'branch', label: 'main', alignment: 'left' }]} />
+</div>;`;
+
+const TOGGLE = `const toggle = (items: ITreeNode[], id: string): ITreeNode[] =>
+  items.map((node) =>
+    node.id === id
+      ? { ...node, isOpen: !node.isOpen }
+      : { ...node, children: node.children && toggle(node.children, id) },
+  );`;
+
+const MIX = `import { ConnectedActivityBar, ConnectedStatusBar } from 'nexus-shell';
+
+<div className="theme-dark flex h-screen flex-col">
+  <div className="flex flex-1">
+    <ConnectedActivityBar />
+    <YourOwnSidebar />
+    <main className="flex-1">{children}</main>
+  </div>
+  <ConnectedStatusBar />
+</div>;`;
+
 export const GettingStarted = () => (
   <article>
     <header className="mb-10">
       <h1 className="text-3xl font-bold tracking-tight">Getting Started</h1>
       <P className="mt-3">
-        Build a working shell from primitives, then swap in{' '}
-        <code className="font-mono text-[14px]">ShellLayout</code> if you want the
-        batteries-included version.
+        From an empty directory to a working IDE-style application, then growing it.
       </P>
     </header>
 
@@ -144,7 +148,7 @@ export const GettingStarted = () => (
 
     <P className="mt-6">
       Import the stylesheet once, in your entry file. It defines the design tokens every
-      component reads — without it, components render unstyled.
+      component reads — without it, everything renders unstyled.
     </P>
     <div className="mt-3">
       <CodeBlock code={ENTRY} />
@@ -171,53 +175,83 @@ export const GettingStarted = () => (
     <div className="mt-4">
       <CodeBlock label="index.html" code={THEME_HTML} />
     </div>
-    <P className="mt-4">Or manage it from React:</P>
-    <div className="mt-3">
-      <CodeBlock code={THEME_REACT} />
-    </div>
 
-    <H2 id="compose">3. Compose a shell</H2>
-    <P>
-      Every primitive is controlled, so state stays in your app. Nothing here reaches into
-      a store.
-    </P>
-    <div className="mt-4">
-      <CodeBlock label="App.tsx" code={COMPOSE} />
-    </div>
-
-    <H3>The one piece of boilerplate</H3>
+    <H2 id="shell">3. Render the shell</H2>
     <Paragraphs
       items={[
-        '`TreeWidget` renders expansion from each node’s `isOpen` but does not own it. That keeps a single source of truth for your file data, at the cost of writing the toggle yourself:',
+        'This is where an application starts. `initializeShell` registers your commands, menus and panels; `ShellLayout` renders the frame around them.',
+        'The code below is a complete app — dockable tabs, a command palette on `Cmd/Ctrl+Shift+P`, a terminal, a chat pane and a themable frame.',
+      ]}
+    />
+    <div className="mt-5">
+      <CodeBlock label="main.tsx" code={APP} />
+    </div>
+
+    <Callout title="What you get for free">
+      <p>
+        {inline(
+          '`initializeShell` also registers built-in commands — toggle terminal, toggle chat, toggle sidebar and the three themes — plus a default **View** menu. Pass `defaultCommands: false` to own every id yourself.',
+        )}
+      </p>
+    </Callout>
+
+    <H2 id="grow">4. Grow it</H2>
+    <P>
+      You add capability by <strong className="text-foreground">registering</strong> it.
+      None of the following change the layout, which is what lets plugins and distant code
+      contribute to the shell.
+    </P>
+
+    <H3>A new view</H3>
+    <CodeBlock code={ADD_VIEW} />
+
+    <H3>An action, with a hotkey and a menu entry</H3>
+    <CodeBlock code={ADD_COMMAND} />
+    <P className="mt-3">
+      Registered commands appear in the command palette automatically.
+    </P>
+
+    <H3>A status bar item, from anywhere</H3>
+    <CodeBlock code={ADD_STATUS} />
+
+    <H3>A dialog, from outside React</H3>
+    <CodeBlock code={ADD_MODAL} />
+
+    <H3>An unsaved-changes guard</H3>
+    <CodeBlock code={DIRTY} />
+    <P className="mt-3">Closing that tab now prompts before discarding it.</P>
+
+    <H2 id="less">5. When you need less than the shell</H2>
+    <Paragraphs
+      items={[
+        'Every component the shell is built from is exported on its own, pure and prop-driven. Reach for them when you are embedding one piece into an app you already have, or need a frame `ShellLayout` cannot express.',
+      ]}
+    />
+    <div className="mt-4">
+      <CodeBlock label="App.tsx" code={PRIMITIVES} />
+    </div>
+    <P className="mt-4">
+      These components are controlled, so state stays in your app. That is a real cost —
+      the shell manages this state for you — which is why it’s the fallback rather than the
+      default.
+    </P>
+
+    <H3>The one gotcha</H3>
+    <Paragraphs
+      items={[
+        '`TreeWidget` renders expansion from each node’s `isOpen` but does not own it, so your file data stays the single source of truth. You write the toggle:',
       ]}
     />
     <div className="mt-4">
       <CodeBlock code={TOGGLE} />
     </div>
 
-    <H2 id="shell">4. Or use the assembled shell</H2>
+    <H2 id="mixing">6. Mixing the two</H2>
     <P>
-      If you want the docking layout, terminal and chat pane too,{' '}
-      <code className="font-mono text-[14px]">ShellLayout</code> composes all of it against
-      the shell stores.
-    </P>
-    <div className="mt-4">
-      <CodeBlock code={SHELL} />
-    </div>
-
-    <Callout title="Note the difference">
-      <p>
-        {inline(
-          'Primitives take `onSelect` handlers. The shell takes `commandId` strings it resolves against the registry. That indirection is what lets a plugin add a menu item without holding a function reference.',
-        )}
-      </p>
-    </Callout>
-
-    <H2 id="mixing">5. Mixing the two</H2>
-    <P>
-      The <code className="font-mono text-[14px]">Connected*</code> components are
-      exported, so you can take the assembled shell and still drive one piece yourself — or
-      take a primitive and bind it to a store.
+      The <code className="font-mono text-[14px]">Connected*</code> components are exported,
+      so you can rearrange the shell’s own parts while keeping its behaviour. These read the
+      same stores <code className="font-mono text-[14px]">initializeShell</code> populates,
+      so your registrations keep working.
     </P>
     <div className="mt-4">
       <CodeBlock code={MIX} />
@@ -226,12 +260,12 @@ export const GettingStarted = () => (
     <H2 id="next">Where next</H2>
     <div className="grid sm:grid-cols-2 gap-3 mt-4">
       <Link
-        to="/components"
+        to="/components/shell-layout"
         className="rounded-xl border border-border p-4 hover:border-primary/40 transition-colors"
       >
-        <p className="font-semibold text-[15px]">Component gallery</p>
+        <p className="font-semibold text-[15px]">ShellLayout</p>
         <p className="text-[13px] text-muted-foreground mt-1">
-          Live examples and props tables for all of them.
+          The frame you start from, running live.
         </p>
       </Link>
       <Link
@@ -240,7 +274,7 @@ export const GettingStarted = () => (
       >
         <p className="font-semibold text-[15px]">Architecture</p>
         <p className="text-[13px] text-muted-foreground mt-1">
-          Why the library splits into two tiers, and when to use each.
+          How registration works, and when to drop below the shell.
         </p>
       </Link>
     </div>

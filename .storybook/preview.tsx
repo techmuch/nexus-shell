@@ -56,10 +56,13 @@ const preview: Preview = {
     },
     options: {
       storySort: {
+        // Layout first: ShellLayout is the starting point for an app, and
+        // the Primitives section documents what it is assembled from.
         order: [
           'Introduction',
           'Getting Started',
           'Layout',
+          'Guides',
           'Primitives',
           'Examples',
         ],

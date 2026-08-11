@@ -5,7 +5,7 @@ import { Meta } from '@storybook/blocks';
 # Nexus Shell
 
 A React component library for building IDE-style application shells — menu bar,
-activity bar, sidebar, docking layout, terminal, chat pane and status bar.
+activity bar, sidebar, docking workspace, terminal, chat pane and status bar.
 
 ## Install
 
@@ -21,74 +21,82 @@ import 'nexus-shell/style.css';
 
 React 19 is a peer dependency; bring your own.
 
-## Two ways to use it
+## Start with the shell
 
-The library has a deliberate two-tier surface, and picking the right tier is the
-main decision you'll make.
-
-### 1. Primitives — you compose
-
-Every component under **Primitives** is pure and prop-driven. No global state,
-no registry lookups, no hidden singletons. You pass data in, you get callbacks
-out.
+An application built on this library starts with `ShellLayout` and grows by
+registering things into it. That is the intended path, and the one the rest of
+these docs assume.
 
 ```tsx
-import { StatusBar, ActivityBar, SidebarPane } from 'nexus-shell';
+import { initializeShell, ShellLayout, componentRegistry, AppTitle } from 'nexus-shell';
+import 'nexus-shell/style.css';
 
-const [active, setActive] = useState<string | null>('files');
+componentRegistry.register('editor', Editor);
 
-<div className="flex h-screen flex-col">
-  <div className="flex flex-1">
-    <ActivityBar items={panels} activeId={active} onSelect={setActive} />
-    {active && (
-      <SidebarPane title="Explorer" onClose={() => setActive(null)}>
-        <TreeWidget data={files} onToggle={toggle} />
-      </SidebarPane>
-    )}
-    <main className="flex-1">{children}</main>
-  </div>
-  <StatusBar widgets={[{ id: 'branch', label: 'main', alignment: 'left' }]} />
-</div>
+initializeShell({
+  panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }],
+  commands: [{ id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save }],
+  menus: { File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] },
+  statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],
+});
+
+createRoot(el).render(<ShellLayout title={<AppTitle title="Acme Studio" />} />);
 ```
 
-This is the supported public API. Use it when you want control over layout and
-state, or when you're adopting one or two pieces into an existing app.
+That is a working IDE: dockable tabs, a command palette on `Cmd/Ctrl+Shift+P`, a
+terminal, a themable chrome. See [ShellLayout](/docs/layout-shelllayout--docs)
+for the full frame, live.
 
-### 2. Shell — it composes
+## How an app grows
 
-`ShellLayout` assembles the whole frame and wires it to a set of zustand stores
-and registries, so you configure it declaratively instead of prop-drilling.
+You add capability by **registering** it, not by restructuring the layout.
+
+| To add | Do this |
+| :-- | :-- |
+| A new view or tab | `componentRegistry.register(id, Component)`, then open it with `useLayoutStore().addTab(id, title)` |
+| An action or hotkey | `commandRegistry.registerCommand({ id, label, keybinding, execute })` — it appears in the palette automatically |
+| A menu entry | Add an item with that `commandId` to `menus` |
+| A sidebar panel | Add it to `panels`; it becomes an activity bar icon |
+| A status bar item | `useStatusBarStore.getState().addWidget(...)` |
+| A dialog from anywhere | `await useModalStore.getState().openConfirm('Sure?')` |
+
+None of these require touching the shell, which is what lets plugins and
+distant code contribute to it. See
+[Registry Architecture](/docs/guides-registry-architecture-ioc--docs).
+
+## The components underneath
+
+Everything the shell is assembled from is exported too. Those components are
+pure and prop-driven — no global state, no registry lookups — and they are the
+**escape hatch**, not the starting point.
+
+Reach for them when you are:
+
+- embedding one piece into an application you already have,
+- building a frame the shell can't express,
+- or rendering the same component twice with different data.
 
 ```tsx
-import { ShellLayout } from 'nexus-shell';
+import { StatusBar } from 'nexus-shell';
 
-<ShellLayout
-  title={<Logo />}
-  panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }]}
-  menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}
-  statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}
-/>;
+<StatusBar widgets={[{ id: 'branch', label: 'main', alignment: 'left' }]} />;
 ```
 
-Use it when you want the full IDE frame and are happy to adopt the shell's state
-model along with it.
+Between the shell and those components sit the `Connected*` variants — `ConnectedStatusBar`,
+`ConnectedMenuBar`, and so on. Each binds one component to its store.
+`ShellLayout` is built entirely out of them, so you can rearrange the shell's
+own parts while keeping its behaviour.
 
-### The bridge between them
-
-Each primitive has a `Connected*` counterpart that binds it to the matching
-store — `ConnectedStatusBar` reads `useStatusBarStore`, `ConnectedMenuBar` reads
-`menuRegistry`, and so on. `ShellLayout` is built entirely out of these.
-
-They're exported, so you can mix tiers: take the assembled shell but swap one
-connected piece for a plain one you drive yourself.
-
-## Why the split
+## Why the components are pure
 
 A component that reads a global store can't be configured by its caller, can't
 be rendered twice with different data, and can't be documented — its props table
-is empty because it has no props. Splitting presentation from wiring is what
-makes the Storybook pages in this site useful: every control you see maps to a
-real prop.
+is empty because it has no props.
+
+Keeping presentation and wiring in separate layers is what makes the pages in
+this Storybook useful: every control you see maps to a real prop. It is an
+implementation discipline that pays off in documentation, not an instruction to
+assemble the shell by hand.
 
 ## Theming
 
@@ -97,12 +105,12 @@ Colors are CSS custom properties scoped to those classes, so theming is a class
 on an ancestor element, not a React context.
 
 Use the **Theme** toolbar control above to switch any story between them. See
-[Theming](/docs/theming--docs) for the full token list.
+[Theming](/docs/guides-theming-styling--docs) for the full token list.
 
-## Where to start
+## Where to go next
 
+- **Getting Started** — build a working app from an empty directory.
+- **Layout** — `ShellLayout`, the frame you start from.
 - **Primitives** — one page per component, each with a live props table.
-- **Layout** — `ShellLayout`, the assembled frame.
 - **Examples** — larger applications built on the library. These are not part of
-  the published package; they exist to prove the primitives are sufficient and
-  to show what a real integration looks like.
+  the published package; they exist to show what a real integration looks like.

@@ -50,12 +50,13 @@ export const COMPONENTS: ComponentEntry[] = [
   {
     slug: 'shell-layout',
     name: 'ShellLayout',
-    tagline: 'The complete application frame, batteries included',
+    tagline: 'The complete application frame — start here',
     category: 'Shell',
     demoFile: 'ShellLayout',
     notes: [
-      'This is the assembled composition. It writes the props you pass into the shell stores on mount, then renders the `Connected*` variants that read from them.',
-      'That indirection buys one thing: plugins and distant code can contribute menu items, status bar widgets and sidebar panels without prop-drilling. It costs the usual price of global state — two shells on one page share it. If that matters, compose the primitives yourself.',
+      '**This is where an application starts.** Call `initializeShell` once to register your commands, menus and panels, render this component, and add features by registering them rather than by restructuring the layout.',
+      'Tab contents resolve through the `componentRegistry`, so a new view is a registration and a menu entry — the shell never has to import it. That is what lets plugins and distant code contribute to an app they know nothing about.',
+      'Configuration can arrive as props or through `initializeShell`; both write to the same stores. Props suit values that change with your state, `initializeShell` suits the fixed set, since it runs once and works outside React.',
     ],
     demos: [
       {

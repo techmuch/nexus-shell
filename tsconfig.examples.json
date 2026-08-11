@@ -2,7 +2,19 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "nexus-shell": [
+        "src/index.ts"
+      ]
+    }
   },
-  "include": ["examples/showcase", "src"]
+  "include": [
+    "examples/showcase",
+    "examples/basic-app/src",
+    "src"
+  ]
 }

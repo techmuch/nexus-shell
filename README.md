@@ -16,17 +16,74 @@ import 'nexus-shell/style.css';
 
 React 19 is a peer dependency.
 
-## Two tiers
+## Start with the shell
 
-**Primitives** are pure and prop-driven. No global state, no registry lookups.
-You pass data in, you get callbacks out.
+An application built on this library starts with `ShellLayout` and grows by
+registering features into it.
 
 ```tsx
-import { StatusBar, ActivityBar, SidebarPane, TreeWidget } from 'nexus-shell';
+// main.tsx — a complete application
+import { createRoot } from 'react-dom/client';
+import { Boxes, Files } from 'lucide-react';
+import {
+  AppTitle,
+  ShellLayout,
+  componentRegistry,
+  initializeShell,
+  useLayoutStore,
+} from 'nexus-shell';
+import 'nexus-shell/style.css';
+
+// Views register by id, so the shell never has to import them.
+componentRegistry.register('editor', Editor);
+
+initializeShell({
+  panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileExplorer }],
+  commands: [
+    { id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save },
+  ],
+  menus: { File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] },
+  statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],
+});
+
+useLayoutStore.getState().addTab('editor', 'App.tsx');
+
+createRoot(document.getElementById('root')!).render(
+  <ShellLayout title={<AppTitle title="Acme Studio" icon={<Boxes size={16} />} />} />,
+);
+```
+
+That is a working IDE: dockable tabs, a command palette on `Cmd/Ctrl+Shift+P`, a
+terminal, a chat pane, and a themable frame.
+
+## Growing an app
+
+You add capability by **registering** it. None of this changes the layout, which
+is what lets plugins and distant code contribute to the shell.
+
+| To add | Do this |
+| :-- | :-- |
+| A view or tab | `componentRegistry.register(id, Component)`, then `useLayoutStore().addTab(id, title)` |
+| An action or hotkey | `commandRegistry.registerCommand({ id, label, keybinding, execute })` — appears in the palette automatically |
+| A menu entry | `menuRegistry.registerMenu('File', { id, label, commandId })` |
+| A sidebar panel | Add it to `panels`; it becomes an activity bar icon |
+| A status bar item | `useStatusBarStore.getState().addWidget(...)` |
+| A dialog from anywhere | `await useModalStore.getState().openConfirm('Sure?')` |
+| An unsaved-changes guard | `useLayoutStore.getState().setTabDirty(tabId, true)` |
+
+## When you need less than the shell
+
+Every component the shell is assembled from is exported on its own — pure and
+prop-driven, with no global state or registry lookups. This is the escape hatch:
+reach for it when you're embedding one piece into an app you already have, or
+building a frame `ShellLayout` can't express.
+
+```tsx
+import { ActivityBar, SidebarPane, StatusBar, TreeWidget } from 'nexus-shell';
 
 const [active, setActive] = useState<string | null>('files');
 
-<div className="theme-light flex h-screen flex-col">
+<div className="theme-dark flex h-screen flex-col">
   <div className="flex flex-1">
     <ActivityBar
       items={panels}
@@ -44,29 +101,18 @@ const [active, setActive] = useState<string | null>('files');
 </div>;
 ```
 
-**`ShellLayout`** is the assembled frame — the same components, wired to a set of
-zustand stores and registries so you configure declaratively:
+These are controlled, so state stays in your app — a real cost the shell was
+absorbing for you.
 
-```tsx
-import { ShellLayout, componentRegistry } from 'nexus-shell';
-
-componentRegistry.register('editor', Editor);
-
-<ShellLayout
-  title={<Logo />}
-  panels={[{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }]}
-  menuConfig={{ File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] }}
-  statusBarConfig={[{ id: 'branch', label: 'main', alignment: 'left' }]}
-/>;
-```
-
-Each primitive also has a `Connected*` variant that binds it to the matching
-store. `ShellLayout` is built out of those, and they're exported, so you can mix
-tiers freely.
+Between the two sit the `Connected*` variants, each binding one component to its
+store. `ShellLayout` is built entirely out of them, so you can rearrange the
+shell's own frame and keep every registration working.
 
 ## Components
 
-| Primitive | What it is |
+`ShellLayout` assembles all of these. Each is also exported on its own.
+
+| Component | What it is |
 | :-- | :-- |
 | `ActivityBar` | Vertical icon rail for switching sidebar panels |
 | `ChatPane` | Docked chat transcript with slash-command autocomplete |
@@ -84,8 +130,6 @@ tiers freely.
 | `ThemeSwitcher` | Segmented theme control |
 | `TreeWidget` | Virtualised file tree with drag-to-move and a data-driven menu |
 | `UserProfile` | Avatar and identity widget |
-
-`ShellLayout` composes all of them.
 
 ## Theming
 
@@ -125,9 +169,9 @@ CI runs all of the above on every push and pull request.
 
 ```
 src/
-  components/       Primitives — pure, prop-driven, the public API
+  components/       Pure, prop-driven components — what the shell is made of
   connected/        Store-bound wrappers used by ShellLayout
-  core/             Stores (zustand) and registries
+  core/             Stores (zustand), registries, and initializeShell
   lib/              Shared utilities
   stories/          MDX documentation pages
 examples/

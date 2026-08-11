@@ -65,44 +65,45 @@ export const Architecture = () => (
     <header className="mb-10">
       <h1 className="text-3xl font-bold tracking-tight">Architecture</h1>
       <P className="mt-3">
-        Why the library splits into two tiers, and how to decide which one you want.
+        Where an application starts, how it grows, and when to drop below the shell.
       </P>
     </header>
 
-    <H2 id="two-tiers">Two tiers</H2>
+    <H2 id="two-tiers">Start with the shell</H2>
     <Paragraphs
       items={[
-        'The public surface is deliberately split. **Primitives** are pure, prop-driven components with no global state — they are the supported API and what most integrations should reach for. **`ShellLayout`** is the assembled application frame, wired to a set of zustand stores and registries.',
-        'Neither is more correct than the other. They answer different questions: *"I want a status bar in my app"* and *"I want an IDE."*',
+        '**`ShellLayout`** is the starting point. It is the assembled application frame, wired to a set of zustand stores and registries, and an app built on this library begins by rendering it and registering features into it.',
+        'Beneath it sit the **components** it is assembled from: pure, prop-driven, no global state. They are exported and fully supported, but they are the escape hatch — reach for them when you are embedding one piece into an existing app, or building a frame the shell cannot express.',
       ]}
     />
 
     <div className="grid md:grid-cols-2 gap-4 mt-6">
       <div className="rounded-xl border border-border bg-card/40 p-5">
         <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-2">
-          Tier 1
+          Start here
         </p>
-        <h3 className="font-semibold text-foreground">Primitives — you compose</h3>
+        <h3 className="font-semibold text-foreground">ShellLayout — it composes</h3>
         <p className="text-[14px] text-muted-foreground mt-2 leading-relaxed">
-          You own layout and state. Best when adopting one or two pieces into an app you
-          already have, or when you want a shell that doesn’t look like VS Code.
+          You configure declaratively and grow by registering features. The shell owns the
+          layout and the state. This is the intended path for an application.
         </p>
       </div>
       <div className="rounded-xl border border-border bg-card/40 p-5">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-2">
-          Tier 2
+        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+          Escape hatch
         </p>
-        <h3 className="font-semibold text-foreground">Shell — it composes</h3>
+        <h3 className="font-semibold text-foreground">Components — you compose</h3>
         <p className="text-[14px] text-muted-foreground mt-2 leading-relaxed">
-          You configure declaratively and adopt the shell’s state model. Best when you want
-          the full frame and plugins that contribute to it.
+          You own layout and state. For embedding a single piece into an app you already
+          have, or a frame that isn’t shaped like an IDE.
         </p>
       </div>
     </div>
 
-    <H2 id="why">Why the split exists</H2>
+    <H2 id="why">Why the layer beneath is pure</H2>
     <Paragraphs
       items={[
+        'This is an implementation discipline, not a suggestion that you assemble the shell by hand.',
         'A component that reads a global store can’t be configured by its caller, can’t be rendered twice with different data, and can’t be tested without standing the store up.',
         'The visible symptom is documentation. A component with no props generates an empty props table — there is nothing to describe, because everything it does depends on state it fetched itself. Every table on this site is generated from real prop declarations; if a component were store-coupled, its page would be blank.',
       ]}
@@ -114,7 +115,7 @@ export const Architecture = () => (
 
     <H2 id="bridge">The bridge between them</H2>
     <P>
-      Each primitive has a <code className="font-mono text-[14px]">Connected*</code>{' '}
+      Each component has a <code className="font-mono text-[14px]">Connected*</code>{' '}
       counterpart that binds it to the matching store.{' '}
       <code className="font-mono text-[14px]">ShellLayout</code> is built entirely out of
       these — it is not a separate implementation.
@@ -123,25 +124,29 @@ export const Architecture = () => (
       <CodeBlock code={CONNECTED} />
     </div>
     <P className="mt-4">
-      They are exported, so the tiers mix: take the assembled shell but swap one connected
-      piece for a plain one you drive yourself.
+      They are exported, so the layers mix. The common case is keeping the shell but
+      rearranging its frame — render{' '}
+      <code className="font-mono text-[14px]">ConnectedActivityBar</code> and{' '}
+      <code className="font-mono text-[14px]">ConnectedStatusBar</code> in your own layout
+      and every registration still works.
     </P>
 
-    <H2 id="registries">Registries and inversion of control</H2>
+    <H2 id="registries">How an app grows: registration</H2>
     <Paragraphs
       items={[
-        'The shell tier uses three registries so it never imports the features it hosts. `componentRegistry` binds React components to id strings, `commandRegistry` holds executable actions, and `menuRegistry` holds menu structure.',
-        'A tab in your layout model names a component id rather than an import:',
+        'This is the mechanism that makes "start with the shell and build from there" work. Three registries let the shell host features it never imports: `componentRegistry` binds React components to id strings, `commandRegistry` holds executable actions, and `menuRegistry` holds menu structure.',
+        'A tab in your layout model names a component id rather than an import, so adding a view never touches the shell:',
       ]}
     />
     <div className="mt-4">
       <CodeBlock code={REGISTRY} />
     </div>
-    <Callout title="Primitives read no registry">
+    <Callout title="Below the shell, there is no registry">
       <p>
-        This applies to the shell tier only. If you’re composing primitives yourself, you
-        never touch any of it — you pass menus as data and handle{' '}
-        <code className="font-mono text-[13px]">onSelect</code>.
+        Registration belongs to the shell. If you drop down to the components and compose
+        them yourself, none of it applies — you pass menus as data and handle{' '}
+        <code className="font-mono text-[13px]">onSelect</code>, and the wiring the shell
+        was doing for you becomes yours.
       </p>
     </Callout>
 

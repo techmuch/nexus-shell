@@ -20,38 +20,34 @@ const propCount = allApi.reduce((n, c) => n + c.props.length, 0);
 
 const QUICK_START = `npm install nexus-shell`;
 
-const SNIPPET = `import { ActivityBar, SidebarPane, StatusBar, TreeWidget } from 'nexus-shell';
+const SNIPPET = `import { createRoot } from 'react-dom/client';
+import { AppTitle, ShellLayout, componentRegistry, initializeShell } from 'nexus-shell';
 import 'nexus-shell/style.css';
 
-export const App = () => {
-  const [active, setActive] = useState<string | null>('files');
+// Views register by id, so the shell never imports them.
+componentRegistry.register('editor', Editor);
 
-  return (
-    <div className="theme-dark flex h-screen flex-col">
-      <div className="flex flex-1">
-        <ActivityBar items={panels} activeId={active} onSelect={setActive} />
-        {active && (
-          <SidebarPane title="Explorer" onClose={() => setActive(null)}>
-            <TreeWidget data={files} onToggle={toggle} />
-          </SidebarPane>
-        )}
-        <main className="flex-1">{children}</main>
-      </div>
-      <StatusBar widgets={[{ id: 'branch', label: 'main', alignment: 'left' }]} />
-    </div>
-  );
-};`;
+initializeShell({
+  panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }],
+  commands: [{ id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save }],
+  menus: { File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] },
+  statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],
+});
+
+createRoot(el).render(
+  <ShellLayout title={<AppTitle title="Acme Studio" />} />,
+);`;
 
 const FEATURES = [
   {
     icon: Blocks,
-    title: 'Pure and prop-driven',
-    body: 'No global state, no registry lookups, no hidden singletons. Every component takes data as props and reports changes through callbacks, so it can be rendered twice with different data — and tested without standing anything up.',
+    title: 'A working IDE in one component',
+    body: 'ShellLayout is the whole frame — menus, activity bar, sidebar, dockable tabs, terminal, chat and status bar. Call initializeShell, render it, and you have an application to build on.',
   },
   {
     icon: Layers,
-    title: 'Two tiers, your choice',
-    body: 'Take the primitives and compose your own layout, or take ShellLayout and get the whole IDE frame wired to a set of stores. Connected wrappers bridge the two, so you can mix them.',
+    title: 'Grow by registering, not restructuring',
+    body: 'New views, commands, hotkeys, menu entries and status items all register themselves by id. The shell hosts features it never imports, which is what lets plugins and distant code contribute to it.',
   },
   {
     icon: Feather,
@@ -60,8 +56,8 @@ const FEATURES = [
   },
   {
     icon: ShieldCheck,
-    title: 'Typed and documented',
-    body: `Every one of the ${propCount} props carries a JSDoc comment explaining what it does and what it defaults to. The tables on this site are generated from those types, so they cannot drift.`,
+    title: 'And you can drop below it',
+    body: `Every component the shell is assembled from is exported, pure and prop-driven, with all ${propCount} props documented. Reach for them to embed one piece into an app you already have.`,
   },
 ];
 
@@ -169,18 +165,18 @@ export const Home = () => (
     <section className="max-w-5xl mx-auto px-4">
       <div className="grid lg:grid-cols-2 gap-10 items-center">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Composable by default</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">This is the whole app</h2>
           <p className="mt-4 text-muted-foreground leading-relaxed text-sm sm:text-base">
-            Primitives are controlled, so state stays in your application. Components receive explicit props and callbacks rather than accessing hidden singletons or global state.
+            An application starts by rendering <code className="font-mono text-xs bg-muted/80 px-1.5 py-0.5 rounded border border-border text-foreground">ShellLayout</code> and grows by registering features into it. Views, commands, hotkeys, menu entries and status items all attach by id — the shell hosts them without importing them.
           </p>
           <p className="mt-3.5 text-muted-foreground leading-relaxed text-sm sm:text-base">
-            If you prefer pre-wired state layout, <code className="font-mono text-xs bg-muted/80 px-1.5 py-0.5 rounded border border-border text-foreground">ShellLayout</code> composes the full IDE frame against integrated stores, with matching <code className="font-mono text-xs bg-muted/80 px-1.5 py-0.5 rounded border border-border text-foreground">Connected*</code> primitive wrappers.
+            Everything the shell is assembled from is exported too, pure and prop-driven. That is the escape hatch for embedding a single piece into an app you already have — not the way in.
           </p>
           <Link
-            to="/docs/architecture"
+            to="/docs/getting-started"
             className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
           >
-            Read about the two tiers <ArrowRight size={16} />
+            Build one from scratch <ArrowRight size={16} />
           </Link>
         </div>
 
