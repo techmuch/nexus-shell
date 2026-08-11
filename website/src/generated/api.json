@@ -343,6 +343,310 @@
       ]
     },
     {
+      "name": "GraphCanvas",
+      "file": "src/components/graph/GraphCanvas.tsx",
+      "description": "An infinite, pannable, zoomable field to draw a graph on.\n\nThe canvas owns exactly one thing: the mapping between screen pixels and\ngraph space. It knows nothing about nodes, edges, or what any of it means —\nchildren are rendered inside a transformed layer, so anything positioned in\ngraph coordinates lands in the right place.\n\nPan by dragging empty space or with the middle mouse button; zoom with the\nwheel or a trackpad pinch, always anchored to the cursor. Space-drag pans\nfrom anywhere, including over a node.\n\nViewport state is internal by default. Pass `viewport` to take control.",
+      "example": "<GraphCanvas onDrop={(point) => addNodeAt(point)}>\n  {nodes.map((node) => (\n    <GraphNode key={node.id} node={node} onMove={move}>\n      {node.label}\n    </GraphNode>\n  ))}\n</GraphCanvas>",
+      "props": [
+        {
+          "name": "aria-label",
+          "required": false,
+          "type": "string",
+          "description": "Accessible label for the canvas region. Defaults to `\"Graph canvas\"`.",
+          "default": "\"Graph canvas\""
+        },
+        {
+          "name": "children",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Content rendered in graph space. Position children with `GraphNode`, or\nwith your own absolutely-positioned elements in graph coordinates.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "defaultViewport",
+          "required": false,
+          "type": "IViewport",
+          "description": "Starting viewport when uncontrolled. Defaults to origin at 1× zoom.",
+          "default": null
+        },
+        {
+          "name": "grid",
+          "required": false,
+          "type": "boolean",
+          "description": "Show the dot grid. Defaults to `true`.",
+          "default": "true"
+        },
+        {
+          "name": "gridSize",
+          "required": false,
+          "type": "number",
+          "description": "Grid spacing in graph units. Defaults to `24`.",
+          "default": "24"
+        },
+        {
+          "name": "maxScale",
+          "required": false,
+          "type": "number",
+          "description": "Largest allowed zoom. Defaults to `4`.",
+          "default": "4"
+        },
+        {
+          "name": "minScale",
+          "required": false,
+          "type": "number",
+          "description": "Smallest allowed zoom. Defaults to `0.1`.",
+          "default": "0.1"
+        },
+        {
+          "name": "onCanvasClick",
+          "required": false,
+          "type": "(point: IPoint, event: React.MouseEvent) => void",
+          "description": "Called with a graph-space point when empty canvas is clicked. Use it to\nclear selection, or to place a node at the click.",
+          "default": null
+        },
+        {
+          "name": "onCanvasContextMenu",
+          "required": false,
+          "type": "(point: IPoint, event: React.MouseEvent) => void",
+          "description": "Called with a graph-space point on right-click of empty canvas.",
+          "default": null
+        },
+        {
+          "name": "onCanvasDoubleClick",
+          "required": false,
+          "type": "(point: IPoint, event: React.MouseEvent) => void",
+          "description": "Called with a graph-space point when empty canvas is double-clicked.",
+          "default": null
+        },
+        {
+          "name": "onDrop",
+          "required": false,
+          "type": "(point: IPoint, event: React.DragEvent) => void",
+          "description": "Called when something is dropped on the canvas, with the graph-space point\nunder the cursor. Pair with `NodePalette` for drag-to-create.",
+          "default": null
+        },
+        {
+          "name": "onViewportChange",
+          "required": false,
+          "type": "(viewport: IViewport) => void",
+          "description": "Called whenever pan or zoom changes, controlled or not.",
+          "default": null
+        },
+        {
+          "name": "overlay",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Content rendered in screen space, above the graph and unaffected by pan or\nzoom — toolbars, a minimap, a legend.",
+          "default": null
+        },
+        {
+          "name": "pannable",
+          "required": false,
+          "type": "boolean",
+          "description": "Allow panning by dragging empty canvas. Defaults to `true`.",
+          "default": "true"
+        },
+        {
+          "name": "viewport",
+          "required": false,
+          "type": "IViewport",
+          "description": "Take control of pan and zoom. Omit it and the canvas manages its own,\nwhich is what most callers want: you should not have to own a viewport\njust to draw a graph.",
+          "default": null
+        },
+        {
+          "name": "zoomable",
+          "required": false,
+          "type": "boolean",
+          "description": "Allow zooming with the wheel or trackpad pinch. Defaults to `true`.",
+          "default": "true"
+        }
+      ]
+    },
+    {
+      "name": "GraphEdge",
+      "file": "src/components/graph/GraphEdge.tsx",
+      "description": "A directed edge between two nodes, rendered as an SVG path.\n\nWhich sides the edge leaves and enters is worked out from the nodes'\nrelative positions, so a node needs no handle configuration to be\nconnectable — move a node and the attachment points follow.\n\nRender inside {@link GraphEdgeLayer}, which provides the SVG surface and the\narrowhead marker.",
+      "example": "<GraphEdgeLayer>\n  {edges.map((edge) => (\n    <GraphEdge\n      key={edge.id}\n      edge={edge}\n      source={byId[edge.source]}\n      target={byId[edge.target]}\n      onSelect={setSelectedEdge}\n    />\n  ))}\n</GraphEdgeLayer>",
+      "props": [
+        {
+          "name": "edge",
+          "required": true,
+          "type": "IGraphEdge",
+          "description": "The edge to render.",
+          "default": null
+        },
+        {
+          "name": "source",
+          "required": true,
+          "type": "IGraphNode",
+          "description": "The node the edge leaves.",
+          "default": null
+        },
+        {
+          "name": "target",
+          "required": true,
+          "type": "IGraphNode",
+          "description": "The node the edge enters.",
+          "default": null
+        },
+        {
+          "name": "arrow",
+          "required": false,
+          "type": "boolean",
+          "description": "Draw an arrowhead at the target end. Defaults to `true`.",
+          "default": "true"
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the visible path.",
+          "default": null
+        },
+        {
+          "name": "onContextMenu",
+          "required": false,
+          "type": "(id: string, point: IPoint, event: React.MouseEvent) => void",
+          "description": "Called on right-click, with the client point for a context menu.",
+          "default": null
+        },
+        {
+          "name": "onSelect",
+          "required": false,
+          "type": "(id: string, event: React.MouseEvent) => void",
+          "description": "Called on click. The wide invisible hit area makes this practical.",
+          "default": null
+        },
+        {
+          "name": "routing",
+          "required": false,
+          "type": "EdgeRouting",
+          "description": "Path shape. Defaults to `\"bezier\"`.",
+          "default": "\"bezier\""
+        },
+        {
+          "name": "selected",
+          "required": false,
+          "type": "boolean",
+          "description": "Draw as selected.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "GraphNode",
+      "file": "src/components/graph/GraphNode.tsx",
+      "description": "A positioned, focusable node on a {@link GraphCanvas}.\n\nProvides placement, dragging, selection and focus affordances, and the four\nedge ports. What the node *contains* is entirely yours — pass any children.\n\nFully controlled: dragging reports positions through `onMove` but never moves\nthe node itself, so snapping, constraints and undo stay in your hands.",
+      "example": "<GraphNode\n  node={node}\n  focused={node.id === focusedId}\n  onMove={(id, position) => setNodes(move(nodes, id, position))}\n  onActivate={(id) => setEditing(id)}\n>\n  <p className=\"text-xs font-medium\">{node.data.label}</p>\n</GraphNode>",
+      "props": [
+        {
+          "name": "node",
+          "required": true,
+          "type": "IGraphNode",
+          "description": "The node to render. Position and size come from here.",
+          "default": null
+        },
+        {
+          "name": "children",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Node body. Anything — a label, a form, a chart.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the node element.",
+          "default": null
+        },
+        {
+          "name": "draggable",
+          "required": false,
+          "type": "boolean",
+          "description": "Allow dragging. Defaults to `true`.",
+          "default": "true"
+        },
+        {
+          "name": "focused",
+          "required": false,
+          "type": "boolean",
+          "description": "Draw as focused — the keyboard cursor. Distinct from `selected`: focus is\nwhere the next keystroke lands, selection is what an action applies to.",
+          "default": null
+        },
+        {
+          "name": "onActivate",
+          "required": false,
+          "type": "(id: string) => void",
+          "description": "Called on double-click. Conventionally enters edit mode.",
+          "default": null
+        },
+        {
+          "name": "onConnectEnd",
+          "required": false,
+          "type": "(targetId: string) => void",
+          "description": "Called when a pointer is released over this node, with its id — the target\nend of a connection started elsewhere.",
+          "default": null
+        },
+        {
+          "name": "onConnectStart",
+          "required": false,
+          "type": "(id: string, port: GraphPort) => void",
+          "description": "Called when one of the node's ports is dragged, to begin a connection.\nProviding it is what makes the ports appear.",
+          "default": null
+        },
+        {
+          "name": "onContextMenu",
+          "required": false,
+          "type": "(id: string, point: IPoint, event: React.MouseEvent) => void",
+          "description": "Called on right-click, with the client point for a context menu.",
+          "default": null
+        },
+        {
+          "name": "onMove",
+          "required": false,
+          "type": "(id: string, position: IPoint) => void",
+          "description": "Called with the new top-left position while dragging, and again on\nrelease. The component never mutates the node — you apply the move, which\nis what lets you snap, constrain or reject it.",
+          "default": null
+        },
+        {
+          "name": "onMoveEnd",
+          "required": false,
+          "type": "(id: string, position: IPoint) => void",
+          "description": "Called when the drag ends, if the node actually moved.",
+          "default": null
+        },
+        {
+          "name": "onSelect",
+          "required": false,
+          "type": "(id: string, event: React.MouseEvent) => void",
+          "description": "Called on click.",
+          "default": null
+        },
+        {
+          "name": "ports",
+          "required": false,
+          "type": "boolean",
+          "description": "Show connection ports on hover and while focused. Defaults to `true`.",
+          "default": "true"
+        },
+        {
+          "name": "selected",
+          "required": false,
+          "type": "boolean",
+          "description": "Draw as selected.",
+          "default": null
+        }
+      ]
+    },
+    {
       "name": "MenuBar",
       "file": "src/components/widgets/MenuBar.tsx",
       "description": "The application menu bar: a row of hover-activated dropdowns with optional\none-level submenus, plus slots for branding, a centre widget and right-hand\nactions.\n\nPresentational and fully controlled — menus come in as data and selections go\nout through `onSelect`. It reads no registry. For the variant wired to the\n{@link menuRegistry} and {@link commandRegistry}, see `ConnectedMenuBar`.",
@@ -474,6 +778,56 @@
           "type": "ModalType",
           "description": "Dialog shape. Defaults to `\"alert\"`.",
           "default": "\"alert\""
+        }
+      ]
+    },
+    {
+      "name": "NodePalette",
+      "file": "src/components/graph/NodePalette.tsx",
+      "description": "A palette of node types that can be dragged onto a {@link GraphCanvas}, or\nactivated with the keyboard.\n\nThe palette carries only the item's `kind` on the drag; what a node of that\nkind actually *is* is decided by your drop handler. Pair it with\n{@link readPaletteDrag} on the canvas.\n\nEvery item is a real button, so the palette is fully usable without a\npointer — `onSelect` fires on click or Enter.",
+      "example": "<GraphCanvas\n  onDrop={(point, event) => {\n    const kind = readPaletteDrag(event);\n    if (kind) addNode({ kind, position: point });\n  }}\n  overlay={\n    <NodePalette\n      items={[{ kind: 'task', label: 'Task' }, { kind: 'gate', label: 'Gate' }]}\n      onSelect={(item) => addNodeAtCentre(item.kind)}\n    />\n  }\n/>",
+      "props": [
+        {
+          "name": "items",
+          "required": true,
+          "type": "INodePaletteItem[]",
+          "description": "The node types on offer.",
+          "default": null
+        },
+        {
+          "name": "aria-label",
+          "required": false,
+          "type": "string",
+          "description": "Accessible label for the group. Defaults to `\"Node palette\"`.",
+          "default": "\"Node palette\""
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "onDragStart",
+          "required": false,
+          "type": "(item: INodePaletteItem) => void",
+          "description": "Called when a drag starts, if you want to show a drop hint.",
+          "default": null
+        },
+        {
+          "name": "onSelect",
+          "required": false,
+          "type": "(item: INodePaletteItem) => void",
+          "description": "Called when an item is activated by click or Enter, for creating without a\ndrag. Keyboard users need this — a drag-only palette is unreachable.",
+          "default": null
+        },
+        {
+          "name": "vertical",
+          "required": false,
+          "type": "boolean",
+          "description": "Stack vertically instead of wrapping horizontally. Defaults to `false`.",
+          "default": "false"
         }
       ]
     },
@@ -952,6 +1306,105 @@
           "type": "boolean",
           "description": "Virtualise rows with `react-virtuoso`. Leave on for large trees; turn it\noff when every row must be present in the DOM — printing, full-text browser\nsearch, or a test environment that can't measure layout. Defaults to `true`.",
           "default": "true"
+        }
+      ]
+    },
+    {
+      "name": "useGraphKeyboard",
+      "file": "src/components/graph/useGraphKeyboard.ts",
+      "description": "Keyboard-driven graph navigation and editing.\n\nHeadless: it owns the focus, editing and connection cursors and reports what\nshould happen, but renders nothing and mutates nothing. That means it works\nwith `GraphNode` or with your own node rendering, and every mutation stays\nsubject to your validation and undo.\n\nThe default map, all overridable:\n\n| Key | Action |\n| :-- | :-- |\n| Arrows | Move focus to the nearest node in that direction |\n| Shift + Arrows | Nudge the focused node |\n| Tab / Shift+Tab | Create a node connected to the focused one |\n| Enter | Edit the focused node |\n| `c` then a node | Connect from the focused node |\n| Delete / Backspace | Delete the focused node |\n| Escape | Leave edit mode, cancel a connection, or clear focus |\n\nArrow traversal is spatial rather than by insertion order — it picks the\nnearest node in the direction travelled, penalising lateral offset, which is\nwhat makes a hand-arranged diagram navigable without a mouse.",
+      "example": "const canvasRef = useRef<HTMLDivElement>(null);\n\nconst keyboard = useGraphKeyboard({\n  nodes, edges, targetRef: canvasRef,\n  onCreateNode: (position) => {\n    const id = nextId('node', nodes);\n    setNodes([...nodes, { id, position, data: { label: 'New' } }]);\n    return id;\n  },\n  onConnect: (source, target) =>\n    setEdges([...edges, { id: nextId('edge', edges), source, target }]),\n  onDeleteNode: (id) => { … },\n});",
+      "props": [
+        {
+          "name": "edges",
+          "required": true,
+          "type": "IGraphEdge[]",
+          "description": "The current edges. Used to reason about existing connections.",
+          "default": null
+        },
+        {
+          "name": "nodes",
+          "required": true,
+          "type": "IGraphNode[]",
+          "description": "The current nodes. Traversal and placement are computed from these.",
+          "default": null
+        },
+        {
+          "name": "targetRef",
+          "required": true,
+          "type": "React.RefObject<HTMLElement | null>",
+          "description": "Element the listener attaches to. Bindings only fire while focus is inside\nit, so several graphs can coexist on one page.",
+          "default": null
+        },
+        {
+          "name": "defaultFocusedId",
+          "required": false,
+          "type": "string | null",
+          "description": "Starting focus when uncontrolled.",
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "required": false,
+          "type": "boolean",
+          "description": "Turn the whole thing off.",
+          "default": null
+        },
+        {
+          "name": "focusedId",
+          "required": false,
+          "type": "string | null",
+          "description": "Take control of which node has keyboard focus.",
+          "default": null
+        },
+        {
+          "name": "nudgeDistance",
+          "required": false,
+          "type": "number",
+          "description": "How far a nudge moves a node, in graph units. Defaults to `16`.",
+          "default": "16"
+        },
+        {
+          "name": "onConnect",
+          "required": false,
+          "type": "(sourceId: string, targetId: string) => void",
+          "description": "Connect two nodes.",
+          "default": null
+        },
+        {
+          "name": "onCreateNode",
+          "required": false,
+          "type": "(position: IPoint, context: { from?: string; direction?: Direction }) => string | undefined",
+          "description": "Create a node at a position, returning its id so focus can follow it. The\nlibrary never invents node content — you decide what a new node is.",
+          "default": null
+        },
+        {
+          "name": "onDeleteNode",
+          "required": false,
+          "type": "(id: string) => void",
+          "description": "Delete a node and its edges.",
+          "default": null
+        },
+        {
+          "name": "onEditNode",
+          "required": false,
+          "type": "(id: string) => void",
+          "description": "Enter edit mode for a node.",
+          "default": null
+        },
+        {
+          "name": "onFocusChange",
+          "required": false,
+          "type": "(id: string | null) => void",
+          "description": "Called whenever focus moves.",
+          "default": null
+        },
+        {
+          "name": "onMoveNode",
+          "required": false,
+          "type": "(id: string, position: IPoint) => void",
+          "description": "Move a node, used by nudging.",
+          "default": null
         }
       ]
     },

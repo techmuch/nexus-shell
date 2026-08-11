@@ -88,6 +88,43 @@ export { ThemeSwitcher, type ThemeSwitcherProps, type IThemeOption, DEFAULT_THEM
 export { TreeWidget, type TreeWidgetProps, type ITreeNode, type ITreeAction, type ITreeContext } from './components/widgets/TreeWidget';
 export { UserProfile, type UserProfileProps, type IUserProfile, type IUserProfileAction } from './components/widgets/UserProfile';
 
+// ---------------------------------------------------------------------------
+// Graph — node-and-edge editing primitives
+//
+// An infinite canvas, positioned nodes, edges, keyboard-driven navigation and
+// drag-to-create. Decomposed so an argument map, a pipeline editor and a scene
+// graph can share them.
+// ---------------------------------------------------------------------------
+
+export * from './components/graph';
+export {
+  DEFAULT_NODE_SIZE,
+  IDENTITY_VIEWPORT,
+  clampScale,
+  edgesOf,
+  findNeighbour,
+  fitViewport,
+  graphBounds,
+  isConnected,
+  nextId,
+  nodeRect,
+  placeRelativeTo,
+  portPoint,
+  rectCenter,
+  removeNode,
+  resolvePorts,
+  toGraphSpace,
+  toScreenSpace,
+  zoomAt,
+  type Direction,
+  type GraphPort,
+  type IGraphEdge,
+  type IGraphNode,
+  type IPoint,
+  type IRect,
+  type IViewport,
+} from './lib/graph';
+
 // Utilities
 export { cn } from './lib/cn';
 export {

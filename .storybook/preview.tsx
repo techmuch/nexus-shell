@@ -59,6 +59,7 @@ const preview: Preview = {
           'Introduction',
           'Getting Started',
           'Layout',
+          'Graph',
           'Guides',
           'Primitives',
           'Examples',

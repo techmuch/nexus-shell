@@ -37,6 +37,7 @@ export interface ComponentEntry {
 
 export const CATEGORIES = [
   'Shell',
+  'Graph',
   'Chrome',
   'Data',
   'Overlays',
@@ -71,6 +72,115 @@ export const COMPONENTS: ComponentEntry[] = [
     ],
   },
 
+  /* ------------------------------------------------------------------ Graph */
+  {
+    slug: 'graph-canvas',
+    name: 'GraphCanvas',
+    tagline: 'The infinite field a graph is drawn on',
+    category: 'Graph',
+    demoFile: 'Graph',
+    notes: [
+      'The canvas owns exactly one thing: the mapping between screen pixels and graph space. It knows nothing about nodes, edges, or what any of it means — children render inside a transformed layer, so anything positioned in graph coordinates lands in the right place.',
+      'Drag empty space to pan, wheel or pinch to zoom. Zoom is always anchored to the cursor, because anything else feels wrong to use. Hold space to pan from anywhere, including over a node.',
+      'Viewport state is internal by default — you should not have to own pan and zoom just to draw a graph. Pass `viewport` to take control.',
+    ],
+    demos: [
+      {
+        export: 'CanvasOnly',
+        region: 'canvas',
+        title: 'Pan and zoom',
+        description: 'Drag to pan, wheel or pinch to zoom. The two cards are plain absolutely-positioned divs in graph coordinates.',
+        flush: true,
+        height: '400px',
+      },
+    ],
+  },
+  {
+    slug: 'graph-node',
+    name: 'GraphNode',
+    tagline: 'A positioned, focusable node with edge ports',
+    category: 'Graph',
+    demoFile: 'Graph',
+    notes: [
+      'Provides placement, dragging, selection and focus affordances, and the four edge ports. What the node *contains* is entirely yours — pass any children.',
+      'Fully controlled: dragging reports positions through `onMove` but never moves the node itself, so snapping, constraints and undo stay in your hands.',
+      '`focused` and `selected` are deliberately separate. Focus is where the next keystroke lands; selection is what an action applies to. A keyboard-driven editor needs both visible at once.',
+    ],
+    demos: [
+      {
+        export: 'NodesAndEdges',
+        region: 'nodesAndEdges',
+        title: 'Nodes, edges and dragging',
+        description: 'Drag a node — the edges re-route themselves. Which sides they attach to comes from relative position, so a node needs no handle configuration to be connectable.',
+        flush: true,
+        height: '420px',
+      },
+    ],
+  },
+  {
+    slug: 'graph-edge',
+    name: 'GraphEdge',
+    tagline: 'A directed edge with pluggable routing',
+    category: 'Graph',
+    demoFile: 'Graph',
+    notes: [
+      'Rendered as an SVG path inside `GraphEdgeLayer`, which provides the surface and the shared arrowhead. Three routings ship: `bezier` for dense graphs, `smoothstep` for flowcharts, `straight` for the literal case.',
+    ],
+    demos: [
+      {
+        export: 'EdgeRouting',
+        region: 'routing',
+        title: 'Routing strategies',
+        description: 'Switch routing, then drag either node to see how attachment sides are chosen.',
+        flush: true,
+        height: '400px',
+      },
+    ],
+  },
+  {
+    slug: 'graph-keyboard',
+    name: 'useGraphKeyboard',
+    tagline: 'Keyboard-driven navigation and editing',
+    category: 'Graph',
+    demoFile: 'Graph',
+    notes: [
+      '**A graph editor that needs a mouse is only half an editor.** This hook owns the focus, editing and connection cursors and reports what should happen — it renders nothing and mutates nothing, so it works with `GraphNode` or with your own node rendering.',
+      'Arrow traversal is spatial rather than by insertion order: it picks the nearest node in the direction travelled, penalising lateral offset. That is what makes a hand-arranged diagram navigable without a pointer.',
+      'Arrows move focus · Shift+Arrows nudge · Tab creates a connected node · Enter edits · `c` then Enter connects · Delete removes · Escape backs out one level.',
+    ],
+    demos: [
+      {
+        export: 'KeyboardEditor',
+        region: 'keyboard',
+        title: 'Build a graph without touching the mouse',
+        description:
+          'Click the canvas once to focus it, then use only the keyboard. Press an arrow to take focus, Tab to create a connected node, type a name, Enter to commit.',
+        flush: true,
+        height: '460px',
+      },
+    ],
+  },
+  {
+    slug: 'node-palette',
+    name: 'NodePalette',
+    tagline: 'Drag-to-create, and keyboard-to-create',
+    category: 'Graph',
+    demoFile: 'Graph',
+    notes: [
+      'Carries only the item’s `kind` on the drag; what a node of that kind actually is gets decided by your drop handler. Pair it with `readPaletteDrag` on the canvas.',
+      'Every item is a real button, so the palette works without a pointer — a drag-only palette is unreachable for keyboard users.',
+    ],
+    demos: [
+      {
+        export: 'DragToCreate',
+        region: 'palette',
+        title: 'Drag a type onto the canvas',
+        description: 'Drag an entry onto the field, or click one to place it. The node lands at the correct graph-space position whatever the pan and zoom.',
+        flush: true,
+        height: '440px',
+      },
+    ],
+  },
   /* ----------------------------------------------------------------- Chrome */
   {
     slug: 'menu-bar',

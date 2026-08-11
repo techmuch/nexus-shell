@@ -129,6 +129,11 @@ shell's own frame and keep every registration working.
 | `TerminalPane` | Bottom-docked terminal log and input |
 | `ThemeSwitcher` | Segmented theme control |
 | `TreeWidget` | Virtualised tree for any hierarchy, with drag-to-move and a data-driven menu |
+| `GraphCanvas` | Infinite pannable, zoomable field for node-and-edge editing |
+| `GraphNode` | Positioned, focusable node with edge ports |
+| `GraphEdge` | Directed edge with bezier / smoothstep / straight routing |
+| `NodePalette` | Drag-to-create and keyboard-to-create node types |
+| `useGraphKeyboard` | Spatial keyboard navigation and editing for a graph |
 | `UserProfile` | Avatar and identity widget |
 
 ## Theming

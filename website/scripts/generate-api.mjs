@@ -189,7 +189,11 @@ const componentDoc = (source, name) => {
 };
 
 const files = walk(COMPONENTS).filter(
-  (f) => f.endsWith('.tsx') && !f.includes('.stories.') && !f.includes('__tests__'),
+  (f) =>
+    /\.tsx?$/.test(f) &&
+    !f.includes('.stories.') &&
+    !f.includes('__tests__') &&
+    !f.endsWith('index.ts'),
 );
 
 // Index every source so `extends` can be resolved across files.
@@ -229,8 +233,14 @@ const collectProps = (file, src, propsName, seen = new Set()) => {
 const components = [];
 
 for (const [file, src] of sources) {
-  const name = basename(file, '.tsx');
-  const propsName = `${name}Props`;
+  const name = basename(file).replace(/\.tsx?$/, '');
+
+  // Components document `<Name>Props`; hooks document `Use<Name>Options`, so
+  // `useGraphKeyboard` gets a real options table rather than an empty one.
+  const propsName = /^use[A-Z]/.test(name)
+    ? `${name[0].toUpperCase()}${name.slice(1)}Options`
+    : `${name}Props`;
+
   if (!new RegExp(`export\\s+(interface|type)\\s+${propsName}\\b`).test(src)) continue;
 
   const doc = componentDoc(src, name);
