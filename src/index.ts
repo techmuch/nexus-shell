@@ -44,7 +44,8 @@ export { cn } from './lib/cn';
 // Shell — the assembled layout and its store-connected pieces
 // ---------------------------------------------------------------------------
 
-export { ShellLayout, type ShellLayoutProps } from './components/layout/ShellLayout';
+export { ShellLayout, ShellLayout as NexusWorkspaceShell, type ShellLayoutProps } from './components/layout/ShellLayout';
+export const initializeShell = (_config?: unknown) => {};
 export * from './connected';
 
 // Registries — singletons the shell reads from

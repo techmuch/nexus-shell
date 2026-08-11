@@ -66,54 +66,57 @@ const FEATURES = [
 ];
 
 const Stat = ({ value, label }: { value: string; label: string }) => (
-  <div>
-    <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
-    <p className="text-[12px] text-muted-foreground mt-0.5">{label}</p>
+  <div className="p-4 rounded-xl border border-border/50 bg-card/30 backdrop-blur-xs flex flex-col items-center justify-center">
+    <p className="text-3xl font-extrabold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">{value}</p>
+    <p className="text-xs font-medium text-muted-foreground/80 mt-1">{label}</p>
   </div>
 );
 
 export const Home = () => (
-  <div className="pb-8">
+  <div className="pb-16 space-y-16">
     {/* ------------------------------------------------------------- hero */}
-    <section className="pt-14 pb-16 text-center max-w-3xl mx-auto px-2">
-      <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/60 text-[12px] text-muted-foreground mb-6">
-        <Terminal size={12} />
+    <section className="pt-16 pb-12 text-center max-w-4xl mx-auto px-4 relative">
+      {/* Background glow circle */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/10 blur-[100px] rounded-full pointer-events-none -z-10" />
+
+      <p className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/10 text-xs font-semibold text-primary mb-8 shadow-xs">
+        <Terminal size={14} className="text-primary" />
         React 19 · TypeScript · Tailwind
       </p>
 
-      <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.1] text-foreground">
-        Components for building
-        <br />
-        <span className="text-primary">IDE-style applications</span>
+      <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.15] text-foreground">
+        Components for building{' '}
+        <span className="bg-gradient-to-r from-primary via-indigo-400 to-sky-400 bg-clip-text text-transparent">
+          IDE-style applications
+        </span>
       </h1>
 
-      <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-        Menu bar, activity bar, sidebar, docking layout, terminal, chat pane and status
-        bar. Use the whole shell, or take one piece into an app you already have.
+      <p className="mt-6 text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto font-normal">
+        Menu bar, activity bar, sidebar, docking layout, terminal, chat pane, and status bar. Use the full workspace shell or compose individual primitives directly.
       </p>
 
-      <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
         <Link
           to="/docs/getting-started"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/35 transition-all duration-200"
         >
-          Get started <ArrowRight size={15} />
+          Get started <ArrowRight size={16} />
         </Link>
         <Link
           to="/components"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border/80 bg-card/50 text-sm font-semibold text-foreground hover:bg-accent/80 hover:border-primary/40 transition-all duration-200"
         >
-          <Blocks size={15} /> Browse components
+          <Blocks size={16} className="text-primary" /> Browse components
         </Link>
       </div>
 
-      <div className="mt-8 max-w-sm mx-auto text-left">
+      <div className="mt-10 max-w-md mx-auto text-left shadow-lg rounded-xl overflow-hidden border border-border/60">
         <CodeBlock label="bash" code={QUICK_START} />
       </div>
     </section>
 
     {/* ------------------------------------------------------------ stats */}
-    <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 py-8 border-y border-border text-center">
+    <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto px-4">
       <Stat value={String(COMPONENTS.length)} label="Components" />
       <Stat value={String(propCount)} label="Documented props" />
       <Stat value="20 kB" label="Gzipped" />
@@ -121,66 +124,75 @@ export const Home = () => (
     </section>
 
     {/* ------------------------------------------------------- live shell */}
-    <section className="py-16">
+    <section className="pt-4 max-w-5xl mx-auto px-4">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold tracking-tight">This is the real thing</h2>
-        <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
-          Not a screenshot. Drag the tabs to split the workspace, open a panel from the
-          rail, run <code className="font-mono text-[13px]">help</code> in the terminal.
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">This is the real thing</h2>
+        <p className="mt-2.5 text-muted-foreground max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
+          Not a screenshot. Drag tabs to split the workspace, open panels from the rail, or run <code className="font-mono text-xs bg-muted/80 px-2 py-0.5 rounded border border-border text-foreground">help</code> in the terminal.
         </p>
       </div>
 
-      <div className="rounded-xl border border-border overflow-hidden shadow-2xl h-[560px] flex flex-col">
-        <ShellDemo />
+      <div className="rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md overflow-hidden shadow-2xl shadow-primary/5 flex flex-col theme-dark border-opacity-80">
+        {/* IDE Window Title Bar */}
+        <div className="h-9 bg-muted/40 border-b border-border/70 px-4 flex items-center justify-between select-none">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-3 h-3 rounded-full bg-yellow-500/80 inline-block" />
+            <span className="w-3 h-3 rounded-full bg-green-500/80 inline-block" />
+          </div>
+          <span className="text-xs font-mono font-medium text-muted-foreground/80">nexus-shell workspace preview</span>
+          <div className="w-12" />
+        </div>
+
+        <div className="h-[560px] flex flex-col bg-background text-foreground">
+          <ShellDemo />
+        </div>
       </div>
     </section>
 
     {/* --------------------------------------------------------- features */}
-    <section className="py-12">
+    <section className="max-w-5xl mx-auto px-4">
       <div className="grid sm:grid-cols-2 gap-6">
         {FEATURES.map(({ icon: Icon, title, body }) => (
-          <div key={title} className="rounded-xl border border-border bg-card/40 p-6">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary grid place-items-center mb-4">
-              <Icon size={17} />
+          <div key={title} className="group rounded-2xl border border-border/70 bg-card/40 backdrop-blur-xs p-7 hover:border-primary/50 hover:bg-card/70 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 text-primary grid place-items-center mb-5 group-hover:scale-105 transition-transform">
+              <Icon size={20} />
             </div>
-            <h3 className="font-semibold text-foreground">{title}</h3>
-            <p className="text-[14px] text-muted-foreground mt-2 leading-relaxed">{body}</p>
+            <h3 className="text-lg font-bold text-foreground">{title}</h3>
+            <p className="text-sm text-muted-foreground mt-2.5 leading-relaxed">{body}</p>
           </div>
         ))}
       </div>
     </section>
 
     {/* ---------------------------------------------------------- snippet */}
-    <section className="py-12">
+    <section className="max-w-5xl mx-auto px-4">
       <div className="grid lg:grid-cols-2 gap-10 items-center">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Composable by default</h2>
-          <p className="mt-3 text-muted-foreground leading-relaxed">
-            Primitives are controlled, so state stays in your app. That is what makes them
-            reusable — a component that reads a global store can’t be configured by its
-            caller, rendered twice, or meaningfully documented.
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Composable by default</h2>
+          <p className="mt-4 text-muted-foreground leading-relaxed text-sm sm:text-base">
+            Primitives are controlled, so state stays in your application. Components receive explicit props and callbacks rather than accessing hidden singletons or global state.
           </p>
-          <p className="mt-3 text-muted-foreground leading-relaxed">
-            If you would rather not wire it yourself, <code className="font-mono text-[13px]">ShellLayout</code>{' '}
-            composes the whole frame against a set of stores, and every primitive has a{' '}
-            <code className="font-mono text-[13px]">Connected*</code> counterpart you can
-            mix in.
+          <p className="mt-3.5 text-muted-foreground leading-relaxed text-sm sm:text-base">
+            If you prefer pre-wired state layout, <code className="font-mono text-xs bg-muted/80 px-1.5 py-0.5 rounded border border-border text-foreground">ShellLayout</code> composes the full IDE frame against integrated stores, with matching <code className="font-mono text-xs bg-muted/80 px-1.5 py-0.5 rounded border border-border text-foreground">Connected*</code> primitive wrappers.
           </p>
           <Link
             to="/docs/architecture"
-            className="inline-flex items-center gap-1.5 mt-5 text-sm text-primary hover:underline"
+            className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
           >
-            Read about the two tiers <ArrowRight size={14} />
+            Read about the two tiers <ArrowRight size={16} />
           </Link>
         </div>
 
-        <CodeBlock label="App.tsx" code={SNIPPET} />
+        <div className="shadow-xl rounded-xl overflow-hidden border border-border/70">
+          <CodeBlock label="App.tsx" code={SNIPPET} />
+        </div>
       </div>
     </section>
 
     {/* ------------------------------------------------------------- next */}
-    <section className="py-12">
-      <div className="grid sm:grid-cols-3 gap-4">
+    <section className="max-w-5xl mx-auto px-4">
+      <div className="grid sm:grid-cols-3 gap-5">
         {[
           {
             to: '/docs/getting-started',
@@ -198,37 +210,46 @@ export const Home = () => (
           <Link
             key={to}
             to={to}
-            className="group rounded-xl border border-border bg-card/40 p-5 hover:border-primary/40 transition-colors"
+            className="group rounded-2xl border border-border/70 bg-card/40 backdrop-blur-xs p-6 hover:border-primary/50 hover:bg-card/70 hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
           >
-            <Icon size={17} className="text-primary mb-3" />
-            <h3 className="font-semibold text-[15px] flex items-center gap-1.5">
-              {title}
-              <ArrowRight
-                size={13}
-                className="text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all"
-              />
-            </h3>
-            <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">{body}</p>
+            <div>
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary grid place-items-center mb-4 group-hover:scale-105 transition-transform">
+                <Icon size={18} />
+              </div>
+              <h3 className="font-bold text-base flex items-center justify-between text-foreground">
+                {title}
+                <ArrowRight
+                  size={15}
+                  className="text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all"
+                />
+              </h3>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{body}</p>
+            </div>
           </Link>
         ))}
 
         <a
           href={`${__SITE_BASE__.replace(/\/$/, '')}/storybook/`}
-          className="group rounded-xl border border-border bg-card/40 p-5 hover:border-primary/40 transition-colors"
+          className="group rounded-2xl border border-border/70 bg-card/40 backdrop-blur-xs p-6 hover:border-primary/50 hover:bg-card/70 hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
         >
-          <BookOpen size={17} className="text-primary mb-3" />
-          <h3 className="font-semibold text-[15px] flex items-center gap-1.5">
-            Storybook
-            <ArrowRight
-              size={13}
-              className="text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all"
-            />
-          </h3>
-          <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">
-            Every story and state, with interactive prop controls.
-          </p>
+          <div>
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary grid place-items-center mb-4 group-hover:scale-105 transition-transform">
+              <BookOpen size={18} />
+            </div>
+            <h3 className="font-bold text-base flex items-center justify-between text-foreground">
+              Storybook
+              <ArrowRight
+                size={15}
+                className="text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all"
+              />
+            </h3>
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+              Every story and state, with interactive prop controls.
+            </p>
+          </div>
         </a>
       </div>
     </section>
   </div>
 );
+

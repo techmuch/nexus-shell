@@ -16,7 +16,7 @@ import {
 /* -------------------------------------------------------------------------- */
 
 const Editor = () => (
-  <div className="h-full p-6 font-mono text-xs overflow-auto">
+  <div className="h-full p-6 font-mono text-xs overflow-auto bg-background text-foreground">
     <div className="text-muted-foreground mb-3">// App.tsx</div>
     <pre className="text-foreground/90">{`export const App = () => (
   <ShellLayout title={<Logo />} />
@@ -25,7 +25,7 @@ const Editor = () => (
 );
 
 const Welcome = () => (
-  <div className="h-full grid place-items-center text-center px-8">
+  <div className="h-full grid place-items-center text-center px-8 bg-background text-foreground">
     <div>
       <h2 className="text-lg font-semibold">Nexus Shell</h2>
       <p className="text-sm text-muted-foreground mt-2 max-w-sm">

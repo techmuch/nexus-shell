@@ -47,6 +47,9 @@ export interface ShellLayoutProps {
    * stories. Omit it to use the store's persisted model.
    */
   layoutModel?: Model;
+  disableLocalStorage?: boolean;
+  initialLayoutJson?: any;
+  onLayoutChange?: (layout: any) => void;
 }
 
 /**

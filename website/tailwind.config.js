@@ -8,5 +8,12 @@ import shared from '../tailwind.config.js';
  */
 export default {
   ...shared,
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}', '../src/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',
+    './website/index.html',
+    './website/src/**/*.{js,ts,jsx,tsx}',
+    '../src/**/*.{js,ts,jsx,tsx}',
+    '../website/src/**/*.{js,ts,jsx,tsx}',
+  ],
 };

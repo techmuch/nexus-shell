@@ -641,6 +641,20 @@
           "default": null
         },
         {
+          "name": "disableLocalStorage",
+          "required": false,
+          "type": "boolean",
+          "description": "",
+          "default": null
+        },
+        {
+          "name": "initialLayoutJson",
+          "required": false,
+          "type": "any",
+          "description": "",
+          "default": null
+        },
+        {
           "name": "layoutModel",
           "required": false,
           "type": "Model",
@@ -652,6 +666,13 @@
           "required": false,
           "type": "Record<string, IMenuItemConfig[]>",
           "description": "Menu structure, keyed by top-level menu name. Items dispatch by `commandId`.",
+          "default": null
+        },
+        {
+          "name": "onLayoutChange",
+          "required": false,
+          "type": "(layout: any) => void",
+          "description": "",
           "default": null
         },
         {
