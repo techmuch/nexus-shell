@@ -66,14 +66,15 @@ const FILES: ITreeNode[] = [
   {
     id: 'src',
     label: 'src',
-    type: 'folder',
+    isBranch: true,
+    kind: 'folder',
     isOpen: true,
     children: [
-      { id: 'app', label: 'App.tsx', type: 'file' },
-      { id: 'main', label: 'main.tsx', type: 'file' },
+      { id: 'app', label: 'App.tsx', kind: 'file' },
+      { id: 'main', label: 'main.tsx', kind: 'file' },
     ],
   },
-  { id: 'pkg', label: 'package.json', type: 'file' },
+  { id: 'pkg', label: 'package.json', kind: 'file' },
 ];
 
 /** Expansion lives on the nodes, so the toggle is the caller's. */
@@ -93,7 +94,7 @@ const FileExplorer = () => {
       onToggle={(node) => setNodes((current) => toggleNode(current, node.id))}
       // Opening a file is just another tab.
       onActivate={(node) =>
-        node.type === 'file' &&
+        !node.isBranch &&
         useLayoutStore.getState().addTab('editor', node.label, { file: node.label })
       }
     />

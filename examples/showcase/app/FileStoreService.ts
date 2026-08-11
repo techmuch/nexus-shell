@@ -24,7 +24,8 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
       const rootNodes: ITreeNode[] = projects.map((p: any) => ({
         id: p.id,
         label: p.name,
-        type: 'folder',
+        isBranch: true,
+        kind: 'folder',
         isOpen: true,
         children: []
       }));
@@ -35,7 +36,8 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
         fileMap.set(f.id, {
           id: f.id,
           label: f.name,
-          type: f.type,
+          isBranch: f.type === 'folder',
+          kind: f.type,
           children: f.type === 'folder' ? [] : undefined
         });
       });
@@ -104,7 +106,8 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
           project_id: projectId,
           parent_id: parentId === projectId ? null : parentId,
           name: file.label,
-          type: file.type
+          // The API's own vocabulary; the tree carries it as `kind`.
+          type: file.kind ?? (file.isBranch ? 'folder' : 'file')
         })
       });
     }

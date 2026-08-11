@@ -1,38 +1,50 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import {
-  ChevronDown,
-  ChevronRight,
-  Edit,
-  File,
-  Folder,
-  FolderPlus,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { ContextMenu, type IContextMenuItem } from './ContextMenu';
 
-/** A node in the {@link TreeWidget} hierarchy. */
+/**
+ * A node in the {@link TreeWidget} hierarchy.
+ *
+ * The model is deliberately domain-neutral: the component knows about branches
+ * and leaves, and nothing else. A file explorer, an org chart, a scene graph and
+ * a category picker are all the same shape here — what differs is your `kind`
+ * and your `icon`.
+ */
 export interface ITreeNode {
   /** Stable identifier, unique across the whole tree. */
   id: string;
   /** Text shown for the node. */
   label: string;
-  /** `folder` nodes expand on click; `file` nodes do not. */
-  type: 'file' | 'folder';
+  /**
+   * Whether this node can contain children — a folder, a department, a group.
+   * Branches expand on click and accept drops; leaves do neither.
+   *
+   * Defaults to `false`. Set it explicitly for a branch whose children haven't
+   * been loaded yet, so it still renders as expandable.
+   */
+  isBranch?: boolean;
+  /**
+   * Your own classification for this node, e.g. `"folder"`, `"department"`,
+   * `"question"`. The component never interprets it — it exists so context-menu
+   * actions can target node types through {@link ITreeAction.showFor}.
+   */
+  kind?: string;
   /** Child nodes. Only rendered while `isOpen` is `true`. */
   children?: ITreeNode[];
-  /** Whether a folder is expanded. Controlled by you — see `onToggle`. */
+  /** Whether a branch is expanded. Controlled by you — see `onToggle`. */
   isOpen?: boolean;
+  /**
+   * Icon rendered before the label. Any node works — a `lucide-react` icon, an
+   * avatar, a coloured dot. Omit it for a label-only row.
+   */
+  icon?: React.ReactNode;
+  /** Extra classes merged onto this row. */
+  className?: string;
 }
 
-/**
- * Where a context-menu action applies.
- *
- * `nodeId` is `null` when the menu was opened on empty background, which is how
- * you distinguish "new file here" from "new file at the root".
- */
+/** Where a context-menu action applies. */
 export interface ITreeContext {
   /** The right-clicked node's id, or `null` for the background. */
   nodeId: string | null;
@@ -40,7 +52,16 @@ export interface ITreeContext {
   node: ITreeNode | null;
 }
 
-/** A custom entry in the tree's right-click menu. */
+/**
+ * Where a context-menu entry is offered.
+ *
+ * `'branch'` and `'leaf'` match structurally; `'background'` is a right-click on
+ * empty space. Any other string is matched against the node's `kind`, so you can
+ * scope an action to your own node types.
+ */
+export type TreeActionScope = 'branch' | 'leaf' | 'background' | (string & {});
+
+/** An entry in the tree's right-click menu. */
 export interface ITreeAction {
   /** Stable identifier. Used as the React key. */
   id: string;
@@ -53,40 +74,39 @@ export interface ITreeAction {
   /** Draw a separator above this entry. */
   divider?: boolean;
   /**
-   * Restrict where the entry appears. Defaults to everywhere. Use this for
-   * actions that only make sense on a folder, or only on the background.
+   * Restrict where the entry appears. Defaults to everywhere.
+   *
+   * @example
+   * ```ts
+   * showFor: ['branch', 'background']   // structural
+   * showFor: ['department']             // matches node.kind
+   * ```
    */
-  showFor?: ('file' | 'folder' | 'background')[];
+  showFor?: TreeActionScope[];
 }
 
 export interface TreeWidgetProps {
   /** Root nodes. Expansion state lives on the nodes themselves via `isOpen`. */
   data: ITreeNode[];
   /**
-   * Called when a folder is clicked. Flip that node's `isOpen` in your own
+   * Called when a branch is clicked. Flip that node's `isOpen` in your own
    * state — the tree renders expansion but does not own it.
    */
   onToggle?: (node: ITreeNode) => void;
-  /** Called when a node is double-clicked. Typically opens the item. */
+  /** Called when a node is double-clicked or Enter is pressed on a leaf. */
   onActivate?: (node: ITreeNode) => void;
-  /** Called after a node is dragged onto a folder. */
-  onMoveNode?: (draggedId: string, targetFolderId: string) => void;
   /**
-   * Entries for the right-click menu. Defaults to New File, New Folder, Rename
-   * and Delete, which map to the `onNew*` / `onRename` / `onDelete` props.
+   * Called after a node is dragged onto a branch. Only branches accept drops.
+   * Reparenting is yours to perform — the tree does not mutate `data`.
+   */
+  onMoveNode?: (draggedId: string, targetBranchId: string) => void;
+  /**
+   * Entries for the right-click menu. Empty by default: the component ships no
+   * actions of its own, because "New File" means nothing to an org chart.
    *
-   * Pass your own array to replace that set entirely — this is the extension
-   * point for app-specific commands, so the tree itself stays generic.
+   * With no entries, no menu appears.
    */
   actions?: ITreeAction[];
-  /** Handler for the built-in "New File" action. */
-  onNewFile?: (parentId: string | null) => void;
-  /** Handler for the built-in "New Folder" action. */
-  onNewFolder?: (parentId: string | null) => void;
-  /** Handler for the built-in "Rename" action. */
-  onRename?: (nodeId: string) => void;
-  /** Handler for the built-in "Delete" action. */
-  onDelete?: (nodeId: string) => void;
   /** Indentation added per depth level, in px. Defaults to `12`. */
   indent?: number;
   /**
@@ -95,6 +115,8 @@ export interface TreeWidgetProps {
    * search, or a test environment that can't measure layout. Defaults to `true`.
    */
   virtualized?: boolean;
+  /** Accessible label for the tree. Defaults to `"Tree"`. */
+  'aria-label'?: string;
   /** Extra classes merged onto the root element. */
   className?: string;
 }
@@ -112,27 +134,50 @@ const flatten = (items: ITreeNode[], level = 0): FlatNode[] =>
     return acc;
   }, []);
 
+/** Structural and `kind`-based scopes a node satisfies. */
+const scopesFor = (node: ITreeNode | null): TreeActionScope[] => {
+  if (!node) return ['background'];
+  const scopes: TreeActionScope[] = [node.isBranch ? 'branch' : 'leaf'];
+  if (node.kind) scopes.push(node.kind);
+  return scopes;
+};
+
 /**
- * A virtualised file-explorer tree with drag-to-move and a right-click menu.
+ * A virtualised, domain-neutral tree with drag-to-move and a data-driven
+ * right-click menu.
  *
- * Rows are virtualised via `react-virtuoso`, so very large trees stay
- * responsive. The component is controlled: expansion lives on your nodes as
- * `isOpen` and changes are reported through `onToggle`, so the tree never holds
- * a second copy of your data.
+ * It renders any hierarchy — files, an org chart, a scene graph, nested
+ * categories, an argument map. The component's only structural concept is
+ * `isBranch`: branches expand and accept drops, leaves do neither. Everything
+ * else — what a node *is*, what icon it carries, what actions it offers — is
+ * yours to supply.
  *
- * The context menu is data-driven. The defaults cover the usual file
- * operations; pass `actions` to replace them with your own commands rather than
- * adding one-off props.
+ * Rows are virtualised via `react-virtuoso`, so large trees stay responsive.
+ *
+ * Controlled: expansion lives on your nodes as `isOpen` and changes are
+ * reported through `onToggle`, so the tree never holds a second copy of your
+ * data.
  *
  * @example
  * ```tsx
+ * // An org chart — no files in sight.
  * <TreeWidget
- *   data={nodes}
- *   onToggle={(n) => setNodes(toggle(nodes, n.id))}
- *   onActivate={(n) => open(n.id)}
+ *   data={[
+ *     {
+ *       id: 'eng',
+ *       label: 'Engineering',
+ *       isBranch: true,
+ *       kind: 'department',
+ *       isOpen: true,
+ *       icon: <Building2 size={14} />,
+ *       children: [
+ *         { id: 'ada', label: 'Ada Lovelace', kind: 'person', icon: <User size={14} /> },
+ *       ],
+ *     },
+ *   ]}
+ *   onToggle={(node) => setNodes(toggle(nodes, node.id))}
  *   actions={[
- *     { id: 'new-map', label: 'New Map', icon: <Map size={14} />,
- *       showFor: ['folder', 'background'], onSelect: (ctx) => createMap(ctx.nodeId) },
+ *     { id: 'hire', label: 'Add report', showFor: ['department'], onSelect: addReport },
  *   ]}
  * />
  * ```
@@ -142,20 +187,17 @@ export const TreeWidget = ({
   onToggle,
   onActivate,
   onMoveNode,
-  actions,
-  onNewFile,
-  onNewFolder,
-  onRename,
-  onDelete,
+  actions = [],
   indent = 12,
   virtualized = true,
+  'aria-label': ariaLabel = 'Tree',
   className,
 }: TreeWidgetProps) => {
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
     context: ITreeContext;
-    scope: 'file' | 'folder' | 'background';
+    scopes: TreeActionScope[];
   } | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
@@ -165,39 +207,11 @@ export const TreeWidget = ({
     setDragOverId(null);
   }, [data]);
 
-  const defaultActions: ITreeAction[] = [
-    {
-      id: 'new-file',
-      label: 'New File',
-      icon: <Plus size={14} />,
-      onSelect: ({ nodeId }) => onNewFile?.(nodeId),
-    },
-    {
-      id: 'new-folder',
-      label: 'New Folder',
-      icon: <FolderPlus size={14} />,
-      onSelect: ({ nodeId }) => onNewFolder?.(nodeId),
-    },
-    {
-      id: 'rename',
-      label: 'Rename',
-      icon: <Edit size={14} />,
-      divider: true,
-      showFor: ['file', 'folder'],
-      onSelect: ({ nodeId }) => nodeId && onRename?.(nodeId),
-    },
-    {
-      id: 'delete',
-      label: 'Delete',
-      icon: <Trash2 size={14} className="text-destructive" />,
-      showFor: ['file', 'folder'],
-      onSelect: ({ nodeId }) => nodeId && onDelete?.(nodeId),
-    },
-  ];
-
-  const menuItems: IContextMenuItem[] = (actions ?? defaultActions)
+  const menuItems: IContextMenuItem[] = actions
     .filter(
-      (action) => !action.showFor || (contextMenu && action.showFor.includes(contextMenu.scope)),
+      (action) =>
+        !action.showFor ||
+        (contextMenu && action.showFor.some((s) => contextMenu.scopes.includes(s))),
     )
     .map((action) => ({
       label: action.label,
@@ -206,88 +220,83 @@ export const TreeWidget = ({
       onClick: () => contextMenu && action.onSelect(contextMenu.context),
     }));
 
-  const openMenu = (
-    e: React.MouseEvent,
-    node: ITreeNode | null,
-    scope: 'file' | 'folder' | 'background',
-  ) => {
+  const openMenu = (e: React.MouseEvent, node: ITreeNode | null) => {
+    if (actions.length === 0) return;
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
-      scope,
+      scopes: scopesFor(node),
       context: { nodeId: node?.id ?? null, node },
     });
   };
 
   const renderRow = (index: number) => {
     const node = nodes[index];
-    const isFolder = node.type === 'folder';
+    const isBranch = !!node.isBranch;
 
     return (
-            <div
-              key={node.id}
-              role="treeitem"
-              aria-expanded={isFolder ? !!node.isOpen : undefined}
-              aria-level={node.level + 1}
-              tabIndex={0}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData('text/plain', node.id);
-                e.dataTransfer.effectAllowed = 'move';
-              }}
-              onDragOver={(e) => {
-                if (!isFolder) return;
-                e.preventDefault();
-                setDragOverId(node.id);
-              }}
-              onDragLeave={() => setDragOverId(null)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOverId(null);
-                const draggedId = e.dataTransfer.getData('text/plain');
-                if (draggedId && draggedId !== node.id && isFolder) {
-                  onMoveNode?.(draggedId, node.id);
-                }
-              }}
-              onClick={() => isFolder && onToggle?.(node)}
-              onDoubleClick={() => onActivate?.(node)}
-              onKeyDown={(e) => {
-                if (e.key !== 'Enter') return;
-                e.preventDefault();
-                if (isFolder) onToggle?.(node);
-                else onActivate?.(node);
-              }}
-              onContextMenu={(e) => openMenu(e, node, node.type)}
-              style={{ paddingLeft: `${node.level * indent + 8}px` }}
-              className={cn(
-                'flex items-center py-1 px-2 cursor-pointer hover:bg-accent hover:text-accent-foreground select-none text-xs',
-                'transition-colors duration-150 relative focus:outline-none focus:ring-1 focus:ring-ring',
-                dragOverId === node.id && 'bg-primary/20 ring-1 ring-primary/50 rounded-sm',
-              )}
-            >
-              <div className="w-4 h-4 mr-1 flex items-center justify-center">
-                {isFolder &&
-                  (node.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
-              </div>
-              <div className="mr-2">
-                {isFolder ? (
-                  <Folder size={14} className="text-blue-400 fill-blue-400/20" />
-                ) : (
-                  <File size={14} className="text-muted-foreground" />
-                )}
-              </div>
-              <span className="truncate">{node.label}</span>
-            </div>
+      <div
+        key={node.id}
+        role="treeitem"
+        aria-expanded={isBranch ? !!node.isOpen : undefined}
+        aria-level={node.level + 1}
+        tabIndex={0}
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData('text/plain', node.id);
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        onDragOver={(e) => {
+          if (!isBranch) return;
+          e.preventDefault();
+          setDragOverId(node.id);
+        }}
+        onDragLeave={() => setDragOverId(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOverId(null);
+          const draggedId = e.dataTransfer.getData('text/plain');
+          if (draggedId && draggedId !== node.id && isBranch) {
+            onMoveNode?.(draggedId, node.id);
+          }
+        }}
+        onClick={() => isBranch && onToggle?.(node)}
+        onDoubleClick={() => onActivate?.(node)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          if (isBranch) onToggle?.(node);
+          else onActivate?.(node);
+        }}
+        onContextMenu={(e) => openMenu(e, node)}
+        style={{ paddingLeft: `${node.level * indent + 8}px` }}
+        className={cn(
+          'flex items-center py-1 px-2 cursor-pointer hover:bg-accent hover:text-accent-foreground select-none text-xs',
+          'transition-colors duration-150 relative focus:outline-none focus:ring-1 focus:ring-ring',
+          dragOverId === node.id && 'bg-primary/20 ring-1 ring-primary/50 rounded-sm',
+          node.className,
+        )}
+      >
+        <div className="w-4 h-4 mr-1 flex items-center justify-center shrink-0">
+          {isBranch &&
+            (node.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
+        </div>
+        {node.icon && (
+          <div className="mr-2 flex items-center shrink-0">{node.icon}</div>
+        )}
+        <span className="truncate">{node.label}</span>
+      </div>
     );
   };
 
   return (
     <div
       role="tree"
+      aria-label={ariaLabel}
       className={cn('h-full w-full bg-muted/30', className)}
-      onContextMenu={(e) => openMenu(e, null, 'background')}
+      onContextMenu={(e) => openMenu(e, null)}
     >
       {virtualized ? (
         <Virtuoso

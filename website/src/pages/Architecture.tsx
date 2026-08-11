@@ -32,7 +32,7 @@ Model.fromJson({
   },
 });`;
 
-const EXTENSION_BAD = `// Don't: a generic file tree should not know dialogue maps exist.
+const EXTENSION_BAD = `// Don't: a generic tree should not know what a dialogue map is.
 <TreeWidget onNewDialogueMap={createMap} />`;
 
 const EXTENSION_GOOD = `// Do: contribute an entry to the data-driven menu.
@@ -42,7 +42,7 @@ const EXTENSION_GOOD = `// Do: contribute an entry to the data-driven menu.
       id: 'new-map',
       label: 'New Dialogue Map',
       icon: <Map size={14} />,
-      showFor: ['folder', 'background'],
+      showFor: ['branch', 'background'],
       onSelect: (ctx) => createMap(ctx.nodeId),
     },
   ]}
@@ -172,7 +172,7 @@ export const Architecture = () => (
     <Paragraphs
       items={[
         'When an app needs a new command inside a component, the answer is a data-driven extension point rather than a new prop.',
-        '`TreeWidget` once had an `onNewDialogueMap` prop. A generic file tree should not know that dialogue maps exist.',
+        '`TreeWidget` once had an `onNewDialogueMap` prop — and, for that matter, a `type: \'file\' | \'folder\'` node model. A tree component should know about branches and leaves; what a node *means* belongs to the app.',
       ]}
     />
 

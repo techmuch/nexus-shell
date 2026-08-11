@@ -1,33 +1,17 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { GitBranch, Map, Sparkles } from 'lucide-react';
+import {
+  Building2,
+  Circle,
+  File,
+  Folder,
+  Lightbulb,
+  ThumbsDown,
+  ThumbsUp,
+  User,
+  Users,
+} from 'lucide-react';
 import { TreeWidget, type ITreeNode } from './TreeWidget';
-
-const FILES: ITreeNode[] = [
-  {
-    id: 'src',
-    label: 'src',
-    type: 'folder',
-    isOpen: true,
-    children: [
-      {
-        id: 'components',
-        label: 'components',
-        type: 'folder',
-        isOpen: true,
-        children: [
-          { id: 'menubar', label: 'MenuBar.tsx', type: 'file' },
-          { id: 'statusbar', label: 'StatusBar.tsx', type: 'file' },
-          { id: 'tree', label: 'TreeWidget.tsx', type: 'file' },
-        ],
-      },
-      { id: 'lib', label: 'lib', type: 'folder', children: [{ id: 'cn', label: 'cn.ts', type: 'file' }] },
-      { id: 'index', label: 'index.ts', type: 'file' },
-    ],
-  },
-  { id: 'docs', label: 'docs', type: 'folder', children: [{ id: 'readme', label: 'README.md', type: 'file' }] },
-  { id: 'pkg', label: 'package.json', type: 'file' },
-];
 
 /** Immutably flip `isOpen` on one node anywhere in the tree. */
 const toggleNode = (items: ITreeNode[], id: string): ITreeNode[] =>
@@ -36,6 +20,89 @@ const toggleNode = (items: ITreeNode[], id: string): ITreeNode[] =>
       ? { ...node, isOpen: !node.isOpen }
       : { ...node, children: node.children && toggleNode(node.children, id) },
   );
+
+const ORG: ITreeNode[] = [
+  {
+    id: 'acme',
+    label: 'Acme Corp',
+    isBranch: true,
+    kind: 'company',
+    isOpen: true,
+    icon: <Building2 size={14} className="text-primary" />,
+    children: [
+      {
+        id: 'eng',
+        label: 'Engineering',
+        isBranch: true,
+        kind: 'department',
+        isOpen: true,
+        icon: <Users size={14} className="text-blue-400" />,
+        children: [
+          { id: 'ada', label: 'Ada Lovelace', kind: 'person', icon: <User size={14} /> },
+          { id: 'alan', label: 'Alan Turing', kind: 'person', icon: <User size={14} /> },
+        ],
+      },
+      {
+        id: 'design',
+        label: 'Design',
+        isBranch: true,
+        kind: 'department',
+        icon: <Users size={14} className="text-purple-400" />,
+        children: [
+          { id: 'kai', label: 'Kai Chen', kind: 'person', icon: <User size={14} /> },
+        ],
+      },
+    ],
+  },
+];
+
+const ARGUMENT: ITreeNode[] = [
+  {
+    id: 'q',
+    label: 'Should we ship v1 this quarter?',
+    isBranch: true,
+    kind: 'question',
+    isOpen: true,
+    icon: <Circle size={12} className="text-sky-400 fill-sky-400/30" />,
+    children: [
+      {
+        id: 'i1',
+        label: 'Ship a limited beta first',
+        isBranch: true,
+        kind: 'idea',
+        isOpen: true,
+        icon: <Lightbulb size={13} className="text-amber-400" />,
+        children: [
+          { id: 'p1', label: 'Real feedback before we commit the API', kind: 'pro', icon: <ThumbsUp size={12} className="text-green-500" /> },
+          { id: 'c1', label: 'Two migration paths to support', kind: 'con', icon: <ThumbsDown size={12} className="text-red-500" /> },
+        ],
+      },
+    ],
+  },
+];
+
+const fileIcon = (isBranch?: boolean) =>
+  isBranch ? (
+    <Folder size={14} className="text-blue-400 fill-blue-400/20" />
+  ) : (
+    <File size={14} className="text-muted-foreground" />
+  );
+
+const FILES: ITreeNode[] = [
+  {
+    id: 'src',
+    label: 'src',
+    isBranch: true,
+    kind: 'folder',
+    isOpen: true,
+    icon: fileIcon(true),
+    children: [
+      { id: 'index', label: 'index.ts', kind: 'file', icon: fileIcon() },
+      { id: 'app', label: 'App.tsx', kind: 'file', icon: fileIcon() },
+    ],
+  },
+  { id: 'pkg', label: 'package.json', kind: 'file', icon: fileIcon() },
+];
 
 const meta = {
   title: 'Primitives/TreeWidget',
@@ -46,13 +113,13 @@ const meta = {
     docs: {
       description: {
         component:
-          'A virtualised file-explorer tree with drag-to-move and a data-driven right-click menu.\n\nControlled: expansion lives on your nodes as `isOpen` and changes are reported through `onToggle`, so the tree never holds a second copy of your data. Rows are virtualised via `react-virtuoso`, so very large trees stay responsive.\n\nThe context menu is data-driven — pass `actions` to replace the defaults with your own commands rather than adding one-off props.',
+          'A virtualised, domain-neutral tree with drag-to-move and a data-driven right-click menu.\n\n**This is not a file explorer.** The component knows about branches and leaves and nothing else — an org chart, a scene graph, a category picker and an argument map are all the same shape here.\n\n`isBranch` is the only structural concept: branches expand and accept drops, leaves do neither. `kind` is your own vocabulary, which the library never interprets — it exists so context-menu actions can target your node types through `showFor`. Icons are per-node, so nothing file-shaped ships in the component.\n\nControlled: expansion lives on your nodes as `isOpen` and changes are reported through `onToggle`.',
       },
     },
   },
   decorators: [
     (Story) => (
-      <div className="h-[420px] w-[320px] border-r border-border">
+      <div className="h-[400px] w-[340px] border-r border-border">
         <Story />
       </div>
     ),
@@ -62,95 +129,89 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Static — folders won't expand without an `onToggle` handler. */
-export const Default: Story = {
-  args: { data: FILES },
-};
-
-/** Wire `onToggle` to your own state and folders expand. Right-click for the default menu. */
-export const Interactive: Story = {
-  args: { data: FILES },
+/** Three node kinds, and a context menu that differs by kind. */
+export const OrgChart: Story = {
+  args: { data: ORG },
   render: function Render() {
-    const [nodes, setNodes] = useState(FILES);
-    const [opened, setOpened] = useState<string | null>(null);
-
+    const [nodes, setNodes] = useState(ORG);
     return (
-      <div className="h-full flex flex-col">
-        <TreeWidget
-          data={nodes}
-          onToggle={(node) => setNodes(toggleNode(nodes, node.id))}
-          onActivate={(node) => setOpened(node.label)}
-          onNewFile={() => {}}
-          onNewFolder={() => {}}
-          onRename={() => {}}
-          onDelete={() => {}}
-        />
-        <div className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground shrink-0">
-          {opened ? `Opened: ${opened}` : 'Double-click a file to open it.'}
-        </div>
-      </div>
+      <TreeWidget
+        data={nodes}
+        aria-label="Organisation"
+        onToggle={(node) => setNodes(toggleNode(nodes, node.id))}
+        actions={[
+          { id: 'hire', label: 'Add direct report', showFor: ['department'], onSelect: () => {} },
+          { id: 'profile', label: 'View profile', showFor: ['person'], onSelect: () => {} },
+        ]}
+      />
     );
   },
 };
 
-/**
- * `actions` replaces the default menu entirely. This is the extension point for
- * app-specific commands — the tree itself stays generic.
- *
- * `showFor` restricts where each entry appears: `'background'` is a right-click
- * on empty space, where `nodeId` is `null`.
- */
-export const CustomActions: Story = {
-  args: { data: FILES },
+/** Nothing here is a file, and the component does not care. */
+export const ArgumentMap: Story = {
+  args: { data: ARGUMENT },
   render: function Render() {
-    const [nodes, setNodes] = useState(FILES);
-    const [last, setLast] = useState<string | null>(null);
-
+    const [nodes, setNodes] = useState(ARGUMENT);
     return (
-      <div className="h-full flex flex-col">
-        <TreeWidget
-          data={nodes}
-          onToggle={(node) => setNodes(toggleNode(nodes, node.id))}
-          actions={[
-            {
-              id: 'new-map',
-              label: 'New Dialogue Map',
-              icon: <Map size={14} />,
-              showFor: ['folder', 'background'],
-              onSelect: (ctx) => setLast(`New map in ${ctx.node?.label ?? 'root'}`),
-            },
-            {
-              id: 'branch',
-              label: 'Create Branch From…',
-              icon: <GitBranch size={14} />,
-              showFor: ['file', 'folder'],
-              onSelect: (ctx) => setLast(`Branch from ${ctx.node?.label}`),
-            },
-            {
-              id: 'explain',
-              label: 'Explain This File',
-              icon: <Sparkles size={14} />,
-              divider: true,
-              showFor: ['file'],
-              onSelect: (ctx) => setLast(`Explain ${ctx.node?.label}`),
-            },
-          ]}
-        />
-        <div className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground shrink-0">
-          {last ?? 'Right-click a file, a folder, or empty space.'}
-        </div>
-      </div>
+      <TreeWidget
+        data={nodes}
+        aria-label="Argument map"
+        onToggle={(node) => setNodes(toggleNode(nodes, node.id))}
+      />
     );
   },
 };
 
-/** Drag a file onto a folder. Only folders accept drops. */
+/** The familiar case, built the same way — icons come from the app. */
+export const FileExplorer: Story = {
+  args: { data: FILES },
+  render: function Render() {
+    const [nodes, setNodes] = useState(FILES);
+    return (
+      <TreeWidget
+        data={nodes}
+        aria-label="Files"
+        onToggle={(node) => setNodes(toggleNode(nodes, node.id))}
+        actions={[
+          { id: 'new', label: 'New File', showFor: ['folder', 'background'], onSelect: () => {} },
+          { id: 'del', label: 'Delete', divider: true, showFor: ['file'], onSelect: () => {} },
+        ]}
+      />
+    );
+  },
+};
+
+/** Without `icon`, rows are label-only. The component ships no default glyphs. */
+export const NoIcons: Story = {
+  args: {
+    data: [
+      {
+        id: 'a',
+        label: 'Category A',
+        isBranch: true,
+        isOpen: true,
+        children: [
+          { id: 'a1', label: 'Item one' },
+          { id: 'a2', label: 'Item two' },
+        ],
+      },
+      { id: 'b', label: 'Category B', isBranch: true, children: [{ id: 'b1', label: 'Item three' }] },
+    ],
+  },
+};
+
+/** With no `actions`, right-clicking does nothing — there is no built-in menu. */
+export const NoContextMenu: Story = {
+  args: { data: ORG },
+};
+
+/** Only branches accept drops. */
 export const DragToMove: Story = {
-  args: { data: FILES },
+  args: { data: ORG },
   render: function Render() {
-    const [nodes, setNodes] = useState(FILES);
+    const [nodes, setNodes] = useState(ORG);
     const [moved, setMoved] = useState<string | null>(null);
-
     return (
       <div className="h-full flex flex-col">
         <TreeWidget
@@ -158,27 +219,26 @@ export const DragToMove: Story = {
           onToggle={(node) => setNodes(toggleNode(nodes, node.id))}
           onMoveNode={(dragged, target) => setMoved(`${dragged} → ${target}`)}
         />
-        <div className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground shrink-0">
-          {moved ? `Moved ${moved}` : 'Drag a file onto a folder.'}
-        </div>
+        <p className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground shrink-0">
+          {moved ?? 'Drag a person onto a department.'}
+        </p>
       </div>
     );
   },
 };
 
-/** 2,000 nodes, to show virtualisation holding up. */
+/** 5,000 nodes, to show virtualisation holding up. */
 export const LargeTree: Story = {
   args: {
     data: [
       {
         id: 'root',
-        label: 'generated',
-        type: 'folder',
+        label: 'Generated nodes',
+        isBranch: true,
         isOpen: true,
-        children: Array.from({ length: 2000 }, (_, i) => ({
-          id: `f${i}`,
-          label: `module-${String(i).padStart(4, '0')}.ts`,
-          type: 'file' as const,
+        children: Array.from({ length: 5000 }, (_, i) => ({
+          id: `n${i}`,
+          label: `Node ${String(i).padStart(4, '0')}`,
         })),
       },
     ],

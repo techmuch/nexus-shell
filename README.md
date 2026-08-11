@@ -92,7 +92,7 @@ const [active, setActive] = useState<string | null>('files');
     />
     {active && (
       <SidebarPane title="Explorer" onClose={() => setActive(null)}>
-        <TreeWidget data={files} onToggle={toggle} onActivate={open} />
+        <TreeWidget data={nodes} onToggle={toggle} onActivate={open} />
       </SidebarPane>
     )}
     <main className="flex-1">{children}</main>
@@ -128,7 +128,7 @@ shell's own frame and keep every registration working.
 | `StatusBar` | Footer with left / center / right item groups |
 | `TerminalPane` | Bottom-docked terminal log and input |
 | `ThemeSwitcher` | Segmented theme control |
-| `TreeWidget` | Virtualised file tree with drag-to-move and a data-driven menu |
+| `TreeWidget` | Virtualised tree for any hierarchy, with drag-to-move and a data-driven menu |
 | `UserProfile` | Avatar and identity widget |
 
 ## Theming

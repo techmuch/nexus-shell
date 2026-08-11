@@ -33,14 +33,15 @@ const FILES: ITreeNode[] = [
   {
     id: 'src',
     label: 'src',
-    type: 'folder',
+    isBranch: true,
+    kind: 'folder',
     isOpen: true,
     children: [
-      { id: 'app', label: 'App.tsx', type: 'file' },
-      { id: 'main', label: 'main.tsx', type: 'file' },
+      { id: 'app', label: 'App.tsx', kind: 'file' },
+      { id: 'main', label: 'main.tsx', kind: 'file' },
     ],
   },
-  { id: 'readme', label: 'README.md', type: 'file' },
+  { id: 'readme', label: 'README.md', kind: 'file' },
 ];
 
 export const Default: Story = {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Map, Plus, FolderPlus, Edit, Trash2 } from 'lucide-react';
+import { Edit, File, Folder, FolderPlus, Map, Plus, Trash2 } from 'lucide-react';
 import {
   TreeWidget,
   type ITreeAction,
@@ -17,12 +17,24 @@ const toggleNode = (items: ITreeNode[], id: string): ITreeNode[] =>
       : { ...node, children: node.children && toggleNode(node.children, id) },
   );
 
+/** Give each node the icon its `kind` deserves. TreeWidget ships none. */
+const withIcons = (items: ITreeNode[]): ITreeNode[] =>
+  items.map((node) => ({
+    ...node,
+    icon: node.isBranch ? (
+      <Folder size={14} className="text-blue-400 fill-blue-400/20" />
+    ) : (
+      <File size={14} className="text-muted-foreground" />
+    ),
+    children: node.children && withIcons(node.children),
+  }));
+
 /**
- * Example sidebar panel: the file explorer for the showcase app.
+ * Example sidebar panel: a file explorer built on the generic `TreeWidget`.
  *
- * Shows how an app-specific command ("New Dialogue Map") is contributed to the
- * generic `TreeWidget` through its `actions` prop, rather than the library
- * carrying a dedicated prop for it.
+ * Everything file-shaped here — the folder and file icons, the New File and New
+ * Folder actions, the `.map` handling — lives in this file, not in the library.
+ * `TreeWidget` only knows about branches and leaves.
  */
 export const FilesSidebar = () => {
   const { nodes, addFile, deleteFile, renameFile, fetchFiles } = useFileStore();
@@ -30,19 +42,20 @@ export const FilesSidebar = () => {
   const { openPrompt, openConfirm } = useModalStore();
 
   // TreeWidget renders expansion but does not own it, so it lives here.
-  const [tree, setTree] = useState<ITreeNode[]>(nodes);
+  const [tree, setTree] = useState<ITreeNode[]>(() => withIcons(nodes));
 
   useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
 
   useEffect(() => {
-    setTree(nodes);
+    setTree(withIcons(nodes));
   }, [nodes]);
 
   const handleNewFile = async (parentId: string | null) => {
     const name = await openPrompt('New File Name:');
-    if (name) addFile(parentId, { id: Date.now().toString(), label: name, type: 'file' });
+    if (name)
+      addFile(parentId, { id: Date.now().toString(), label: name, kind: 'file' });
   };
 
   const handleNewFolder = async (parentId: string | null) => {
@@ -51,7 +64,8 @@ export const FilesSidebar = () => {
       addFile(parentId, {
         id: Date.now().toString(),
         label: name,
-        type: 'folder',
+        isBranch: true,
+        kind: 'folder',
         isOpen: true,
         children: [],
       });
@@ -67,9 +81,9 @@ export const FilesSidebar = () => {
   };
 
   const handleActivate = (node: ITreeNode) => {
-    if (node.type === 'file' && node.label.endsWith('.map')) {
+    if (!node.isBranch && node.label.endsWith('.map')) {
       addTab('dialogue-map', node.label, { mapId: node.id });
-    } else if (node.type === 'folder') {
+    } else if (node.isBranch) {
       addTab('project-properties', `${node.label} Properties`, {
         projectId: node.id,
         projectName: node.label,
@@ -95,11 +109,12 @@ export const FilesSidebar = () => {
       id: 'new-map',
       label: 'New Dialogue Map',
       icon: <Map size={14} />,
+      showFor: ['folder', 'background'],
       onSelect: ({ nodeId }) =>
         addFile(nodeId, {
           id: `map-${Date.now()}`,
           label: 'Untitled.map',
-          type: 'file',
+          kind: 'file',
         }),
     },
     {
@@ -107,14 +122,14 @@ export const FilesSidebar = () => {
       label: 'Rename',
       icon: <Edit size={14} />,
       divider: true,
-      showFor: ['file', 'folder'],
+      showFor: ['branch', 'leaf'],
       onSelect: ({ nodeId }) => nodeId && handleRename(nodeId),
     },
     {
       id: 'delete',
       label: 'Delete',
       icon: <Trash2 size={14} className="text-destructive" />,
-      showFor: ['file', 'folder'],
+      showFor: ['branch', 'leaf'],
       onSelect: ({ nodeId }) => nodeId && handleDelete(nodeId),
     },
   ];

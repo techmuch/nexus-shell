@@ -887,8 +887,8 @@
     {
       "name": "TreeWidget",
       "file": "src/components/widgets/TreeWidget.tsx",
-      "description": "A virtualised file-explorer tree with drag-to-move and a right-click menu.\n\nRows are virtualised via `react-virtuoso`, so very large trees stay\nresponsive. The component is controlled: expansion lives on your nodes as\n`isOpen` and changes are reported through `onToggle`, so the tree never holds\na second copy of your data.\n\nThe context menu is data-driven. The defaults cover the usual file\noperations; pass `actions` to replace them with your own commands rather than\nadding one-off props.",
-      "example": "<TreeWidget\n  data={nodes}\n  onToggle={(n) => setNodes(toggle(nodes, n.id))}\n  onActivate={(n) => open(n.id)}\n  actions={[\n    { id: 'new-map', label: 'New Map', icon: <Map size={14} />,\n      showFor: ['folder', 'background'], onSelect: (ctx) => createMap(ctx.nodeId) },\n  ]}\n/>",
+      "description": "A virtualised, domain-neutral tree with drag-to-move and a data-driven\nright-click menu.\n\nIt renders any hierarchy — files, an org chart, a scene graph, nested\ncategories, an argument map. The component's only structural concept is\n`isBranch`: branches expand and accept drops, leaves do neither. Everything\nelse — what a node *is*, what icon it carries, what actions it offers — is\nyours to supply.\n\nRows are virtualised via `react-virtuoso`, so large trees stay responsive.\n\nControlled: expansion lives on your nodes as `isOpen` and changes are\nreported through `onToggle`, so the tree never holds a second copy of your\ndata.",
+      "example": "// An org chart — no files in sight.\n<TreeWidget\n  data={[\n    {\n      id: 'eng',\n      label: 'Engineering',\n      isBranch: true,\n      kind: 'department',\n      isOpen: true,\n      icon: <Building2 size={14} />,\n      children: [\n        { id: 'ada', label: 'Ada Lovelace', kind: 'person', icon: <User size={14} /> },\n      ],\n    },\n  ]}\n  onToggle={(node) => setNodes(toggle(nodes, node.id))}\n  actions={[\n    { id: 'hire', label: 'Add report', showFor: ['department'], onSelect: addReport },\n  ]}\n/>",
       "props": [
         {
           "name": "data",
@@ -901,8 +901,15 @@
           "name": "actions",
           "required": false,
           "type": "ITreeAction[]",
-          "description": "Entries for the right-click menu. Defaults to New File, New Folder, Rename\nand Delete, which map to the `onNew*` / `onRename` / `onDelete` props.\n\nPass your own array to replace that set entirely — this is the extension\npoint for app-specific commands, so the tree itself stays generic.",
+          "description": "Entries for the right-click menu. Empty by default: the component ships no\nactions of its own, because \"New File\" means nothing to an org chart.\n\nWith no entries, no menu appears.",
           "default": null
+        },
+        {
+          "name": "aria-label",
+          "required": false,
+          "type": "string",
+          "description": "Accessible label for the tree. Defaults to `\"Tree\"`.",
+          "default": "\"Tree\""
         },
         {
           "name": "className",
@@ -922,49 +929,21 @@
           "name": "onActivate",
           "required": false,
           "type": "(node: ITreeNode) => void",
-          "description": "Called when a node is double-clicked. Typically opens the item.",
-          "default": null
-        },
-        {
-          "name": "onDelete",
-          "required": false,
-          "type": "(nodeId: string) => void",
-          "description": "Handler for the built-in \"Delete\" action.",
+          "description": "Called when a node is double-clicked or Enter is pressed on a leaf.",
           "default": null
         },
         {
           "name": "onMoveNode",
           "required": false,
-          "type": "(draggedId: string, targetFolderId: string) => void",
-          "description": "Called after a node is dragged onto a folder.",
-          "default": null
-        },
-        {
-          "name": "onNewFile",
-          "required": false,
-          "type": "(parentId: string | null) => void",
-          "description": "Handler for the built-in \"New File\" action.",
-          "default": null
-        },
-        {
-          "name": "onNewFolder",
-          "required": false,
-          "type": "(parentId: string | null) => void",
-          "description": "Handler for the built-in \"New Folder\" action.",
-          "default": null
-        },
-        {
-          "name": "onRename",
-          "required": false,
-          "type": "(nodeId: string) => void",
-          "description": "Handler for the built-in \"Rename\" action.",
+          "type": "(draggedId: string, targetBranchId: string) => void",
+          "description": "Called after a node is dragged onto a branch. Only branches accept drops.\nReparenting is yours to perform — the tree does not mutate `data`.",
           "default": null
         },
         {
           "name": "onToggle",
           "required": false,
           "type": "(node: ITreeNode) => void",
-          "description": "Called when a folder is clicked. Flip that node's `isOpen` in your own\nstate — the tree renders expansion but does not own it.",
+          "description": "Called when a branch is clicked. Flip that node's `isOpen` in your own\nstate — the tree renders expansion but does not own it.",
           "default": null
         },
         {

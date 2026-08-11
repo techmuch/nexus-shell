@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Files, Search } from 'lucide-react';
 
@@ -300,73 +300,144 @@ describe('ChatPane', () => {
 });
 
 describe('TreeWidget', () => {
-  const data: ITreeNode[] = [
+  /**
+   * Deliberately not a file tree. The component's only structural concept is
+   * `isBranch`; `kind` is the caller's own vocabulary and must stay opaque to
+   * the library.
+   */
+  const org: ITreeNode[] = [
     {
-      id: 'src',
-      label: 'src',
-      type: 'folder',
+      id: 'eng',
+      label: 'Engineering',
+      isBranch: true,
+      kind: 'department',
       isOpen: true,
-      children: [{ id: 'app', label: 'App.tsx', type: 'file' }],
+      children: [{ id: 'ada', label: 'Ada Lovelace', kind: 'person' }],
     },
-    { id: 'closed', label: 'closed', type: 'folder', children: [{ id: 'x', label: 'x.ts', type: 'file' }] },
+    {
+      id: 'design',
+      label: 'Design',
+      isBranch: true,
+      kind: 'department',
+      children: [{ id: 'kai', label: 'Kai Chen', kind: 'person' }],
+    },
   ];
 
-  it('renders children only for open folders', () => {
-    render(<TreeWidget data={data} virtualized={false} />);
-    expect(screen.getByText('App.tsx')).toBeInTheDocument();
-    expect(screen.queryByText('x.ts')).not.toBeInTheDocument();
+  it('renders children only for open branches', () => {
+    render(<TreeWidget data={org} virtualized={false} />);
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+    expect(screen.queryByText('Kai Chen')).not.toBeInTheDocument();
   });
 
   it('reports toggles rather than owning expansion', async () => {
     const onToggle = vi.fn();
-    render(<TreeWidget data={data} onToggle={onToggle} virtualized={false} />);
-    await userEvent.click(screen.getByText('closed'));
-    expect(onToggle).toHaveBeenCalledWith(expect.objectContaining({ id: 'closed' }));
+    render(<TreeWidget data={org} onToggle={onToggle} virtualized={false} />);
+    await userEvent.click(screen.getByText('Design'));
+    expect(onToggle).toHaveBeenCalledWith(expect.objectContaining({ id: 'design' }));
     // Still collapsed: the data didn't change.
-    expect(screen.queryByText('x.ts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Kai Chen')).not.toBeInTheDocument();
   });
 
-  it('activates files on double click', async () => {
+  it('activates leaves on double click', async () => {
     const onActivate = vi.fn();
-    render(<TreeWidget data={data} onActivate={onActivate} virtualized={false} />);
-    await userEvent.dblClick(screen.getByText('App.tsx'));
-    expect(onActivate).toHaveBeenCalledWith(expect.objectContaining({ id: 'app' }));
+    render(<TreeWidget data={org} onActivate={onActivate} virtualized={false} />);
+    await userEvent.dblClick(screen.getByText('Ada Lovelace'));
+    expect(onActivate).toHaveBeenCalledWith(expect.objectContaining({ id: 'ada' }));
   });
 
-  it('exposes custom actions in the context menu, honouring showFor', async () => {
+  it('marks branches expandable and leaves not', () => {
+    render(<TreeWidget data={org} virtualized={false} />);
+    expect(screen.getByText('Engineering').closest('[role="treeitem"]')).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(
+      screen.getByText('Ada Lovelace').closest('[role="treeitem"]'),
+    ).not.toHaveAttribute('aria-expanded');
+  });
+
+  it('renders a per-node icon when given one', () => {
+    render(
+      <TreeWidget
+        virtualized={false}
+        data={[{ id: 'a', label: 'A', icon: <span data-testid="node-icon">•</span> }]}
+      />,
+    );
+    expect(screen.getByTestId('node-icon')).toBeInTheDocument();
+  });
+
+  it('ships no context menu of its own', async () => {
+    render(<TreeWidget data={org} virtualized={false} />);
+    await userEvent.pointer({ keys: '[MouseRight]', target: screen.getByText('Engineering') });
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('scopes actions structurally with branch and leaf', async () => {
     const onSelect = vi.fn();
     render(
       <TreeWidget
-        data={data}
+        data={org}
         virtualized={false}
         actions={[
-          { id: 'folder-only', label: 'Folder Only', showFor: ['folder'], onSelect },
-          { id: 'file-only', label: 'File Only', showFor: ['file'], onSelect },
+          { id: 'b', label: 'Branch Only', showFor: ['branch'], onSelect },
+          { id: 'l', label: 'Leaf Only', showFor: ['leaf'], onSelect },
         ]}
       />,
     );
 
-    await userEvent.pointer({ keys: '[MouseRight]', target: screen.getByText('App.tsx') });
-    expect(screen.getByText('File Only')).toBeInTheDocument();
-    expect(screen.queryByText('Folder Only')).not.toBeInTheDocument();
+    await userEvent.pointer({ keys: '[MouseRight]', target: screen.getByText('Ada Lovelace') });
+    expect(screen.getByText('Leaf Only')).toBeInTheDocument();
+    expect(screen.queryByText('Branch Only')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByText('File Only'));
-    expect(onSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ nodeId: 'app' }),
+    await userEvent.click(screen.getByText('Leaf Only'));
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ nodeId: 'ada' }));
+  });
+
+  it('scopes actions by the caller’s own kind', async () => {
+    const onSelect = vi.fn();
+    render(
+      <TreeWidget
+        data={org}
+        virtualized={false}
+        actions={[
+          { id: 'hire', label: 'Add report', showFor: ['department'], onSelect },
+          { id: 'profile', label: 'View profile', showFor: ['person'], onSelect },
+        ]}
+      />,
     );
+
+    await userEvent.pointer({ keys: '[MouseRight]', target: screen.getByText('Engineering') });
+    expect(screen.getByText('Add report')).toBeInTheDocument();
+    expect(screen.queryByText('View profile')).not.toBeInTheDocument();
   });
 
   it('passes a null nodeId for background right-clicks', async () => {
     const onSelect = vi.fn();
     const { container } = render(
       <TreeWidget
-        data={data}
+        data={org}
         virtualized={false}
-        actions={[{ id: 'new', label: 'New File', onSelect }]}
+        actions={[{ id: 'new', label: 'New Department', onSelect }]}
       />,
     );
     await userEvent.pointer({ keys: '[MouseRight]', target: container.firstChild as Element });
-    await userEvent.click(screen.getByText('New File'));
+    await userEvent.click(screen.getByText('New Department'));
     expect(onSelect).toHaveBeenCalledWith({ nodeId: null, node: null });
+  });
+
+  it('only lets branches accept drops', async () => {
+    const onMoveNode = vi.fn();
+    render(<TreeWidget data={org} onMoveNode={onMoveNode} virtualized={false} />);
+
+    const leaf = screen.getByText('Ada Lovelace').closest('[role="treeitem"]')!;
+    const data = { getData: () => 'design', setData: vi.fn(), effectAllowed: '' };
+
+    // A leaf never calls preventDefault on dragover, so a drop can't land.
+    fireEvent.drop(leaf, { dataTransfer: data });
+    expect(onMoveNode).not.toHaveBeenCalled();
+
+    const branch = screen.getByText('Engineering').closest('[role="treeitem"]')!;
+    fireEvent.drop(branch, { dataTransfer: data });
+    expect(onMoveNode).toHaveBeenCalledWith('design', 'eng');
   });
 });

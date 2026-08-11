@@ -125,9 +125,11 @@ the presentational layer.
 When an app needs a new command in a component's menu, the answer is a data-driven
 extension point, not a new prop.
 
-`TreeWidget` used to have an `onNewDialogueMap` prop. A generic file tree should
-not know that dialogue maps exist. It now takes an `actions` array, and the app
-contributes its own entries — see `examples/showcase/app/FilesSidebar.tsx`.
+`TreeWidget` used to have an `onNewDialogueMap` prop, and a `type: 'file' |
+'folder'` node model. Both encoded a domain the component has no business
+knowing. It now exposes `isBranch` for structure and a free-form `kind` for your
+taxonomy, with an `actions` array the app fills in — see
+`examples/showcase/app/FilesSidebar.tsx`, where every file-shaped decision lives.
 
 If you're about to add a prop named after a feature, add an array instead.
 
