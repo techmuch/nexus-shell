@@ -232,28 +232,49 @@ const collectProps = (file, src, propsName, seen = new Set()) => {
 
 const components = [];
 
+/**
+ * Every documented component in a file, as `[name, propsInterface]`.
+ *
+ * A file is not assumed to hold one component — `fields.tsx` holds nine — so
+ * this pairs each exported `<Name>Props` / `Use<Name>Options` with an
+ * `export const <Name>` of the same name. Requiring both is what keeps generic
+ * base interfaces like `FieldProps<T>` out: nothing exports a `Field`.
+ */
+const documentedIn = (src) => {
+  const found = [];
+  const declared = /export\s+(?:interface|type)\s+([A-Za-z_$][\w$]*)(?:Props|Options)\b/g;
+
+  for (const [, stem] of src.matchAll(declared)) {
+    const propsName = new RegExp(`export\\s+(?:interface|type)\\s+${stem}Props\\b`).test(src)
+      ? `${stem}Props`
+      : `${stem}Options`;
+
+    // `UseGraphKeyboardOptions` documents `useGraphKeyboard`.
+    const name = propsName.endsWith('Options')
+      ? `${stem[0].toLowerCase()}${stem.slice(1)}`
+      : stem;
+
+    if (!new RegExp(`export\\s+const\\s+${name}\\b`).test(src)) continue;
+    if (!found.some(([n]) => n === name)) found.push([name, propsName]);
+  }
+
+  return found;
+};
+
 for (const [file, src] of sources) {
-  const name = basename(file).replace(/\.tsx?$/, '');
-
-  // Components document `<Name>Props`; hooks document `Use<Name>Options`, so
-  // `useGraphKeyboard` gets a real options table rather than an empty one.
-  const propsName = /^use[A-Z]/.test(name)
-    ? `${name[0].toUpperCase()}${name.slice(1)}Options`
-    : `${name}Props`;
-
-  if (!new RegExp(`export\\s+(interface|type)\\s+${propsName}\\b`).test(src)) continue;
-
-  const doc = componentDoc(src, name);
-  components.push({
-    name,
-    file: relative(ROOT, file).replace(/\\/g, '/'),
-    description: doc.description,
-    example: doc.example,
-    props: collectProps(file, src, propsName).sort((a, b) => {
-      if (a.required !== b.required) return a.required ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    }),
-  });
+  for (const [name, propsName] of documentedIn(src)) {
+    const doc = componentDoc(src, name);
+    components.push({
+      name,
+      file: relative(ROOT, file).replace(/\\/g, '/'),
+      description: doc.description,
+      example: doc.example,
+      props: collectProps(file, src, propsName).sort((a, b) => {
+        if (a.required !== b.required) return a.required ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      }),
+    });
+  }
 }
 
 components.sort((a, b) => a.name.localeCompare(b.name));

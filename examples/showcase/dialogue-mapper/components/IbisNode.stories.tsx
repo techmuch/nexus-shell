@@ -1,166 +1,128 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import ReactFlow, { Node } from 'reactflow';
-import 'reactflow/dist/style.css';
+import { GraphCanvas, GraphNode } from '../../../../src/index';
 import { IbisNode } from './IbisNode';
-import { IDialogueNodeData } from '../DialogueMappingService';
+import { NODE_SIZE, type IbisNodeType, type IDialogueNodeData } from '../DialogueMappingService';
 
-const nodeTypes = {
-  ibisNode: IbisNode,
-};
+/**
+ * The IBIS card, on the library's own canvas.
+ *
+ * Note how little wrapping there is: `IbisNode` renders the card's contents and
+ * `GraphNode` supplies placement, selection and ports. The card no longer knows
+ * it is on a graph at all.
+ */
 
 const meta: Meta = {
   title: 'Examples/Dialogue Mapper/IBIS Node',
-  parameters: {
-    layout: 'padded',
-  },
+  parameters: { layout: 'padded' },
 };
 
 export default meta;
 
-// Mock Wrapper to render React Flow nodes correctly
-const ReactFlowMockWrapper: React.FC<{ node: Node<IDialogueNodeData> }> = ({ node }) => {
-  return (
-    <div className="theme-dark bg-background border border-border/80 rounded-xl p-2 h-[220px] w-[280px]">
-      <ReactFlow
-        nodes={[node]}
-        edges={[]}
-        nodeTypes={nodeTypes}
-        fitView
-        nodesDraggable={false}
-        nodesConnectable={false}
-        zoomOnScroll={false}
-        panOnDrag={false}
-        proOptions={{ hideAttribution: true }}
-      />
-    </div>
-  );
-};
+const Card = ({
+  type,
+  data,
+  selected,
+}: {
+  type: IbisNodeType;
+  data: IDialogueNodeData;
+  selected?: boolean;
+}) => (
+  <div className="theme-dark h-[260px] w-[320px] overflow-hidden rounded-xl border border-border/80 bg-background">
+    <GraphCanvas defaultViewport={{ x: 24, y: 20, scale: 1 }} pannable={false} zoomable={false}>
+      <GraphNode
+        node={{ id: 'demo', position: { x: 0, y: 0 }, size: NODE_SIZE, kind: type }}
+        selected={selected}
+        draggable={false}
+      >
+        <IbisNode type={type} data={data} />
+      </GraphNode>
+    </GraphCanvas>
+  </div>
+);
+
+const base = (overrides: Partial<IDialogueNodeData> = {}): IDialogueNodeData => ({
+  title: 'Untitled',
+  author: 'user',
+  timestamp: new Date().toLocaleDateString(),
+  ...overrides,
+});
 
 export const Question: StoryObj = {
   render: () => (
-    <ReactFlowMockWrapper
-      node={{
-        id: 'mock-node-1',
-        type: 'ibisNode',
-        position: { x: 0, y: 0 },
-        data: {
-          id: 'mock-node-1',
-          type: 'question',
-          title: 'Which authorization library is most secure for OAuth2 integration?',
-          description: 'Looking for maintained libraries with native JWT support.',
-          tags: ['security', 'oauth2'],
-          author: 'security-lead',
-          timestamp: new Date().toLocaleDateString(),
-          status: 'pending',
-        },
-      }}
+    <Card
+      type="question"
+      data={base({
+        title: 'Which authorization library is most secure for OAuth2 integration?',
+        tags: ['security', 'oauth2'],
+        author: 'security-lead',
+        status: 'pending',
+      })}
     />
   ),
 };
 
 export const Idea: StoryObj = {
   render: () => (
-    <ReactFlowMockWrapper
-      node={{
-        id: 'mock-node-2',
-        type: 'ibisNode',
-        position: { x: 0, y: 0 },
-        data: {
-          id: 'mock-node-2',
-          type: 'idea',
-          title: 'Use NextAuth.js (Auth.js) with standard JWT session flow',
-          description: 'Supports prebuilt providers and manages cookie encryption automatically.',
-          tags: ['nextjs', 'authjs'],
-          author: 'engineer-1',
-          timestamp: new Date().toLocaleDateString(),
-          status: 'pending',
-        },
-      }}
+    <Card
+      type="idea"
+      data={base({
+        title: 'Adopt the platform’s own OAuth2 client',
+        tags: ['proposal'],
+        author: 'platform',
+        status: 'pending',
+      })}
     />
   ),
 };
 
 export const Pro: StoryObj = {
   render: () => (
-    <ReactFlowMockWrapper
-      node={{
-        id: 'mock-node-3',
-        type: 'ibisNode',
-        position: { x: 0, y: 0 },
-        data: {
-          id: 'mock-node-3',
-          type: 'pro',
-          title: 'Supports 40+ social providers out-of-the-box',
-          description: 'Saves time setting up Google, GitHub, and Apple login.',
-          tags: ['oauth'],
-          author: 'engineer-1',
-          timestamp: new Date().toLocaleDateString(),
-        },
-      }}
+    <Card
+      type="pro"
+      data={base({ title: 'Already audited, and maintained in-house', author: 'security-lead' })}
     />
   ),
 };
 
 export const Con: StoryObj = {
   render: () => (
-    <ReactFlowMockWrapper
-      node={{
-        id: 'mock-node-4',
-        type: 'ibisNode',
-        position: { x: 0, y: 0 },
-        data: {
-          id: 'mock-node-4',
-          type: 'con',
-          title: 'Locks the project into React-based frameworks',
-          description: 'Difficult to reuse if we build a companion mobile app in React Native.',
-          tags: ['mobile-compatibility'],
-          author: 'lead-architect',
-          timestamp: new Date().toLocaleDateString(),
-        },
-      }}
-    />
-  ),
-};
-
-export const Note: StoryObj = {
-  render: () => (
-    <ReactFlowMockWrapper
-      node={{
-        id: 'mock-node-5',
-        type: 'ibisNode',
-        position: { x: 0, y: 0 },
-        data: {
-          id: 'mock-node-5',
-          type: 'note',
-          title: 'Link to Auth.js docs: authjs.dev',
-          description: 'Reference page for manual adapter setups.',
-          tags: ['documentation'],
-          author: 'engineer-2',
-          timestamp: new Date().toLocaleDateString(),
-        },
-      }}
-    />
+    <Card type="con" data={base({ title: 'No refresh-token rotation yet', author: 'platform' })} />
   ),
 };
 
 export const Decision: StoryObj = {
   render: () => (
-    <ReactFlowMockWrapper
-      node={{
-        id: 'mock-node-6',
-        type: 'ibisNode',
-        position: { x: 0, y: 0 },
-        data: {
-          id: 'mock-node-6',
-          type: 'decision',
-          title: 'Implement NextAuth.js with PostgreSQL backend persistence',
-          description: 'Formally accepted by design review board on June 12.',
-          tags: ['database', 'decision-accepted'],
-          author: 'review-board',
-          timestamp: new Date().toLocaleDateString(),
-          status: 'accepted',
-        },
-      }}
+    <Card
+      type="decision"
+      data={base({
+        title: 'Use the platform client, add rotation in Q4',
+        author: 'architecture',
+        status: 'accepted',
+      })}
+    />
+  ),
+};
+
+export const Link: StoryObj = {
+  render: () => (
+    <Card
+      type="link"
+      data={base({
+        title: 'RFC 6749 — The OAuth 2.0 Authorization Framework',
+        url: 'https://datatracker.ietf.org/doc/html/rfc6749',
+        author: 'security-lead',
+      })}
+    />
+  ),
+};
+
+/** Selected, so the focus and selection affordances are visible. */
+export const Selected: StoryObj = {
+  render: () => (
+    <Card
+      type="question"
+      selected
+      data={base({ title: 'Should we ship on Friday?', tags: ['release'], status: 'pending' })}
     />
   ),
 };

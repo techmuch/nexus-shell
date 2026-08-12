@@ -1,241 +1,197 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
-import { 
-  HelpCircle, 
-  Lightbulb, 
-  Plus, 
-  Minus, 
-  FileText, 
-  Check, 
-  User,
-  Link2,
-  Image as ImageIcon,
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Check,
   ExternalLink,
-  Folder
+  FileText,
+  Folder,
+  HelpCircle,
+  Image as ImageIcon,
+  Lightbulb,
+  Minus,
+  Plus,
+  User,
 } from 'lucide-react';
 import sampleDiagram from './sample_diagram.png';
-import { useDialogueMappingStore, IDialogueNodeData, IbisNodeType } from '../DialogueMappingService';
+import type { IbisNodeType, IDialogueNodeData } from '../DialogueMappingService';
 import { useModalStore } from '../../../../src/core/services/ModalStoreService';
 import { cn } from '../../../../src/lib/cn';
 
-export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selected }) => {
-  const updateNodeData = useDialogueMappingStore((state) => state.updateNodeData);
-  const selectedNodeId = useDialogueMappingStore((state) => state.selectedNodeId);
-  const setSelectedNodeId = useDialogueMappingStore((state) => state.setSelectedNodeId);
+/**
+ * What an IBIS node looks like.
+ *
+ * This renders the *contents* of a node and nothing else — placement, dragging,
+ * selection, focus and ports all belong to `GraphNode`, which this sits inside.
+ * That split is the point: the card knows about IBIS, the library knows about
+ * graphs, and neither has to know the other.
+ */
 
-  const [isEditing, setIsEditing] = useState(() => {
-    return !!data.autoEdit;
-  });
-  const [editTitle, setEditTitle] = useState(data.title);
+export interface IbisNodeProps {
+  type: IbisNodeType;
+  data: IDialogueNodeData;
+  /** Editing the title, driven by the editor's keyboard cursor. */
+  editing?: boolean;
+  onTitleChange?: (title: string) => void;
+  onEditingChange?: (editing: boolean) => void;
+}
+
+interface TypeConfig {
+  icon: React.ReactNode;
+  label: string;
+  /** Ring and text colour when the node is the editor's current selection. */
+  accent: string;
+  badge: string;
+}
+
+export const IBIS_CONFIG: Record<IbisNodeType, TypeConfig> = {
+  question: {
+    icon: <HelpCircle size={16} className="text-sky-400" />,
+    label: 'Question',
+    accent: 'text-sky-400',
+    badge: 'bg-sky-500/10',
+  },
+  idea: {
+    icon: <Lightbulb size={16} className="text-yellow-400" />,
+    label: 'Idea',
+    accent: 'text-yellow-400',
+    badge: 'bg-yellow-500/10',
+  },
+  pro: {
+    icon: <Plus size={16} className="text-emerald-400" />,
+    label: 'Pro',
+    accent: 'text-emerald-400',
+    badge: 'bg-emerald-500/10',
+  },
+  con: {
+    icon: <Minus size={16} className="text-rose-400" />,
+    label: 'Con',
+    accent: 'text-rose-400',
+    badge: 'bg-rose-500/10',
+  },
+  note: {
+    icon: <FileText size={16} className="text-amber-400" />,
+    label: 'Note',
+    accent: 'text-amber-400',
+    badge: 'bg-amber-500/10',
+  },
+  decision: {
+    icon: <Check size={16} className="text-purple-400" />,
+    label: 'Decision',
+    accent: 'text-purple-400',
+    badge: 'bg-purple-500/10',
+  },
+  link: {
+    icon: <ExternalLink size={16} className="text-teal-400" />,
+    label: 'Link',
+    accent: 'text-teal-400',
+    badge: 'bg-teal-500/10',
+  },
+  image: {
+    icon: <ImageIcon size={16} className="text-pink-400" />,
+    label: 'Image',
+    accent: 'text-pink-400',
+    badge: 'bg-pink-500/10',
+  },
+  map: {
+    icon: <Folder size={16} className="text-indigo-400" />,
+    label: 'Map',
+    accent: 'text-indigo-400',
+    badge: 'bg-indigo-500/10',
+  },
+};
+
+/** Minimap and palette colours, keyed by IBIS type. */
+export const IBIS_COLOURS: Record<IbisNodeType, string> = {
+  question: '#0ea5e9',
+  idea: '#eab308',
+  pro: '#10b981',
+  con: '#f43f5e',
+  note: '#f59e0b',
+  decision: '#a855f7',
+  link: '#14b8a6',
+  image: '#ec4899',
+  map: '#6366f1',
+};
+
+export const IbisNode: React.FC<IbisNodeProps> = ({
+  type,
+  data,
+  editing = false,
+  onTitleChange,
+  onEditingChange,
+}) => {
+  const config = IBIS_CONFIG[type] ?? IBIS_CONFIG.note;
+  const [draft, setDraft] = useState(data.title);
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setDraft(data.title), [data.title]);
 
   useEffect(() => {
-    setEditTitle(data.title);
-  }, [data.title]);
+    if (!editing) return;
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, [editing]);
 
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  useEffect(() => {
-    if (data.autoEdit) {
-      updateNodeData(data.id, { autoEdit: false });
-    }
-  }, [data.autoEdit, data.id, updateNodeData]);
-
-  // Handle Enter key to transition into edit mode when node is selected
-  useEffect(() => {
-    const isSelected = selected || selectedNodeId === data.id;
-    if (!isSelected || isEditing) {
-      return;
-    }
-
-    const handleKeyDownGlobal = (e: KeyboardEvent) => {
-      // Check visibility of the node to prevent triggering hidden tab actions
-      const container = containerRef.current;
-      if (!container || container.offsetParent === null) {
-        return;
-      }
-
-      // Ignore if typing in some input/textarea
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' || 
-        target.tagName === 'TEXTAREA' || 
-        target.isContentEditable
-      ) {
-        return;
-      }
-
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsEditing(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDownGlobal);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDownGlobal);
-    };
-  }, [selected, selectedNodeId, data.id, isEditing]);
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(true);
+  const commit = () => {
+    onEditingChange?.(false);
+    const title = draft.trim();
+    if (title && title !== data.title) onTitleChange?.(title);
   };
-
-  const handleBlur = () => {
-    setIsEditing(false);
-    if (editTitle.trim() && editTitle !== data.title) {
-      updateNodeData(data.id, { title: editTitle.trim() });
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleBlur();
-    } else if (e.key === 'Escape') {
-      setEditTitle(data.title);
-      setIsEditing(false);
-    }
-  };
-
-  const handleNodeClick = () => {
-    setSelectedNodeId(data.id);
-  };
-
-  // Node configurations based on IBIS Type
-  const nodeConfigs: Record<IbisNodeType, {
-    colorClass: string;
-    icon: React.ReactNode;
-    bgClass: string;
-    label: string;
-    selectedClass: string;
-  }> = {
-    question: {
-      colorClass: 'border-sky-500 text-sky-400 shadow-sky-500/10',
-      icon: <HelpCircle size={16} className="text-sky-400" />,
-      bgClass: 'bg-sky-500/5',
-      label: 'Question',
-      selectedClass: 'border-sky-400 ring-4 ring-sky-500/35 scale-[1.04] shadow-sky-500/40 z-50 text-sky-400',
-    },
-    idea: {
-      colorClass: 'border-yellow-500 text-yellow-400 shadow-yellow-500/10',
-      icon: <Lightbulb size={16} className="text-yellow-400" />,
-      bgClass: 'bg-yellow-500/5',
-      label: 'Idea',
-      selectedClass: 'border-yellow-400 ring-4 ring-yellow-500/35 scale-[1.04] shadow-yellow-500/40 z-50 text-yellow-400',
-    },
-    pro: {
-      colorClass: 'border-emerald-500 text-emerald-400 shadow-emerald-500/10',
-      icon: <Plus size={16} className="text-emerald-400" />,
-      bgClass: 'bg-emerald-500/5',
-      label: 'Pro',
-      selectedClass: 'border-emerald-400 ring-4 ring-emerald-500/35 scale-[1.04] shadow-emerald-500/40 z-50 text-emerald-400',
-    },
-    con: {
-      colorClass: 'border-rose-500 text-rose-400 shadow-rose-500/10',
-      icon: <Minus size={16} className="text-rose-400" />,
-      bgClass: 'bg-rose-500/5',
-      label: 'Con',
-      selectedClass: 'border-rose-400 ring-4 ring-rose-500/35 scale-[1.04] shadow-rose-500/40 z-50 text-rose-400',
-    },
-    note: {
-      colorClass: 'border-amber-500 text-amber-400 shadow-amber-500/10',
-      icon: <FileText size={16} className="text-amber-400" />,
-      bgClass: 'bg-amber-500/5',
-      label: 'Note',
-      selectedClass: 'border-amber-400 ring-4 ring-amber-500/35 scale-[1.04] shadow-amber-500/40 z-50 text-amber-400',
-    },
-    decision: {
-      colorClass: 'border-purple-500 text-purple-400 shadow-purple-500/20 ring-1 ring-purple-500/30',
-      icon: <Check size={16} className="text-purple-400" />,
-      bgClass: 'bg-purple-500/10',
-      label: 'Decision',
-      selectedClass: 'border-purple-400 ring-4 ring-purple-500/40 scale-[1.04] shadow-purple-500/50 z-50 text-purple-400',
-    },
-    link: {
-      colorClass: 'border-teal-500 text-teal-400 shadow-teal-500/10',
-      icon: <Link2 size={16} className="text-teal-400" />,
-      bgClass: 'bg-teal-500/5',
-      label: 'Link',
-      selectedClass: 'border-teal-400 ring-4 ring-teal-500/35 scale-[1.04] shadow-teal-500/40 z-50 text-teal-400',
-    },
-    image: {
-      colorClass: 'border-pink-500 text-pink-400 shadow-pink-500/10',
-      icon: <ImageIcon size={16} className="text-pink-400" />,
-      bgClass: 'bg-pink-500/5',
-      label: 'Image',
-      selectedClass: 'border-pink-400 ring-4 ring-pink-500/35 scale-[1.04] shadow-pink-500/40 z-50 text-pink-400',
-    },
-    map: {
-      colorClass: 'border-indigo-500 text-indigo-400 shadow-indigo-500/10',
-      icon: <Folder size={16} className="text-indigo-400" />,
-      bgClass: 'bg-indigo-500/5',
-      label: 'Map',
-      selectedClass: 'border-indigo-400 ring-4 ring-indigo-500/35 scale-[1.04] shadow-indigo-500/40 z-50 text-indigo-400',
-    },
-  };
-
-  const config = nodeConfigs[data.type] || nodeConfigs.note;
-
-  // Active highlighted style if node is selected locally
-  const isStoreSelected = selectedNodeId === data.id;
 
   return (
-    <div
-      ref={containerRef}
-      onClick={handleNodeClick}
-      className={cn(
-        "px-4 py-3 rounded-xl shadow-lg w-[240px] transition-all select-none bg-card/90 backdrop-blur-sm relative",
-        (selected || isStoreSelected) ? cn("border-[1.5px]", config.selectedClass) : cn("border", config.colorClass, "hover:border-border/80 hover:shadow-xl")
-      )}
-    >
-      {/* Target handle on top */}
-      <Handle 
-        type="target" 
-        position={Position.Top} 
-        style={{ background: '#64748b', width: 8, height: 8 }} 
-      />
-
-      {/* Header Info */}
-      <div className="flex items-center justify-between border-b border-border/40 pb-1.5 mb-2 shrink-0">
-        <div className={cn("flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider font-mono px-2 py-0.5 rounded-full", config.bgClass)}>
+    <div className="flex h-full flex-col px-4 py-3" data-ibis-type={type}>
+      <header className="mb-2 flex shrink-0 items-center justify-between border-b border-border/40 pb-1.5">
+        <div
+          className={cn(
+            'flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider',
+            config.badge,
+            config.accent,
+          )}
+        >
           {config.icon}
           {config.label}
         </div>
-        
+
         {data.status && data.status !== 'pending' && (
-          <span className={cn(
-            "text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded font-mono border",
-            data.status === 'accepted' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-rose-500/10 text-rose-400 border-rose-500/30"
-          )}>
+          <span
+            className={cn(
+              'rounded border px-1.5 py-0.5 font-mono text-[9px] font-extrabold uppercase',
+              data.status === 'accepted'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                : 'border-rose-500/30 bg-rose-500/10 text-rose-400',
+            )}
+          >
             {data.status}
           </span>
         )}
-      </div>
+      </header>
 
-      {/* Title / Description Text */}
-      <div className="min-h-[40px] flex flex-col justify-center">
-        {isEditing ? (
+      <div className="flex min-h-[40px] flex-col justify-center">
+        {editing ? (
           <input
             ref={inputRef}
             type="text"
-            className="w-full bg-secondary border border-border rounded px-1.5 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
+            aria-label="Node title"
+            className="w-full rounded border border-border bg-secondary px-1.5 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              // Stop the editor's own shortcuts from firing while typing.
+              e.stopPropagation();
+              if (e.key === 'Enter') commit();
+              if (e.key === 'Escape') {
+                setDraft(data.title);
+                onEditingChange?.(false);
+              }
+            }}
           />
         ) : (
           <h4
-            onDoubleClick={handleDoubleClick}
-            className="text-xs font-bold text-foreground leading-relaxed cursor-text break-words select-text"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onEditingChange?.(true);
+            }}
+            className="cursor-text select-text break-words text-xs font-bold leading-relaxed text-foreground"
             title="Double click to edit title"
           >
             {data.title || 'Untitled Node'}
@@ -243,9 +199,8 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
         )}
       </div>
 
-      {/* Link / Image Content */}
-      {data.type === 'link' && data.url && (
-        <div className="mt-2 text-[10px] text-teal-400 hover:text-teal-300 truncate">
+      {type === 'link' && data.url && (
+        <div className="mt-2 truncate text-[10px] text-teal-400">
           <a
             href={data.url}
             target="_blank"
@@ -259,22 +214,25 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
         </div>
       )}
 
-      {data.type === 'image' && (
+      {type === 'image' && (
         <img
-          className="w-full h-24 object-cover rounded mt-2 select-none pointer-events-none"
+          className="pointer-events-none mt-2 h-24 w-full select-none rounded object-cover"
           src={data.imageUrl || sampleDiagram}
-          alt={data.title || 'Image Embed'}
+          alt={data.title || 'Image embed'}
         />
       )}
 
-      {data.type === 'map' && (
+      {type === 'map' && (
         <div className="mt-2.5">
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
-              useModalStore.getState().openAlert(`Navigating to nested dialogue map: "${data.title || 'Sub-Map'}"...`);
+              useModalStore
+                .getState()
+                .openAlert(`Navigating to nested dialogue map: "${data.title || 'Sub-Map'}"…`);
             }}
-            className="w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/25 border border-indigo-500/30 hover:border-indigo-500/50 rounded-lg text-[10px] font-bold text-indigo-400 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 py-2 text-[10px] font-bold text-indigo-400 transition-all hover:border-indigo-500/50 hover:bg-indigo-500/25 active:scale-[0.98]"
           >
             <Folder size={11} className="text-indigo-400" />
             Open Dialogue Map
@@ -282,13 +240,12 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
         </div>
       )}
 
-      {/* Node Metadata Tags */}
       {data.tags && data.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2.5">
+        <div className="mt-2.5 flex flex-wrap gap-1">
           {data.tags.map((tag) => (
-            <span 
-              key={tag} 
-              className="text-[9px] bg-secondary/80 text-muted-foreground border border-border/60 px-1.5 py-0.5 rounded-md font-mono"
+            <span
+              key={tag}
+              className="rounded-md border border-border/60 bg-secondary/80 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground"
             >
               #{tag}
             </span>
@@ -296,22 +253,12 @@ export const IbisNode: React.FC<NodeProps<IDialogueNodeData>> = ({ data, selecte
         </div>
       )}
 
-      {/* Node Footer Info (Author) */}
-      <div className="flex justify-between items-center mt-3 pt-1.5 border-t border-border/20 text-[9px] text-muted-foreground/80 font-mono">
+      <footer className="mt-auto flex items-center justify-between border-t border-border/20 pt-1.5 font-mono text-[9px] text-muted-foreground/80">
         <span className="flex items-center gap-1">
           <User size={10} /> {data.author || 'user'}
         </span>
-        <span className="text-[8px] opacity-75">
-          {data.timestamp ? data.timestamp.split(',')[0] : ''}
-        </span>
-      </div>
-
-      {/* Source handle on bottom */}
-      <Handle 
-        type="source" 
-        position={Position.Bottom} 
-        style={{ background: '#64748b', width: 8, height: 8 }} 
-      />
+        <span className="text-[8px] opacity-75">{data.timestamp?.split(',')[0] ?? ''}</span>
+      </footer>
     </div>
   );
 };

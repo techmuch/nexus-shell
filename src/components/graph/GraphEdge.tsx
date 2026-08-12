@@ -173,7 +173,9 @@ export const GraphEdge = ({
 };
 
 export interface GraphEdgeLayerProps {
+  /** The edges to draw. Anything SVG works — this is just the surface. */
   children?: React.ReactNode;
+  /** Extra classes merged onto the `<svg>` element. */
   className?: string;
 }
 

@@ -138,6 +138,9 @@ shell's own frame and keep every registration working.
 | `useGraphLayout` | Auto layout engines, with a freeform escape for hand placement |
 | `layeredLayout` | Layered tree layout in four directions; handles cycles |
 | `gridLayout` | Uniform grid, ignoring edges |
+| `PropertyPanel` | Inspector for the current selection, with mixed-value editing |
+| `TextField` … `StaticField` | Nine composable property fields, usable on their own |
+| `FieldShell` | The label / description / error frame, for fields of your own |
 | `UserProfile` | Avatar and identity widget |
 
 ## Theming

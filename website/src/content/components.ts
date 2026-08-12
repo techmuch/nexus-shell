@@ -38,6 +38,7 @@ export interface ComponentEntry {
 export const CATEGORIES = [
   'Shell',
   'Graph',
+  'Properties',
   'Chrome',
   'Data',
   'Overlays',
@@ -238,6 +239,73 @@ export const COMPONENTS: ComponentEntry[] = [
       },
     ],
   },
+
+  /* ------------------------------------------------------------- Properties */
+  {
+    slug: 'property-panel',
+    name: 'PropertyPanel',
+    tagline: 'An inspector for whatever is selected',
+    category: 'Properties',
+    demoFile: 'Properties',
+    notes: [
+      'Give it the selection and a list of field descriptors. It reads each property across every subject, renders the matching field, and hands back new copies on edit — it holds no state and mutates nothing.',
+      '**Three selection states are handled for you: none, one, and several.** The last is the one hand-rolled inspectors usually skip. Where subjects agree the field edits all of them at once; where they disagree it shows *Mixed* rather than one subject’s value, because showing one as if it were everyone’s is how a multi-selection edit silently flattens data.',
+      'Field types come from a registry, exactly like `TreeWidget.actions` and `useGraphLayout.layouts`. Spread `BUILT_IN_FIELD_TYPES` to add your own, or replace an entry to change how a type renders everywhere.',
+      'A field’s `when` hides it for the current selection — a property that only applies to one node kind — and `validate` returns a message shown under the control.',
+      '`key` is a dotted path, so `data.label` reaches into a node’s payload without an accessor. Pass `get` and `set` for anything a path cannot express.',
+    ],
+    demos: [
+      {
+        export: 'GraphInspector',
+        region: 'inspector',
+        title: 'Node properties, beside the graph',
+        description:
+          'Click a node to inspect it, shift-click to select several. The panel is the same component in both cases — nothing about it is graph-specific.',
+        flush: true,
+        height: '520px',
+      },
+      {
+        export: 'MultiSelect',
+        region: 'panel',
+        title: 'Editing several subjects at once',
+        description:
+          'Tick more than one. Colour and Due agree, so they edit together; Label, Notes and Tags disagree and say so. Resolved disappears entirely once the selection is not all questions.',
+        flush: true,
+        height: '520px',
+      },
+      {
+        export: 'CustomFieldType',
+        region: 'custom',
+        title: 'Registering a field type',
+        description:
+          'A rating control the library knows nothing about, wearing the same label, description and Mixed treatment as the built-ins.',
+        height: '420px',
+      },
+    ],
+  },
+  {
+    slug: 'property-fields',
+    name: 'TextField',
+    tagline: 'The composable field primitives',
+    category: 'Properties',
+    demoFile: 'Properties',
+    notes: [
+      'Nine fields ship: `TextField`, `TextAreaField`, `SelectField`, `CheckboxField`, `NumberField`, `ColorField`, `DateField`, `TagField` and `StaticField`. Each is an ordinary controlled component — pass `value`, get `onChange` — so they work with or without `PropertyPanel`.',
+      'Every one accepts `mixed`, for a selection that disagrees. A mixed field shows a placeholder rather than a value; a mixed checkbox renders indeterminate, since neither on nor off is honest.',
+      'Small decisions worth knowing: `NumberField` reports nothing for an emptied box rather than coercing to zero, `DateField` carries an ISO string rather than a `Date` so it round-trips through JSON, and `TagField` rejects blanks and duplicates silently — neither is a mistake worth interrupting for.',
+      '`FieldShell` is exported too. It is the label, description, error and *Mixed* frame the built-ins use, so a bespoke control lines up with them without copying their markup.',
+    ],
+    demos: [
+      {
+        export: 'Fields',
+        region: 'fields',
+        title: 'Every field',
+        description: 'All nine, wired to local state. Each works on its own.',
+        height: '620px',
+      },
+    ],
+  },
+
   /* ----------------------------------------------------------------- Chrome */
   {
     slug: 'menu-bar',

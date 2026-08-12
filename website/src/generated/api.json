@@ -158,6 +158,84 @@
       ]
     },
     {
+      "name": "CheckboxField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A boolean property.\n\nWhen `mixed`, the box renders indeterminate — neither on nor off — which is\nthe only honest state for a selection that disagrees.",
+      "example": null,
+      "props": []
+    },
+    {
+      "name": "ColorField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A colour property, as a swatch plus an editable hex value.",
+      "example": null,
+      "props": [
+        {
+          "name": "label",
+          "required": true,
+          "type": "string",
+          "description": "Label shown above the control.",
+          "default": null
+        },
+        {
+          "name": "value",
+          "required": true,
+          "type": "T | undefined",
+          "description": "Current value. `undefined` renders as empty.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the field wrapper.",
+          "default": null
+        },
+        {
+          "name": "description",
+          "required": false,
+          "type": "string",
+          "description": "One line under the label explaining the property.",
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "required": false,
+          "type": "boolean",
+          "description": "Render read-only.",
+          "default": null
+        },
+        {
+          "name": "error",
+          "required": false,
+          "type": "string",
+          "description": "Validation message, shown in the destructive colour.",
+          "default": null
+        },
+        {
+          "name": "mixed",
+          "required": false,
+          "type": "boolean",
+          "description": "Selected subjects hold different values. The control shows a placeholder\ninstead of a value, and editing applies to all of them.",
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "required": false,
+          "type": "(value: T) => void",
+          "description": "Called with the new value.",
+          "default": null
+        },
+        {
+          "name": "showValue",
+          "required": false,
+          "type": "boolean",
+          "description": "Show the hex value in an editable text box beside the swatch. Default `true`.",
+          "default": null
+        }
+      ]
+    },
+    {
       "name": "CommandPalette",
       "file": "src/components/widgets/CommandPalette.tsx",
       "description": "A VS Code-style command palette: a fuzzy-filtered, keyboard-navigable list of\ncommands over a dimmed backdrop.\n\nFully controlled — it owns only the query text and the highlighted row.\nVisibility, the command list and execution are the caller's. It also binds no\nglobal keyboard shortcut; for the store-backed variant that reads the\n{@link commandRegistry} and binds `Cmd/Ctrl+Shift+P`, see\n`ConnectedCommandPalette`.\n\nArrow keys move the highlight, Enter selects, Escape closes.",
@@ -338,6 +416,155 @@
           "required": false,
           "type": "boolean",
           "description": "Virtualise rows with `react-virtuoso`. Leave on for large datasets; turn it\noff when the grid must print or be fully present in the DOM. Defaults to\n`true`.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "DateField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A date property, as an ISO `yyyy-mm-dd` string (or `yyyy-mm-ddThh:mm` with\n`withTime`). A string rather than a `Date` so it round-trips through JSON\nunchanged.",
+      "example": null,
+      "props": [
+        {
+          "name": "label",
+          "required": true,
+          "type": "string",
+          "description": "Label shown above the control.",
+          "default": null
+        },
+        {
+          "name": "value",
+          "required": true,
+          "type": "T | undefined",
+          "description": "Current value. `undefined` renders as empty.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the field wrapper.",
+          "default": null
+        },
+        {
+          "name": "description",
+          "required": false,
+          "type": "string",
+          "description": "One line under the label explaining the property.",
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "required": false,
+          "type": "boolean",
+          "description": "Render read-only.",
+          "default": null
+        },
+        {
+          "name": "error",
+          "required": false,
+          "type": "string",
+          "description": "Validation message, shown in the destructive colour.",
+          "default": null
+        },
+        {
+          "name": "max",
+          "required": false,
+          "type": "string",
+          "description": "Latest selectable date, in the same ISO form as `value`.",
+          "default": null
+        },
+        {
+          "name": "min",
+          "required": false,
+          "type": "string",
+          "description": "Earliest selectable date, in the same ISO form as `value`.",
+          "default": null
+        },
+        {
+          "name": "mixed",
+          "required": false,
+          "type": "boolean",
+          "description": "Selected subjects hold different values. The control shows a placeholder\ninstead of a value, and editing applies to all of them.",
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "required": false,
+          "type": "(value: T) => void",
+          "description": "Called with the new value.",
+          "default": null
+        },
+        {
+          "name": "withTime",
+          "required": false,
+          "type": "boolean",
+          "description": "Include a time component. Defaults to `false`.",
+          "default": "false"
+        }
+      ]
+    },
+    {
+      "name": "FieldShell",
+      "file": "src/components/properties/FieldShell.tsx",
+      "description": "The label, description and error frame shared by every property field.\n\nExported so a bespoke field looks like the built-in ones without copying\ntheir markup — which is exactly what went wrong in the examples this family\nreplaces, where the same label styling was pasted into three inspectors.",
+      "example": "<FieldShell label=\"Opacity\" description=\"0 to 1\" htmlFor=\"opacity\">\n  <MyCustomSlider id=\"opacity\" />\n</FieldShell>",
+      "props": [
+        {
+          "name": "children",
+          "required": true,
+          "type": "ReactNode",
+          "description": "The control itself.",
+          "default": null
+        },
+        {
+          "name": "label",
+          "required": true,
+          "type": "string",
+          "description": "Label shown above the control, or beside it when `inline`.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the field wrapper.",
+          "default": null
+        },
+        {
+          "name": "description",
+          "required": false,
+          "type": "string",
+          "description": "One line under the control explaining the property. Hidden while `error` is set.",
+          "default": null
+        },
+        {
+          "name": "error",
+          "required": false,
+          "type": "string",
+          "description": "Validation message, shown in the destructive colour in place of the description.",
+          "default": null
+        },
+        {
+          "name": "htmlFor",
+          "required": false,
+          "type": "string",
+          "description": "Associates the label with the control.",
+          "default": null
+        },
+        {
+          "name": "inline",
+          "required": false,
+          "type": "boolean",
+          "description": "Render the label beside the control rather than above. Suits checkboxes,\nwhere a label on its own line reads as a heading for nothing.",
+          "default": null
+        },
+        {
+          "name": "mixed",
+          "required": false,
+          "type": "boolean",
+          "description": "Selected subjects hold different values — renders the *Mixed* marker beside the label.",
           "default": null
         }
       ]
@@ -543,6 +770,28 @@
           "required": false,
           "type": "boolean",
           "description": "Draw as selected.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "GraphEdgeLayer",
+      "file": "src/components/graph/GraphEdge.tsx",
+      "description": "The SVG surface edges are drawn on.\n\nSits beneath the nodes inside a {@link GraphCanvas}, spanning an effectively\nunbounded area so edges remain visible wherever the graph is panned. It also\ndefines the shared arrowhead marker.",
+      "example": null,
+      "props": [
+        {
+          "name": "children",
+          "required": false,
+          "type": "React.ReactNode",
+          "description": "The edges to draw. Anything SVG works — this is just the surface.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the `<svg>` element.",
           "default": null
         }
       ]
@@ -945,6 +1194,176 @@
       ]
     },
     {
+      "name": "NumberField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A numeric property.",
+      "example": null,
+      "props": [
+        {
+          "name": "label",
+          "required": true,
+          "type": "string",
+          "description": "Label shown above the control.",
+          "default": null
+        },
+        {
+          "name": "value",
+          "required": true,
+          "type": "T | undefined",
+          "description": "Current value. `undefined` renders as empty.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the field wrapper.",
+          "default": null
+        },
+        {
+          "name": "description",
+          "required": false,
+          "type": "string",
+          "description": "One line under the label explaining the property.",
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "required": false,
+          "type": "boolean",
+          "description": "Render read-only.",
+          "default": null
+        },
+        {
+          "name": "error",
+          "required": false,
+          "type": "string",
+          "description": "Validation message, shown in the destructive colour.",
+          "default": null
+        },
+        {
+          "name": "max",
+          "required": false,
+          "type": "number",
+          "description": "Highest accepted value. Enforced by the browser, not by this component.",
+          "default": null
+        },
+        {
+          "name": "min",
+          "required": false,
+          "type": "number",
+          "description": "Lowest accepted value. Enforced by the browser, not by this component.",
+          "default": null
+        },
+        {
+          "name": "mixed",
+          "required": false,
+          "type": "boolean",
+          "description": "Selected subjects hold different values. The control shows a placeholder\ninstead of a value, and editing applies to all of them.",
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "required": false,
+          "type": "(value: T) => void",
+          "description": "Called with the new value.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Hint shown in an empty control. Replaced by the mixed placeholder when `mixed`.",
+          "default": null
+        },
+        {
+          "name": "step",
+          "required": false,
+          "type": "number",
+          "description": "Increment for the spinner and arrow keys.",
+          "default": null
+        },
+        {
+          "name": "unit",
+          "required": false,
+          "type": "string",
+          "description": "Unit shown inside the control's trailing edge, e.g. `\"px\"`.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "PropertyPanel",
+      "file": "src/components/properties/PropertyPanel.tsx",
+      "description": "An inspector: the properties of whatever is selected, as editable fields.\n\nGive it the selection and a list of field descriptors. It reads each\nproperty across every selected subject, renders the matching field, and hands\nback new copies on edit — it holds no state and mutates nothing.\n\nThree selection states are handled for you:\n\n- **none** — the empty state.\n- **one** — ordinary editing.\n- **several** — shared values edit together; where subjects disagree the\n  field shows *Mixed* rather than one subject's value, and editing applies to\n  all of them.\n\nThat last case is the one hand-rolled inspectors usually skip, and skipping\nit is how a multi-selection edit silently flattens data.\n\nEvery field is also exported on its own — reach for `TextField` and friends\nwhen a property needs bespoke arrangement, and use `FieldShell` to make a\ncustom control look like the rest.",
+      "example": "<PropertyPanel\n  subjects={selectedNodes}\n  title={(nodes) => nodes.length > 1 ? `${nodes.length} nodes` : 'Node'}\n  fields={[\n    { key: 'data.label', label: 'Label' },\n    { key: 'kind', label: 'Type', type: 'select',\n      props: { options: [{ value: 'idea', label: 'Idea' }] } },\n    { key: 'data.notes', label: 'Notes', type: 'textarea', group: 'Detail' },\n    { key: 'data.tags', label: 'Tags', type: 'tags', group: 'Detail' },\n  ]}\n  onChange={(updated) => setNodes(merge(nodes, updated))}\n/>",
+      "props": [
+        {
+          "name": "fields",
+          "required": true,
+          "type": "IPropertyField<S>[]",
+          "description": "The properties to show.",
+          "default": null
+        },
+        {
+          "name": "subjects",
+          "required": true,
+          "type": "S[]",
+          "description": "The selected subjects. Zero renders the empty state, one edits normally,\nseveral edit together with a mixed indicator where values differ.",
+          "default": null
+        },
+        {
+          "name": "aria-label",
+          "required": false,
+          "type": "string",
+          "description": "Accessible label for the region. Defaults to `\"Properties\"`.",
+          "default": "\"Properties\""
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the root element.",
+          "default": null
+        },
+        {
+          "name": "emptyState",
+          "required": false,
+          "type": "ReactNode",
+          "description": "Shown when nothing is selected.",
+          "default": null
+        },
+        {
+          "name": "fieldTypes",
+          "required": false,
+          "type": "Record<string, FieldRenderer<S>>",
+          "description": "Field renderers by type. Defaults to {@link BUILT_IN_FIELD_TYPES}; spread\nit to add your own without losing the built-ins.",
+          "default": null
+        },
+        {
+          "name": "groupOrder",
+          "required": false,
+          "type": "string[]",
+          "description": "Group headings render in this order. Unlisted groups follow, in first-seen order.",
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "required": false,
+          "type": "(updated: S[], field: IPropertyField<S>, value: unknown) => void",
+          "description": "Called with every subject updated. The panel produces new copies and never\nmutates, so this is the whole edit — apply it to your state.",
+          "default": null
+        },
+        {
+          "name": "title",
+          "required": false,
+          "type": "ReactNode | ((subjects: S[]) => ReactNode)",
+          "description": "Heading above the fields. Receives the selection, so it can read\n\"3 nodes selected\" as easily as a name.",
+          "default": null
+        }
+      ]
+    },
+    {
       "name": "QuickSearch",
       "file": "src/components/widgets/QuickSearch.tsx",
       "description": "A compact search field with a grouped results dropdown, sized to sit inside a\n{@link MenuBar}.\n\nPresentational and fully controlled — it owns the query text, the open state\nand the keyboard highlight, and nothing else. Searching is entirely yours:\nresults are pushed in via `results`, so the same component backs a local\narray, a registry lookup, or a remote index.\n\nArrow keys move the highlight across groups, Enter selects, Escape closes.",
@@ -1054,6 +1473,84 @@
           "required": false,
           "type": "string[]",
           "description": "Past or suggested queries offered as autocomplete below the input.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "SelectField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A choice from a fixed set.",
+      "example": null,
+      "props": [
+        {
+          "name": "label",
+          "required": true,
+          "type": "string",
+          "description": "Label shown above the control.",
+          "default": null
+        },
+        {
+          "name": "options",
+          "required": true,
+          "type": "ISelectOption[]",
+          "description": "The choices, in the order they should appear.",
+          "default": null
+        },
+        {
+          "name": "value",
+          "required": true,
+          "type": "T | undefined",
+          "description": "Current value. `undefined` renders as empty.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the field wrapper.",
+          "default": null
+        },
+        {
+          "name": "description",
+          "required": false,
+          "type": "string",
+          "description": "One line under the label explaining the property.",
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "required": false,
+          "type": "boolean",
+          "description": "Render read-only.",
+          "default": null
+        },
+        {
+          "name": "error",
+          "required": false,
+          "type": "string",
+          "description": "Validation message, shown in the destructive colour.",
+          "default": null
+        },
+        {
+          "name": "mixed",
+          "required": false,
+          "type": "boolean",
+          "description": "Selected subjects hold different values. The control shows a placeholder\ninstead of a value, and editing applies to all of them.",
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "required": false,
+          "type": "(value: T) => void",
+          "description": "Called with the new value.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Shown as the first, unselected entry.",
           "default": null
         }
       ]
@@ -1223,6 +1720,21 @@
       ]
     },
     {
+      "name": "StaticField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A read-only property: an id, a timestamp, a computed total.\n\nPresent because inspectors are full of values worth showing and not worth\nediting, and a disabled text input reads as \"you may not edit this yet\"\nrather than \"this is derived\".",
+      "example": null,
+      "props": [
+        {
+          "name": "mono",
+          "required": false,
+          "type": "boolean",
+          "description": "Render in a monospaced face — ids, hashes, coordinates.",
+          "default": null
+        }
+      ]
+    },
+    {
       "name": "StatusBar",
       "file": "src/components/widgets/StatusBar.tsx",
       "description": "A VS Code-style status bar: a fixed-height footer with left, center and right\nitem groups. Items may be static labels or interactive buttons.\n\nThis component is fully controlled — it holds no state and reads no global\nstore. For the store-backed variant used by `ShellLayout`, see\n{@link ConnectedStatusBar}.",
@@ -1247,6 +1759,84 @@
           "required": false,
           "type": "IStatusBarWidget[]",
           "description": "Items to display. They are grouped by `alignment` and sorted by descending\n`priority` within each group.",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "TagField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A list-of-strings property.\n\nEnter or the add button commits the draft; duplicates and blanks are\nrejected silently rather than with an error, since neither is a mistake worth\ninterrupting for.",
+      "example": null,
+      "props": [
+        {
+          "name": "label",
+          "required": true,
+          "type": "string",
+          "description": "Label shown above the control.",
+          "default": null
+        },
+        {
+          "name": "value",
+          "required": true,
+          "type": "T | undefined",
+          "description": "Current value. `undefined` renders as empty.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the field wrapper.",
+          "default": null
+        },
+        {
+          "name": "description",
+          "required": false,
+          "type": "string",
+          "description": "One line under the label explaining the property.",
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "required": false,
+          "type": "boolean",
+          "description": "Render read-only.",
+          "default": null
+        },
+        {
+          "name": "error",
+          "required": false,
+          "type": "string",
+          "description": "Validation message, shown in the destructive colour.",
+          "default": null
+        },
+        {
+          "name": "mixed",
+          "required": false,
+          "type": "boolean",
+          "description": "Selected subjects hold different values. The control shows a placeholder\ninstead of a value, and editing applies to all of them.",
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "required": false,
+          "type": "(value: T) => void",
+          "description": "Called with the new value.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Hint shown in the draft box. Defaults to `\"Add and press Enter\"`.",
+          "default": "\"Add and press Enter\""
+        },
+        {
+          "name": "suggestions",
+          "required": false,
+          "type": "string[]",
+          "description": "Offer these as a datalist while typing.",
           "default": null
         }
       ]
@@ -1305,6 +1895,162 @@
           "type": "string",
           "description": "Title shown in the pane header. Defaults to `\"Terminal\"`.",
           "default": "\"Terminal\""
+        }
+      ]
+    },
+    {
+      "name": "TextAreaField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A multi-line text property — notes, descriptions, evidence.",
+      "example": null,
+      "props": [
+        {
+          "name": "label",
+          "required": true,
+          "type": "string",
+          "description": "Label shown above the control.",
+          "default": null
+        },
+        {
+          "name": "value",
+          "required": true,
+          "type": "T | undefined",
+          "description": "Current value. `undefined` renders as empty.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the field wrapper.",
+          "default": null
+        },
+        {
+          "name": "description",
+          "required": false,
+          "type": "string",
+          "description": "One line under the label explaining the property.",
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "required": false,
+          "type": "boolean",
+          "description": "Render read-only.",
+          "default": null
+        },
+        {
+          "name": "error",
+          "required": false,
+          "type": "string",
+          "description": "Validation message, shown in the destructive colour.",
+          "default": null
+        },
+        {
+          "name": "mixed",
+          "required": false,
+          "type": "boolean",
+          "description": "Selected subjects hold different values. The control shows a placeholder\ninstead of a value, and editing applies to all of them.",
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "required": false,
+          "type": "(value: T) => void",
+          "description": "Called with the new value.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Hint shown in an empty control. Replaced by the mixed placeholder when `mixed`.",
+          "default": null
+        },
+        {
+          "name": "rows",
+          "required": false,
+          "type": "number",
+          "description": "Visible rows. Defaults to `4`.",
+          "default": "4"
+        }
+      ]
+    },
+    {
+      "name": "TextField",
+      "file": "src/components/properties/fields.tsx",
+      "description": "A single-line text property.",
+      "example": null,
+      "props": [
+        {
+          "name": "label",
+          "required": true,
+          "type": "string",
+          "description": "Label shown above the control.",
+          "default": null
+        },
+        {
+          "name": "value",
+          "required": true,
+          "type": "T | undefined",
+          "description": "Current value. `undefined` renders as empty.",
+          "default": null
+        },
+        {
+          "name": "className",
+          "required": false,
+          "type": "string",
+          "description": "Extra classes merged onto the field wrapper.",
+          "default": null
+        },
+        {
+          "name": "description",
+          "required": false,
+          "type": "string",
+          "description": "One line under the label explaining the property.",
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "required": false,
+          "type": "boolean",
+          "description": "Render read-only.",
+          "default": null
+        },
+        {
+          "name": "error",
+          "required": false,
+          "type": "string",
+          "description": "Validation message, shown in the destructive colour.",
+          "default": null
+        },
+        {
+          "name": "inputType",
+          "required": false,
+          "type": "'text' | 'url' | 'email' | 'tel' | 'password'",
+          "description": "Input type, for the browser's own affordances. Defaults to `\"text\"`.",
+          "default": "\"text\""
+        },
+        {
+          "name": "mixed",
+          "required": false,
+          "type": "boolean",
+          "description": "Selected subjects hold different values. The control shows a placeholder\ninstead of a value, and editing applies to all of them.",
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "required": false,
+          "type": "(value: T) => void",
+          "description": "Called with the new value.",
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "required": false,
+          "type": "string",
+          "description": "Hint shown in an empty control. Replaced by the mixed placeholder when `mixed`.",
+          "default": null
         }
       ]
     },

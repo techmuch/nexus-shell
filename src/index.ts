@@ -137,6 +137,25 @@ export {
   type IViewport,
 } from './lib/graph';
 
+// ---------------------------------------------------------------------------
+// Properties — inspectors for whatever is selected
+//
+// Composable fields, plus a descriptor-driven panel built on them. Handles the
+// empty, single and multiple selection cases, including mixed values.
+// ---------------------------------------------------------------------------
+
+export * from './components/properties';
+export {
+  getPath,
+  setPath,
+  readValue,
+  readValues,
+  writeValue,
+  writeValues,
+  type IPropertyAccessor,
+  type IPropertyValue,
+} from './lib/properties';
+
 // Utilities
 export { cn } from './lib/cn';
 export {

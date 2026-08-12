@@ -1,434 +1,412 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+/**
+ * The dialogue mapper, end to end.
+ *
+ * Selectors here are the library's own contract — `[data-graph-node]`,
+ * `[data-graph-edge]`, and the accessible names of the inspector's fields.
+ * Nothing reaches for a rendering library's internal class names, which is what
+ * made the previous version of this file break whenever the canvas changed.
+ */
+
+const SAMPLE_MAP = {
+  nodes: [
+    {
+      id: 'node-1',
+      kind: 'question',
+      position: { x: 250, y: 100 },
+      size: { width: 240, height: 182 },
+      data: {
+        title: 'Which communication model should we use for real-time state sync?',
+        tags: [],
+        author: 'architecture',
+        timestamp: '01/03/2026, 09:00',
+      },
+    },
+    {
+      id: 'node-2',
+      kind: 'idea',
+      position: { x: 100, y: 400 },
+      size: { width: 240, height: 182 },
+      data: {
+        title: 'WebSockets with a custom state protocol',
+        tags: [],
+        author: 'platform',
+        timestamp: '01/03/2026, 09:05',
+      },
+    },
+    {
+      id: 'node-4',
+      kind: 'idea',
+      position: { x: 420, y: 400 },
+      size: { width: 240, height: 182 },
+      data: {
+        title: 'Server-Sent Events (SSE) with HTTP/2 multiplexing',
+        tags: [],
+        author: 'platform',
+        timestamp: '01/03/2026, 09:06',
+      },
+    },
+    {
+      id: 'node-3',
+      kind: 'pro',
+      position: { x: 100, y: 700 },
+      size: { width: 240, height: 182 },
+      data: {
+        title: 'Extremely low latency (sub-10ms)',
+        tags: [],
+        author: 'platform',
+        timestamp: '01/03/2026, 09:10',
+      },
+    },
+    {
+      id: 'node-link',
+      kind: 'link',
+      position: { x: 740, y: 100 },
+      size: { width: 240, height: 182 },
+      data: {
+        title: 'IBIS Methodology Reference',
+        url: 'https://en.wikipedia.org/wiki/Issue-Based_Information_System',
+        tags: [],
+        author: 'research',
+        timestamp: '01/03/2026, 09:12',
+      },
+    },
+    {
+      id: 'node-img',
+      kind: 'image',
+      position: { x: 1040, y: 240 },
+      size: { width: 240, height: 182 },
+      data: {
+        title: 'Architecture Network Diagram',
+        tags: [],
+        author: 'research',
+        timestamp: '01/03/2026, 09:14',
+      },
+    },
+  ],
+  edges: [
+    { id: 'e1-2', source: 'node-1', target: 'node-2' },
+    { id: 'e1-4', source: 'node-1', target: 'node-4' },
+    { id: 'e2-3', source: 'node-3', target: 'node-2' },
+  ],
+};
+
+const canvas = (page: Page) => page.getByRole('application', { name: 'Dialogue map' });
+const nodes = (page: Page) => page.locator('[data-graph-node]');
+const edges = (page: Page) => page.locator('[data-graph-edge]');
+const nodeTitleInput = (page: Page) => page.getByLabel('Node title');
+
+/** The inspector's fields, by their accessible names. */
+const inspector = (page: Page) => ({
+  label: page.getByLabel('Node label'),
+  kind: page.getByLabel('Argument logic class'),
+  url: page.getByLabel('Link URL'),
+  imageUrl: page.getByLabel('Image URL'),
+  tags: page.getByLabel('Tags / categories'),
+});
 
 test.describe('Dialogue Mapping Workstation', () => {
   test.beforeEach(async ({ page }) => {
-    const sampleMap = {
-      nodes: [
-        { id: 'node-1', type: 'ibisNode', position: { x: 250, y: 100 }, selected: false, data: { id: 'node-1', type: 'question', title: 'Which communication model should we use for real-time state sync?', tags: [] } },
-        { id: 'node-2', type: 'ibisNode', position: { x: 100, y: 300 }, selected: false, data: { id: 'node-2', type: 'idea', title: 'WebSockets with a custom state protocol', tags: [] } },
-        { id: 'node-4', type: 'ibisNode', position: { x: 400, y: 300 }, selected: false, data: { id: 'node-4', type: 'idea', title: 'Server-Sent Events (SSE) with HTTP/2 multiplexing', tags: [] } },
-        { id: 'node-3', type: 'ibisNode', position: { x: 100, y: 500 }, selected: false, data: { id: 'node-3', type: 'pro', title: 'Extremely low latency (sub-10ms)', tags: [] } },
-        { id: 'node-link', type: 'ibisNode', position: { x: 500, y: 100 }, selected: false, data: { id: 'node-link', type: 'link', title: 'IBIS Methodology Reference', url: 'https://en.wikipedia.org/wiki/Issue-Based_Information_System', tags: [] } },
-        { id: 'node-img', type: 'ibisNode', position: { x: 800, y: 200 }, selected: false, data: { id: 'node-img', type: 'image', title: 'Architecture Network Diagram', tags: [] } },
-      ],
-      edges: [
-        { id: 'e1-2', source: 'node-1', target: 'node-2', type: 'straight' },
-        { id: 'e1-4', source: 'node-1', target: 'node-4', type: 'straight' },
-        { id: 'e2-3', source: 'node-2', target: 'node-3', type: 'straight' },
-        { id: 'e-dummy1', source: 'node-1', target: 'node-1', type: 'straight' },
-        { id: 'e-dummy2', source: 'node-1', target: 'node-1', type: 'straight' },
-        { id: 'e-dummy3', source: 'node-1', target: 'node-1', type: 'straight' },
-        { id: 'e-dummy4', source: 'node-1', target: 'node-1', type: 'straight' },
-        { id: 'e-dummy5', source: 'node-1', target: 'node-1', type: 'straight' },
-      ]
-    };
+    await page.route('**/api/projects', (route) => route.fulfill({ status: 200, json: [] }));
+    await page.route('**/api/files', (route) =>
+      route.fulfill({
+        status: 200,
+        json: [{ id: undefined, content: JSON.stringify(SAMPLE_MAP) }],
+      }),
+    );
+    await page.route('**/api/maps/content', (route) =>
+      route.fulfill({ status: 200, json: { success: true } }),
+    );
 
-    await page.route('**/api/projects', async route => {
-      await route.fulfill({ status: 200, json: [] });
-    });
-    
-    await page.route('**/api/files', async route => {
-      await route.fulfill({ 
-        status: 200, 
-        json: [{ id: undefined, content: JSON.stringify(sampleMap) }] 
-      });
-    });
-
-    await page.route('**/api/maps/content', async route => {
-      await route.fulfill({ status: 200, json: { success: true } });
-    });
-
-    page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
     await page.goto('/');
-    
-    // Hover on 'View' menu and open the Dialogue Map tab
+
     await page.getByText('View', { exact: true }).hover();
     await page.getByText('Dialogue Map', { exact: true }).click();
-    await page.mouse.move(0, 0); // dismiss menu
+    await page.mouse.move(0, 0);
 
-    // Verify workspace elements are visible
     await expect(page.getByText('IBIS Node Library')).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Argument Inspector')).toBeVisible();
-
-    // Wait for React Flow nodes to be fully rendered in DOM
-    const nodeLocator = page.locator('.react-flow__node').first();
-    await nodeLocator.waitFor({ state: 'attached', timeout: 5000 });
-
-    // Print computed styles and bounding box to console
-    await page.evaluate(() => {
-      const node = document.querySelector('.react-flow__node');
-      const container = document.querySelector('.react-flow');
-      if (node && container) {
-        console.log('TEST DEBUG - NODE CLIENT: ' + JSON.stringify({
-          nodeWidth: node.clientWidth,
-          nodeHeight: node.clientHeight,
-          nodeRect: {
-            x: node.getBoundingClientRect().x,
-            y: node.getBoundingClientRect().y,
-            width: node.getBoundingClientRect().width,
-            height: node.getBoundingClientRect().height
-          },
-          nodeStyle: {
-            display: window.getComputedStyle(node).display,
-            visibility: window.getComputedStyle(node).visibility,
-            opacity: window.getComputedStyle(node).opacity,
-          },
-          containerRect: {
-            x: container.getBoundingClientRect().x,
-            y: container.getBoundingClientRect().y,
-            width: container.getBoundingClientRect().width,
-            height: container.getBoundingClientRect().height
-          },
-          containerStyle: {
-            display: window.getComputedStyle(container).display,
-            visibility: window.getComputedStyle(container).visibility,
-            width: window.getComputedStyle(container).width,
-            height: window.getComputedStyle(container).height,
-          }
-        }));
-      } else {
-        console.log('TEST DEBUG - NODE OR CONTAINER NOT FOUND: ' + JSON.stringify({
-          nodeExists: !!node,
-          containerExists: !!container,
-        }));
-      }
-    });
-
-    // Wait for React Flow nodes to be fully rendered and visible
-    await expect(nodeLocator).toBeVisible({ timeout: 5000 });
+    await expect(nodes(page).first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should display preloaded IBIS nodes on the canvas', async ({ page }) => {
-    // Check that preloaded question is visible
-    await expect(page.getByText('Which communication model should we use for real-time state sync?')).toBeVisible();
-    // Check that preloaded ideas are visible
+    await expect(
+      page.getByText('Which communication model should we use for real-time state sync?'),
+    ).toBeVisible();
     await expect(page.getByText('WebSockets with a custom state protocol')).toBeVisible();
-    await expect(page.getByText('Server-Sent Events (SSE) with HTTP/2 multiplexing')).toBeVisible();
+    await expect(
+      page.getByText('Server-Sent Events (SSE) with HTTP/2 multiplexing'),
+    ).toBeVisible();
+    await expect(nodes(page)).toHaveCount(SAMPLE_MAP.nodes.length);
   });
 
   test('should add nodes when clicked from library', async ({ page }) => {
-    // Click 'Question / Issue' button in the node library
     await page.getByRole('button', { name: 'Question / Issue' }).click();
-    
-    // The node starts in edit mode, commit it by pressing Enter
-    await page.locator('.react-flow__node-ibisNode input').press('Enter');
 
-    // A new question node should be visible
+    // A new node opens for editing; Enter commits the default title.
+    await nodeTitleInput(page).press('Enter');
     await expect(page.getByText('New Question')).toBeVisible();
 
-    // Select the new question node
     await page.getByText('New Question').first().click();
-
-    // The inspector should show properties for this new node
-    await expect(page.locator('input[placeholder="Enter node title..."]')).toHaveValue('New Question');
+    await expect(inspector(page).label).toHaveValue('New Question');
   });
 
   test('should add nodes when dragged from library', async ({ page }) => {
-    const source = page.getByRole('button', { name: 'Idea / Position' });
-    const target = page.locator('.react-flow');
+    await page.getByRole('button', { name: 'Idea / Position' }).dragTo(canvas(page));
 
-    // Drag the idea button to the canvas
-    await source.dragTo(target);
-
-    // Commit edit mode for the newly created node
-    await page.locator('.react-flow__node-ibisNode input').press('Enter');
-
-    // A new idea node should be visible on the canvas
+    await nodeTitleInput(page).press('Enter');
     await expect(page.getByText('New Idea')).toBeVisible();
 
-    // Select the new idea node
     await page.getByText('New Idea').first().click();
-
-    // The inspector should show properties for this new node
-    await expect(page.locator('input[placeholder="Enter node title..."]')).toHaveValue('New Idea');
+    await expect(inspector(page).label).toHaveValue('New Idea');
   });
 
-  test('should support context menu copy, paste, and delete on nodes and edges', async ({ page }) => {
-    // 1. Right-click the preloaded Question node on the canvas
-    const questionNode = page.getByText('Which communication model should we use for real-time state sync?');
-    await questionNode.click({ button: 'right' });
+  test('should support context menu copy, paste, and delete on nodes and edges', async ({
+    page,
+  }) => {
+    const title = 'Which communication model should we use for real-time state sync?';
 
-    // The custom context menu should appear
-    const copyOption = page.getByText('Copy Node', { exact: true });
-    await expect(copyOption).toBeVisible();
+    await page.getByText(title).click({ button: 'right' });
+    await page.getByText('Copy Node', { exact: true }).click();
 
-    // Click "Copy Node"
-    await copyOption.click();
+    await canvas(page).click({ button: 'right', position: { x: 220, y: 220 } });
+    await page.getByText('Paste Node').click();
 
-    // 2. Right-click on the canvas pane
-    const canvas = page.locator('.react-flow');
-    await canvas.click({ button: 'right', position: { x: 200, y: 200 } });
+    await expect(page.getByText(title).nth(1)).toBeVisible();
 
-    // Paste option should be visible
-    const pasteOption = page.getByText('Paste Node');
-    await expect(pasteOption).toBeVisible();
+    await page.getByText(title).nth(1).click({ button: 'right', force: true });
+    await page.getByText('Delete Node', { exact: true }).click();
+    await expect(page.getByText(title)).toHaveCount(1);
 
-    // Click "Paste Node"
-    await pasteOption.click();
-
-    // The pasted node should now be visible on the canvas (there will be two identical question titles)
-    await expect(page.getByText('Which communication model should we use for real-time state sync?').nth(1)).toBeVisible();
-
-    // 3. Right-click the newly pasted node and delete it
-    const pastedNode = page.getByText('Which communication model should we use for real-time state sync?').nth(1);
-    await pastedNode.click({ button: 'right', force: true });
-
-    const deleteOption = page.getByText('Delete Node', { exact: true });
-    await expect(deleteOption).toBeVisible();
-    await deleteOption.click();
-
-    // The duplicated node should be removed
-    await expect(page.getByText('Which communication model should we use for real-time state sync?').nth(1)).not.toBeVisible();
-
-    // 4. Right-click on an edge connection path
-    const edge = page.locator('[data-testid="rf__edge-e1-4"] .react-flow__edge-interaction');
-    await edge.dispatchEvent('contextmenu', { clientX: 300, clientY: 200 });
-
-    // Delete Connection option should be visible
-    const deleteConnectionOption = page.getByText('Delete Connection');
-    await expect(deleteConnectionOption).toBeVisible();
-    await deleteConnectionOption.click();
-
-    // The edge path count should decrease from 8 to 7
-    await expect(page.locator('.react-flow__edge-path')).toHaveCount(7);
+    // Edges carry their id, so no rendering-library test id is needed.
+    await expect(edges(page)).toHaveCount(3);
+    await page.locator('[data-graph-edge="e1-4"]').click({ button: 'right', force: true });
+    await page.getByText('Delete Connection').click();
+    await expect(edges(page)).toHaveCount(2);
   });
 
   test('should edit node titles in inspector sidebar', async ({ page }) => {
-    // Click on the preloaded WebSockets Idea node to select it
     await page.getByText('WebSockets with a custom state protocol').first().click();
 
-    // Inspector title input should have its current value
-    const titleInput = page.locator('input[placeholder="Enter node title..."]');
-    await expect(titleInput).toHaveValue('WebSockets with a custom state protocol');
+    const label = inspector(page).label;
+    await expect(label).toHaveValue('WebSockets with a custom state protocol');
 
-    // Change title in the inspector
-    await titleInput.fill('Updated WebSockets Title');
-    
-    // The node on the canvas should immediately update its text
+    await label.fill('Updated WebSockets Title');
     await expect(page.getByText('Updated WebSockets Title')).toBeVisible();
   });
 
-  test('should support inline double-click title editing directly on the node', async ({ page }) => {
-    const nodeLabel = page.getByText('Extremely low latency (sub-10ms)');
-    
-    // Double click the label to trigger inline editing
-    await nodeLabel.dblclick();
+  test('should support inline double-click title editing directly on the node', async ({
+    page,
+  }) => {
+    await page.getByText('Extremely low latency (sub-10ms)').dblclick();
 
-    // An input element should appear in the node container
-    const inlineInput = page.locator('.react-flow__node-ibisNode input');
-    await expect(inlineInput).toBeVisible();
+    const input = nodeTitleInput(page);
+    await expect(input).toBeVisible();
 
-    // Type new title and blur
-    await inlineInput.fill('Updated Low Latency Pro');
-    await inlineInput.press('Enter');
-
-    // Verify updated title is rendered
+    await input.fill('Updated Low Latency Pro');
+    await input.press('Enter');
     await expect(page.getByText('Updated Low Latency Pro')).toBeVisible();
   });
 
   test('should support adding and removing tags in inspector', async ({ page }) => {
-    // Click on the preloaded SSE Idea node
-    await page.locator('.react-flow__node', { hasText: 'Server-Sent Events (SSE) with HTTP/2 multiplexing' }).first().click({ force: true });
+    await page.getByText('Server-Sent Events (SSE) with HTTP/2 multiplexing').first().click();
 
-    // Find the tag input field and add a tag
-    const tagInput = page.locator('input[placeholder="e.g. database"]');
-    await tagInput.fill('performance-test');
-    await tagInput.press('Enter');
+    const tags = inspector(page).tags;
+    await tags.fill('performance-test');
+    await tags.press('Enter');
 
-    // Tag badge should be visible in the inspector
-    const inspectorTag = page.locator('[title="Click to remove tag"]', { hasText: '#performance-test' });
-    await expect(inspectorTag).toBeVisible();
+    await expect(page.getByText('performance-test')).toBeVisible();
 
-    // Click on tag in the inspector to remove it
-    await inspectorTag.click();
-
-    // Tag badge should be removed in the inspector
-    await expect(inspectorTag).not.toBeVisible();
+    await page.getByLabel('Remove performance-test').click();
+    await expect(page.getByText('performance-test')).toHaveCount(0);
   });
 
-  test('should block invalid semantic connections and display toast', async ({ page }) => {
-    // Question node node-1: 'Which communication model should we use...'
-    // Pro node node-3: 'Extremely low latency...'
-    
-    // Let's attempt to connect Pro (node-3) to Question (node-1) directly, which is forbidden in IBIS (Pros must target Ideas).
-    // React Flow handles connections by dragging from source handles.
-    // Instead of coordinate dragging which can be fragile, we can evaluate a script inside browser standard scope to trigger state connect.
-    const connectResult = await page.evaluate(() => {
-      // Access store directly from window object if exposed, or use programmatic test hook
-      const store = (window as any).useDialogueMappingStore?.getState();
-      if (store) {
-        return store.connectNodes({ source: 'node-3', target: 'node-1' });
-      }
-      return null;
+  /**
+   * Selecting several nodes and editing them together — the capability the
+   * hand-written inspector explicitly refused ("cannot be edited
+   * simultaneously") before it was rebuilt on `PropertyPanel`.
+   */
+  test('should edit several selected nodes at once, and mark values that differ', async ({
+    page,
+  }) => {
+    await page.getByText('WebSockets with a custom state protocol').first().click();
+    await page
+      .getByText('Server-Sent Events (SSE) with HTTP/2 multiplexing')
+      .first()
+      .click({ modifiers: ['Shift'] });
+
+    await expect(page.getByText('2 nodes selected')).toBeVisible();
+
+    // The two titles differ, so no value is shown for either.
+    await expect(inspector(page).label).toHaveValue('');
+    await expect(inspector(page).label).toHaveAttribute('placeholder', 'Mixed values');
+
+    // Both are ideas, so the shared kind edits normally.
+    await expect(inspector(page).kind).toHaveValue('idea');
+
+    const tags = inspector(page).tags;
+    await tags.fill('shared-tag');
+    await tags.press('Enter');
+
+    // The tag lands on both nodes.
+    await expect(page.getByText('#shared-tag')).toHaveCount(2);
+  });
+
+  test('should block invalid semantic connections and display a rejection', async ({ page }) => {
+    // Pros must target Ideas or Decisions, so Pro → Question is forbidden.
+    const accepted = await page.evaluate(() => {
+      const store = (window as unknown as Record<string, any>).useDialogueMappingStore?.getState();
+      return store ? store.connectNodes('node-3', 'node-1') : null;
     });
 
-    // If store is exposed, verify connection failed and alert/warning text is displayed
-    // Let's check if the connection toast alert appears on page
-    if (connectResult === false) {
-      await expect(page.getByText('Semantic Rejection:')).toBeVisible();
-    }
+    expect(accepted).toBe(false);
+    await expect(page.getByText('Semantic Rejection:')).toBeVisible();
   });
 
   test('should undo manual node drags using keyboard shortcut', async ({ page }) => {
-    // 1. Locate node, click to select/focus it, wait for scale transition to stabilize, and record initial bounding box
     const node = page.getByText('WebSockets with a custom state protocol').first();
     await node.click();
     await page.waitForTimeout(300);
-    const boxBefore = await node.boundingBox();
-    expect(boxBefore).not.toBeNull();
 
-    // 2. Drag the node
-    if (boxBefore) {
+    const before = await node.boundingBox();
+    expect(before).not.toBeNull();
+
+    if (before) {
       await node.hover();
       await page.mouse.down();
-      await page.mouse.move(boxBefore.x + 150, boxBefore.y + 150, { steps: 5 });
+      await page.mouse.move(before.x + 150, before.y + 150, { steps: 5 });
       await page.mouse.up();
     }
 
-    // 3. Verify node moved
-    const boxAfter = await node.boundingBox();
-    expect(boxAfter).not.toBeNull();
-    if (boxBefore && boxAfter) {
-      expect(boxAfter.x).not.toBeCloseTo(boxBefore.x, 2);
-      expect(boxAfter.y).not.toBeCloseTo(boxBefore.y, 2);
+    const after = await node.boundingBox();
+    expect(after).not.toBeNull();
+    if (before && after) {
+      expect(after.x).not.toBeCloseTo(before.x, 2);
+      expect(after.y).not.toBeCloseTo(before.y, 2);
     }
 
-    // 4. Press Control+Z to undo
     await page.keyboard.press('Control+Z');
 
-    // 5. Verify node moved back
-    const boxUndone = await node.boundingBox();
-    expect(boxUndone).not.toBeNull();
-    if (boxBefore && boxUndone) {
-      expect(boxUndone.x).toBeCloseTo(boxBefore.x, 2);
-      expect(boxUndone.y).toBeCloseTo(boxBefore.y, 2);
+    const undone = await node.boundingBox();
+    expect(undone).not.toBeNull();
+    if (before && undone) {
+      expect(undone.x).toBeCloseTo(before.x, 2);
+      expect(undone.y).toBeCloseTo(before.y, 2);
     }
   });
 
   test('should display preloaded Link and Image nodes', async ({ page }) => {
-    // Check that preloaded link is visible and contains its anchor URL
-    const linkNode = page.getByText('IBIS Methodology Reference');
-    await expect(linkNode).toBeVisible();
-    
-    const urlAnchor = page.locator('a[href="https://en.wikipedia.org/wiki/Issue-Based_Information_System"]');
-    await expect(urlAnchor).toBeVisible();
-    await expect(urlAnchor).toHaveText('https://en.wikipedia.org/wiki/Issue-Based_Information_System');
+    await expect(page.getByText('IBIS Methodology Reference')).toBeVisible();
 
-    // Check that preloaded image is visible
-    const imageNode = page.getByText('Architecture Network Diagram');
-    await expect(imageNode).toBeVisible();
+    const anchor = page.locator(
+      'a[href="https://en.wikipedia.org/wiki/Issue-Based_Information_System"]',
+    );
+    await expect(anchor).toBeVisible();
 
-    const imageTag = page.locator('img[alt="Architecture Network Diagram"]');
-    await expect(imageTag).toBeVisible();
+    await expect(page.getByText('Architecture Network Diagram')).toBeVisible();
+    await expect(page.locator('img[alt="Architecture Network Diagram"]')).toBeVisible();
   });
 
   test('should support adding Link and Image nodes from library', async ({ page }) => {
-    // Add Link node
     await page.getByRole('button', { name: 'Link / Reference' }).click();
-    
-    // Node starts in edit mode, commit it
-    await page.locator('.react-flow__node-ibisNode input').press('Enter');
+    await nodeTitleInput(page).press('Enter');
     await expect(page.getByText('New Link')).toBeVisible();
 
-    // Select new Link node and check inspector URL input
     await page.getByText('New Link').first().click();
-    const linkInput = page.locator('input[placeholder="https://example.com"]');
-    await expect(linkInput).toBeVisible();
-    await linkInput.fill('https://google.com');
-    await linkInput.press('Enter');
-
-    // Check link node on canvas has the updated link URL
+    const url = inspector(page).url;
+    await expect(url).toBeVisible();
+    await url.fill('https://google.com');
     await expect(page.locator('a[href="https://google.com"]')).toBeVisible();
 
-    // Add Image node
     await page.getByRole('button', { name: 'Image / Diagram' }).click();
-    
-    // Node starts in edit mode, commit it
-    await page.locator('.react-flow__node-ibisNode input').press('Enter');
+    await nodeTitleInput(page).press('Enter');
     await expect(page.getByText('New Image')).toBeVisible();
 
-    // Select new Image node and check inspector Image URL input
     await page.getByText('New Image').first().click();
-    const imageInput = page.locator('input[placeholder="Image URL or local path..."]');
-    await expect(imageInput).toBeVisible();
+    await expect(inspector(page).imageUrl).toBeVisible();
   });
 
   test('should support Compendium keyboard shortcuts for node creation', async ({ page }) => {
-    // Click on canvas background to ensure no inputs are focused
-    await page.locator('.react-flow').click();
+    await canvas(page).click({ position: { x: 40, y: 40 } });
 
-    // Press 'l' -> Create Link
-    await page.keyboard.press('l');
-    await page.locator('.react-flow__node-ibisNode input').press('Enter');
-    await expect(page.getByText('New Link')).toBeVisible();
-
-    // Press 'i' -> Create Image
-    await page.keyboard.press('i');
-    await page.locator('.react-flow__node-ibisNode input').press('Enter');
-    await expect(page.getByText('New Image')).toBeVisible();
-
-    // Press 'q' -> Create Question
-    await page.keyboard.press('q');
-    await page.locator('.react-flow__node-ibisNode input').press('Enter');
-    await expect(page.getByText('New Question')).toBeVisible();
+    for (const [key, title] of [
+      ['l', 'New Link'],
+      ['i', 'New Image'],
+      ['q', 'New Question'],
+    ] as const) {
+      await page.keyboard.press(key);
+      await nodeTitleInput(page).press('Enter');
+      await expect(page.getByText(title)).toBeVisible();
+    }
   });
 
-  test('should support linked node creation from selected node via shortcuts', async ({ page }) => {
-    // 1. Click on the preloaded Question node (node-1) to select it
-    await page.getByText('Which communication model should we use for real-time state sync?').click();
+  test('should support linked node creation from selected node via shortcuts', async ({
+    page,
+  }) => {
+    await page
+      .getByText('Which communication model should we use for real-time state sync?')
+      .click();
 
-    // 2. Press 'a' to create a new linked Idea node below it
     await page.keyboard.press('a');
 
-    // 3. Verify that the connection edge was generated
-    const hasEdge = await page.evaluate(() => {
-      const store = (window as any).useDialogueMappingStore?.getState();
-      if (store) {
-        const newIdea = store.nodes.find((n: any) => n.data.title.includes('New Idea'));
-        if (newIdea) {
-          return store.edges.some((e: any) => 
-            (e.source === 'node-1' && e.target === newIdea.id) ||
-            (e.source === newIdea.id && e.target === 'node-1')
-          );
-        }
-      }
-      return false;
+    const linked = await page.evaluate(() => {
+      const store = (window as unknown as Record<string, any>).useDialogueMappingStore?.getState();
+      if (!store) return false;
+
+      const idea = store.nodes.find((n: any) => n.data.title.includes('New Idea'));
+      if (!idea) return false;
+
+      return store.edges.some(
+        (e: any) =>
+          (e.source === 'node-1' && e.target === idea.id) ||
+          (e.source === idea.id && e.target === 'node-1'),
+      );
     });
-    expect(hasEdge).toBe(true);
+    expect(linked).toBe(true);
 
-    // 4. The new node should immediately be in edit mode
-    const inlineInput = page.locator('.react-flow__node-ibisNode input');
-    await expect(inlineInput).toBeVisible();
-
-    // 5. Type to change the title
-    await inlineInput.fill('Idea created by shortcut linking');
-    await inlineInput.press('Enter');
-
-    // Verify updated title is rendered
+    const input = nodeTitleInput(page);
+    await expect(input).toBeVisible();
+    await input.fill('Idea created by shortcut linking');
+    await input.press('Enter');
     await expect(page.getByText('Idea created by shortcut linking')).toBeVisible();
   });
 
-  test('should enter and exit edit mode by pressing Enter key on selected node', async ({ page }) => {
-    // 1. Click on a node to select/focus it (WebSockets node)
-    const nodeLabel = page.getByText('WebSockets with a custom state protocol').first();
-    await nodeLabel.click();
-
-    // 2. Press Enter to enter edit mode
+  test('should enter and exit edit mode by pressing Enter key on selected node', async ({
+    page,
+  }) => {
+    await page.getByText('WebSockets with a custom state protocol').first().click();
     await page.keyboard.press('Enter');
 
-    // 3. Verify that input element is visible
-    const inlineInput = page.locator('.react-flow__node-ibisNode input');
-    await expect(inlineInput).toBeVisible();
+    const input = nodeTitleInput(page);
+    await expect(input).toBeVisible();
 
-    // 4. Edit the text
-    await inlineInput.fill('WebSockets edit via Enter key');
-
-    // 5. Press Enter again to save and exit edit mode
+    await input.fill('WebSockets edit via Enter key');
     await page.keyboard.press('Enter');
 
-    // 6. Verify input element is no longer visible and label is updated
-    await expect(inlineInput).not.toBeVisible();
+    await expect(input).not.toBeVisible();
     await expect(page.getByText('WebSockets edit via Enter key')).toBeVisible();
   });
-});
 
+  /**
+   * Arrow keys move focus to the nearest node in that direction, which is what
+   * makes a hand-arranged map navigable without a pointer.
+   */
+  test('should move focus spatially with the arrow keys', async ({ page }) => {
+    await page.getByText('Which communication model should we use for real-time state sync?').click();
+    await expect(inspector(page).label).toHaveValue(
+      'Which communication model should we use for real-time state sync?',
+    );
+
+    await page.keyboard.press('ArrowDown');
+    // Both ideas sit below the question; the nearer one takes focus.
+    await expect(inspector(page).label).toHaveValue(
+      'WebSockets with a custom state protocol',
+    );
+
+    await page.keyboard.press('ArrowRight');
+    await expect(inspector(page).label).toHaveValue(
+      'Server-Sent Events (SSE) with HTTP/2 multiplexing',
+    );
+  });
+});

@@ -1,875 +1,433 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap,
-  Connection,
-  useReactFlow,
-  ReactFlowProvider,
-  Node,
-  Edge,
-  SelectionMode,
-  applyNodeChanges,
-  applyEdgeChanges,
-  MarkerType
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TabNode } from 'flexlayout-react';
+import { AlertCircle, ClipboardPaste, Copy, Scissors, Trash2 } from 'lucide-react';
 
-import { 
-  Trash2, 
-  AlertCircle,
-  Copy,
-  ClipboardPaste,
-  Scissors
-} from 'lucide-react';
+import {
+  ContextMenu,
+  FREEFORM,
+  GraphCanvas,
+  GraphEdge,
+  GraphEdgeLayer,
+  GraphMiniMap,
+  GraphNode,
+  readPaletteDrag,
+  useGraphKeyboard,
+  useGraphLayout,
+  type GraphCanvasHandle,
+  type IContextMenuItem,
+  type IGraphEdge,
+  type IPoint,
+  type IViewport,
+} from '../../../src/index';
 
-import { getMapStore, IbisNodeType, IDialogueNodeData } from './DialogueMappingService';
-import { IbisNode } from './components/IbisNode';
+import {
+  DIALOGUE_LAYOUTS,
+  getMapStore,
+  NODE_SIZE,
+  type DialogueNode,
+  type IbisNodeType,
+} from './DialogueMappingService';
+import { IBIS_COLOURS, IbisNode } from './components/IbisNode';
 import { DialogueMapRepository } from './services/DialogueMapRepository';
-import { ContextMenu, IContextMenuItem } from '../../../src/components/widgets/ContextMenu';
 import { FlowControlToolbar } from './FlowControlToolbar';
 import { DialogueMapperLibrary } from './DialogueMapperLibrary';
 import { DialogueMapperInspector } from './DialogueMapperInspector';
 
+/**
+ * The dialogue mapper.
+ *
+ * Every general capability here comes from the library — the infinite canvas,
+ * node placement and dragging, edge routing, the minimap, spatial keyboard
+ * navigation, auto layout, the palette and the inspector. What is left in this
+ * file is the part that is genuinely about dialogue mapping: IBIS validation on
+ * connect, the shortcut keys for the nine node types, and clipboard semantics.
+ */
+
 export interface DialogueMappingWidgetProps {
   node?: TabNode;
+  /** Kept for compatibility; the canvas pans on empty space either way. */
   defaultDragMode?: 'pan' | 'select';
   mapId: string;
 }
 
-export const DialogueMappingWidget: React.FC<DialogueMappingWidgetProps> = ({ 
-  node,
-  defaultDragMode = 'select',
-  mapId
-}) => {
-  return (
-    <ReactFlowProvider>
-      <DialogueMappingCanvas 
-        node={node} 
-        defaultDragMode={defaultDragMode}
-        mapId={mapId}
-      />
-    </ReactFlowProvider>
-  );
+type MenuTarget = { x: number; y: number; kind: 'node' | 'edge' | 'pane'; id?: string };
+
+/** Shortcut key → node type, from the palette's own definition. */
+const SHORTCUT_TYPES: Record<string, IbisNodeType> = {
+  q: 'question',
+  '?': 'question',
+  a: 'idea',
+  '!': 'idea',
+  p: 'pro',
+  '+': 'pro',
+  n: 'note',
+  d: 'decision',
+  l: 'link',
+  i: 'image',
+  m: 'map',
 };
 
-const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({ 
+export const DialogueMappingWidget: React.FC<DialogueMappingWidgetProps> = ({
   node,
-  defaultDragMode = 'select',
-  mapId
+  mapId,
 }) => {
-  const nodeTypes = React.useMemo(() => ({
-    ibisNode: IbisNode,
-  }), []);
-
-  const useStore = React.useMemo(() => {
-    return getMapStore(mapId);
-  }, [mapId]);
+  const useStore = useMemo(() => getMapStore(mapId), [mapId]);
 
   if (typeof window !== 'undefined') {
-    (window as any).useDialogueMappingStore = useStore;
+    (window as unknown as Record<string, unknown>).useDialogueMappingStore = useStore;
   }
 
   const {
     nodes,
     edges,
-    selectedNodeId,
+    selectedIds,
     layoutHistory,
     connectionError,
-    setConnectionError,
-    recordHistory,
+    autoLayoutMode,
     setNodes,
     setEdges,
+    setSelectedIds,
+    setAutoLayoutMode,
+    setConnectionError,
     addNode,
     deleteNode,
     deleteEdge,
+    deleteSelection,
     connectNodes,
+    moveNode,
+    recordHistory,
     undoLayout,
-    setSelectedNodeId,
-    autoLayoutMode,
-    setAutoLayoutMode,
   } = useStore();
 
-
-
-  const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<GraphCanvasHandle>(null);
 
-  useEffect(() => {
-    (window as any).reactFlowInstance = reactFlowInstance;
-    return () => {
-      if ((window as any).reactFlowInstance === reactFlowInstance) {
-        delete (window as any).reactFlowInstance;
-      }
-    };
-  }, [reactFlowInstance]);
-
-  // Initial Data Load
-  useEffect(() => {
-    let mounted = true;
-    const loadMap = async () => {
-      try {
-        const content = await DialogueMapRepository.loadMap(mapId);
-        if (content && mounted) {
-          useStore.getState().importMap(content);
-        }
-      } catch (e) {
-        console.error("Failed to load map data", e);
-      }
-    };
-    loadMap();
-    return () => { mounted = false; };
-  }, [mapId, useStore]);
-
-  // Debounced Auto-Save
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (nodes.length > 0 || edges.length > 0) {
-        DialogueMapRepository.saveMap(mapId, nodes, edges).catch(console.error);
-      }
-    }, 2000);
-    return () => clearTimeout(handler);
-  }, [nodes, edges, mapId]);
-  
-  // Right drag link connection states
-  const [rightDragStartNodeId, setRightDragStartNodeId] = useState<string | null>(null);
-  const [currentMousePos, setCurrentMousePos] = useState<{ clientX: number; clientY: number } | null>(null);
-  const preventNextContextMenuRef = useRef(false);
-  const wasRightPressedOnNodeRef = useRef(false);
-
-  // Context Menu and clipboard states
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    targetType: 'node' | 'edge' | 'pane';
-    id?: string;
-  } | null>(null);
+  const [viewport, setViewport] = useState<IViewport>({ x: 0, y: 0, scale: 1 });
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [menu, setMenu] = useState<MenuTarget | null>(null);
   const [clipboard, setClipboard] = useState<{
-    nodes: Node<IDialogueNodeData>[];
-    edges: Edge[];
+    nodes: DialogueNode[];
+    edges: IGraphEdge[];
   } | null>(null);
 
-  // UI Panels state
-  const [dragMode, setDragMode] = useState<'pan' | 'select'>(defaultDragMode);
   const [isLibraryOpen, setIsLibraryOpen] = useState(!node?.getConfig()?.hideInternalLibrary);
-  const [isInspectorOpen, setIsInspectorOpen] = useState(!node?.getConfig()?.hideInternalInspector);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(
+    !node?.getConfig()?.hideInternalInspector,
+  );
 
-  // Scoped keydown listener for layout undos and Compendium shortcuts
+  const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+
+  /* ---------------------------------------------------------------- layout */
+
+  /**
+   * Layout is computed, never stored.
+   *
+   * The old version wrote laid-out positions into the store on a timer after
+   * every add, connect and delete, which is why nodes used to jump. Here the
+   * hook derives positions on render, and dragging a node escapes to freeform
+   * so the drag survives.
+   */
+  const layout = useGraphLayout({
+    nodes,
+    edges,
+    layouts: DIALOGUE_LAYOUTS,
+    mode: autoLayoutMode,
+    onModeChange: (mode) => setAutoLayoutMode(mode as typeof autoLayoutMode),
+    onNodeMove: (id, position) => moveNode(id, position),
+  });
+
+  const laidOut = layout.nodes as DialogueNode[];
+
+  /* ------------------------------------------------------------- keyboard */
+
+  const keyboard = useGraphKeyboard({
+    nodes: laidOut,
+    edges,
+    targetRef: containerRef,
+    onCreateNode: (position, context) => addNode('idea', position, context.from),
+    // Routed through the store so IBIS rules apply however a connection is made.
+    onConnect: (source, target) => {
+      connectNodes(source, target);
+    },
+    onDeleteNode: (id) => {
+      recordHistory();
+      deleteNode(id);
+    },
+    onMoveNode: (id, position) => layout.onMove(id, position),
+    onFocusChange: (id) => setSelectedIds(id ? [id] : []),
+  });
+
+  /** New nodes open for editing, which is what `autoEdit` meant. */
+  const create = useCallback(
+    (type: IbisNodeType, position: IPoint, parentId?: string | null) => {
+      recordHistory();
+      const id = addNode(type, position, parentId);
+      keyboard.setFocusedId(id);
+      keyboard.setEditingId(id);
+      return id;
+    },
+    [addNode, recordHistory, keyboard],
+  );
+
+  /** Where a node goes when created without a pointer position. */
+  const centreOfView = useCallback((): IPoint => {
+    const point = canvasRef.current?.clientToGraph({
+      x: (containerRef.current?.getBoundingClientRect().left ?? 0) + canvasSize.width / 2,
+      y: (containerRef.current?.getBoundingClientRect().top ?? 0) + canvasSize.height / 2,
+    });
+    return point ?? { x: 350, y: 150 };
+  }, [canvasSize]);
+
+  /* IBIS shortcut keys. Separate from `useGraphKeyboard` because which key
+     makes which kind of node is a property of IBIS, not of graphs. */
   useEffect(() => {
-    const focusAndScrollToNode = (targetNodeId: string) => {
-      setSelectedNodeId(targetNodeId);
-      setNodes(
-        nodes.map((n) => ({
-          ...n,
-          selected: n.id === targetNodeId,
-        }))
-      );
+    const element = containerRef.current;
+    if (!element) return;
 
-      const targetNode = nodes.find((n) => n.id === targetNodeId);
-      if (targetNode && containerRef.current) {
-        const { x: vx, y: vy, zoom: vz } = reactFlowInstance.getViewport();
-        const containerWidth = containerRef.current.clientWidth;
-        const containerHeight = containerRef.current.clientHeight;
-
-        const nx = targetNode.position.x;
-        const ny = targetNode.position.y;
-        
-        const nodeWidth = targetNode.width || 240;
-        const nodeHeight = targetNode.height || 182;
-
-        const nodeLeft = nx * vz + vx;
-        const nodeRight = (nx + nodeWidth) * vz + vx;
-        const nodeTop = ny * vz + vy;
-        const nodeBottom = (ny + nodeHeight) * vz + vy;
-
-        const margin = 80;
-        const isFullyVisible = (
-          nodeLeft >= margin &&
-          nodeRight <= containerWidth - margin &&
-          nodeTop >= margin &&
-          nodeBottom <= containerHeight - margin
-        );
-
-        if (!isFullyVisible) {
-          const isPartiallyVisible = (
-            nodeRight >= 0 &&
-            nodeLeft <= containerWidth &&
-            nodeBottom >= 0 &&
-            nodeTop <= containerHeight
-          );
-
-          if (isPartiallyVisible) {
-            let newVx = vx;
-            let newVy = vy;
-
-            if (nodeLeft < margin) {
-              newVx = vx + (margin - nodeLeft);
-            } else if (nodeRight > containerWidth - margin) {
-              newVx = vx - (nodeRight - (containerWidth - margin));
-            }
-
-            if (nodeTop < margin) {
-              newVy = vy + (margin - nodeTop);
-            } else if (nodeBottom > containerHeight - margin) {
-              newVy = vy - (nodeBottom - (containerHeight - margin));
-            }
-
-            reactFlowInstance.setViewport({ x: newVx, y: newVy, zoom: vz }, { duration: 200 });
-          } else {
-            reactFlowInstance.setCenter(nx + nodeWidth / 2, ny + nodeHeight / 2, { zoom: vz, duration: 200 });
-          }
-        }
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if this tab is active
-      if (node && !node.isVisible()) {
-        return;
-      }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (node && !node.isVisible()) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       const target = e.target as HTMLElement;
       if (
-        target.tagName === 'INPUT' || 
-        target.tagName === 'TEXTAREA' || 
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
         target.isContentEditable
       ) {
         return;
       }
 
-      // Escape -> Cancel active right-click drag-linking
-      if (e.key === 'Escape') {
-        if (rightDragStartNodeId) {
-          e.preventDefault();
-          setRightDragStartNodeId(null);
-          setCurrentMousePos(null);
-          wasRightPressedOnNodeRef.current = false;
-          return;
-        }
-      }
+      // `c` is the library's connect binding, so con nodes take the minus key
+      // alone. Two meanings for one key would make neither reliable.
+      const type = e.key === '-' ? 'con' : SHORTCUT_TYPES[e.key];
+      if (!type) return;
 
-      // Arrow keys navigation
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (selectedNodeId) {
-          const currentNode = nodes.find((n) => n.id === selectedNodeId);
-          if (currentNode) {
-            const cx = currentNode.position.x;
-            const cy = currentNode.position.y;
-            
-            let bestNodeId: string | null = null;
-            let minMetric = Infinity;
-            
-            nodes.forEach((n) => {
-              if (n.id === selectedNodeId) return;
-              const nx = n.position.x;
-              const ny = n.position.y;
-              const dx = nx - cx;
-              const dy = ny - cy;
-              
-              let isValid = false;
-              let metric = Infinity;
-              
-              if (e.key === 'ArrowRight') {
-                if (dx > 10) {
-                  isValid = true;
-                  metric = dx + 2 * Math.abs(dy);
-                }
-              } else if (e.key === 'ArrowLeft') {
-                if (dx < -10) {
-                  isValid = true;
-                  metric = -dx + 2 * Math.abs(dy);
-                }
-              } else if (e.key === 'ArrowUp') {
-                if (dy < -10) {
-                  isValid = true;
-                  metric = -dy + 2 * Math.abs(dx);
-                }
-              } else if (e.key === 'ArrowDown') {
-                if (dy > 10) {
-                  isValid = true;
-                  metric = dy + 2 * Math.abs(dx);
-                }
-              }
-              
-              if (isValid && metric < minMetric) {
-                minMetric = metric;
-                bestNodeId = n.id;
-              }
-            });
-            
-            if (bestNodeId) {
-              focusAndScrollToNode(bestNodeId);
-            }
-          }
-        } else {
-          // Fallback: select first node
-          if (nodes.length > 0) {
-            focusAndScrollToNode(nodes[0].id);
-          }
-        }
-        return;
-      }
+      e.preventDefault();
+      const parent = keyboard.focusedId ? byId.get(keyboard.focusedId) : undefined;
 
-      // Cmd/Ctrl + Z -> Undo Layout
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-        if (layoutHistory.length > 0) {
-          e.preventDefault();
-          undoLayout();
-        }
-        return;
-      }
-
-      // Ignore shortcut key combos with modifiers like Cmd/Ctrl/Alt
-      if (e.ctrlKey || e.metaKey || e.altKey) {
-        return;
-      }
-
-      let type: IbisNodeType | null = null;
-      if (e.key === 'q' || e.key === '?') type = 'question';
-      else if (e.key === 'a' || e.key === '!') type = 'idea';
-      else if (e.key === 'p' || e.key === '+') type = 'pro';
-      else if (e.key === 'c' || e.key === '-') type = 'con';
-      else if (e.key === 'n') type = 'note';
-      else if (e.key === 'd') type = 'decision';
-      else if (e.key === 'l') type = 'link';
-      else if (e.key === 'i') type = 'image';
-      else if (e.key === 'm') type = 'map';
-
-      if (type) {
-        e.preventDefault();
-        // If a node is selected, position new node below it and link them
-        if (selectedNodeId) {
-          const selectedNode = nodes.find((n) => n.id === selectedNodeId);
-          if (selectedNode) {
-            const xOffset = (Math.random() - 0.5) * 40;
-            const newPos = {
-              x: selectedNode.position.x + xOffset,
-              y: selectedNode.position.y + 250,
-            };
-            addNode(type, newPos, selectedNodeId);
-            return;
-          }
-        }
-        // Otherwise position near center
-        const offset = Math.random() * 50;
-        addNode(type, { x: 350 + offset, y: 150 + offset });
-      }
+      create(
+        type,
+        parent
+          ? { x: parent.position.x, y: parent.position.y + NODE_SIZE.height + 70 }
+          : centreOfView(),
+        parent?.id,
+      );
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [node, layoutHistory, undoLayout, addNode, selectedNodeId, nodes, rightDragStartNodeId]);
+    element.addEventListener('keydown', onKeyDown);
+    return () => element.removeEventListener('keydown', onKeyDown);
+  }, [node, keyboard.focusedId, byId, create, centreOfView]);
 
-  // Connection warning auto-clear
+  /* Undo, on the platform shortcut. */
   useEffect(() => {
-    if (connectionError) {
-      const timer = setTimeout(() => {
-        setConnectionError(null);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [connectionError, setConnectionError]);
-  
-  // Node editing state in Inspector
-  const selectedNodes = nodes.filter((n) => n.selected);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (node && !node.isVisible()) return;
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+      if (layoutHistory.length === 0) return;
 
-  const selectedNodesRef = useRef(selectedNodes);
-  useEffect(() => {
-    selectedNodesRef.current = selectedNodes;
-  }, [selectedNodes]);
+      e.preventDefault();
+      undoLayout();
+    };
 
-  // Handle nodes/edges movements from canvas
-  const onNodesChange = useCallback(
-    (changes: any) => {
-      let manualDrag = false;
-      changes.forEach((change: any) => {
-        if (change.type === 'position' && change.dragging) {
-          manualDrag = true;
-        }
-      });
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [node, layoutHistory.length, undoLayout]);
 
-      let nextNodes = applyNodeChanges(changes, nodes);
-
-      if (manualDrag) {
-        nextNodes = nextNodes.map(n => {
-          const isBeingDragged = changes.find((c: any) => c.id === n.id && c.type === 'position' && c.dragging);
-          if (isBeingDragged) {
-            return {
-              ...n,
-              data: {
-                ...n.data,
-                freeformPosition: { ...n.position }
-              }
-            };
-          }
-          return n;
-        });
-
-        if (autoLayoutMode !== 'freeform') {
-          setAutoLayoutMode('freeform');
-        }
-      }
-
-      setNodes(nextNodes);
-
-      const selected = nextNodes.filter((n) => n.selected);
-      if (selected.length === 1) {
-        setSelectedNodeId(selected[0].id);
-      } else {
-        setSelectedNodeId(null);
-      }
-    },
-    [nodes, setNodes, setSelectedNodeId, autoLayoutMode, setAutoLayoutMode]
-  );
-
-  const onEdgesChange = useCallback(
-    (changes: any) => {
-      setEdges(applyEdgeChanges(changes, edges));
-    },
-    [edges, setEdges]
-  );
-
-  // Link drawing completion
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      connectNodes(connection);
-    },
-    [connectNodes]
-  );
+  /* ------------------------------------------------------- load and save */
 
   useEffect(() => {
-    const domNode = containerRef.current;
-    if (!domNode) return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 2) { // right-click
-        const target = e.target as HTMLElement;
-        const nodeEl = target.closest('.react-flow__node');
-        if (nodeEl) {
-          const nodeId = nodeEl.getAttribute('data-id');
-          if (nodeId) {
-            setRightDragStartNodeId(nodeId);
-            setCurrentMousePos({ clientX: e.clientX, clientY: e.clientY });
-            wasRightPressedOnNodeRef.current = true;
-          }
-        }
-      } else {
-        wasRightPressedOnNodeRef.current = false;
-      }
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (rightDragStartNodeId) {
-        setCurrentMousePos({ clientX: e.clientX, clientY: e.clientY });
-      }
-    };
-
-    const handleMouseUp = (e: MouseEvent) => {
-      if (e.button === 2 && rightDragStartNodeId) {
-        const target = e.target as HTMLElement;
-        const nodeEl = target.closest('.react-flow__node');
-        if (nodeEl) {
-          const nodeId = nodeEl.getAttribute('data-id');
-          if (nodeId && nodeId !== rightDragStartNodeId) {
-            connectNodes({ 
-              source: rightDragStartNodeId, 
-              target: nodeId,
-              sourceHandle: null,
-              targetHandle: null
-            });
-            preventNextContextMenuRef.current = true;
-          }
-        }
-      }
-      setRightDragStartNodeId(null);
-      setCurrentMousePos(null);
-    };
-
-    const handleContextMenu = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (domNode.contains(target)) {
-        e.preventDefault();
-
-        // Check if right clicked on node selection overlay wrapper
-        const selectionEl = 
-          target.closest('.react-flow__nodesselection-rect') || 
-          target.closest('.react-flow__nodesselection') || 
-          target.closest('.react-flow__selection');
-        const activeSelectedNodes = selectedNodesRef.current;
-
-        if (selectionEl && activeSelectedNodes.length > 1) {
-          setContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-            targetType: 'node',
-            id: activeSelectedNodes[0].id,
-          });
-        }
-      }
-    };
-
-    const handleDoubleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('.react-flow__node') || target.closest('.react-flow__controls') || target.closest('.react-flow__minimap')) {
-        return;
-      }
-
-      const rect = domNode.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const projectedPos = reactFlowInstance.project({ x, y });
-      addNode('question', projectedPos);
-    };
-
-    domNode.addEventListener('mousedown', handleMouseDown);
-    domNode.addEventListener('dblclick', handleDoubleClick);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('contextmenu', handleContextMenu, { capture: true });
-
+    let mounted = true;
+    DialogueMapRepository.loadMap(mapId)
+      .then((content) => {
+        if (content && mounted) useStore.getState().importMap(content);
+      })
+      .catch((e) => console.error('Failed to load map data', e));
     return () => {
-      domNode.removeEventListener('mousedown', handleMouseDown);
-      domNode.removeEventListener('dblclick', handleDoubleClick);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('contextmenu', handleContextMenu, { capture: true });
+      mounted = false;
     };
-  }, [rightDragStartNodeId, connectNodes, reactFlowInstance, addNode]);
+  }, [mapId, useStore]);
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
+  useEffect(() => {
+    if (nodes.length === 0 && edges.length === 0) return;
+    const handle = setTimeout(() => {
+      DialogueMapRepository.saveMap(mapId, nodes, edges).catch(console.error);
+    }, 2000);
+    return () => clearTimeout(handle);
+  }, [nodes, edges, mapId]);
 
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
+  /* Connection warnings clear themselves. */
+  useEffect(() => {
+    if (!connectionError) return;
+    const handle = setTimeout(() => setConnectionError(null), 4000);
+    return () => clearTimeout(handle);
+  }, [connectionError, setConnectionError]);
 
-      const type = event.dataTransfer.getData('application/reactflow') as IbisNodeType;
+  /* ------------------------------------------------------------ selection */
 
-      if (!type || !reactFlowInstance) {
-        return;
-      }
-
-      const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-
-      addNode(type, position);
+  const select = useCallback(
+    (id: string, event?: React.MouseEvent) => {
+      keyboard.setFocusedId(id);
+      setSelectedIds(
+        event?.shiftKey || event?.metaKey
+          ? selectedIds.includes(id)
+            ? selectedIds.filter((s) => s !== id)
+            : [...selectedIds, id]
+          : [id],
+      );
     },
-    [reactFlowInstance, addNode]
+    [selectedIds, setSelectedIds, keyboard],
   );
 
-  const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      event.preventDefault();
-      if (preventNextContextMenuRef.current) {
-        preventNextContextMenuRef.current = false;
-        return;
-      }
+  /* ------------------------------------------------------------ clipboard */
 
-      // If the right-clicked node is not already selected, select it exclusively
-      const isSelected = nodes.find((n) => n.id === node.id)?.selected;
-      if (!isSelected) {
-        setNodes(
-          nodes.map((n) => ({
-            ...n,
-            selected: n.id === node.id,
-          }))
-        );
-        setSelectedNodeId(node.id);
-      }
-
-      setContextMenu({
-        x: event.clientX,
-        y: event.clientY,
-        targetType: 'node',
-        id: node.id,
-      });
-    },
-    [nodes, setNodes, setSelectedNodeId]
+  const selectedNodes = useMemo(
+    () => nodes.filter((n) => selectedIds.includes(n.id)),
+    [nodes, selectedIds],
   );
 
-  const onEdgeContextMenu = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
-      event.preventDefault();
-      setContextMenu({
-        x: event.clientX,
-        y: event.clientY,
-        targetType: 'edge',
-        id: edge.id,
-      });
-    },
-    []
-  );
-
-  const onPaneContextMenu = useCallback(
-    (event: React.MouseEvent) => {
-      event.preventDefault();
-      const target = event.target as HTMLElement;
-
-      const isSelectionClick = 
-        target.closest('.react-flow__nodesselection-rect') || 
-        target.closest('.react-flow__nodesselection') || 
-        target.closest('.react-flow__selection') || 
-        target.closest('.react-flow__node');
-
-      if (selectedNodes.length > 1 && isSelectionClick) {
-        setContextMenu({
-          x: event.clientX,
-          y: event.clientY,
-          targetType: 'node',
-          id: selectedNodes[0].id,
-        });
-      } else {
-        setContextMenu({
-          x: event.clientX,
-          y: event.clientY,
-          targetType: 'pane',
-        });
-      }
-    },
-    [selectedNodes]
-  );
-
-  const handleCopy = useCallback(() => {
-    const selectedIds = new Set(selectedNodes.map((n) => n.id));
-    const internalEdges = edges.filter(
-      (e) => selectedIds.has(e.source) && selectedIds.has(e.target)
-    );
-    setClipboard({
+  /** Copies the selection plus the edges wholly inside it. */
+  const snapshot = useCallback(() => {
+    const ids = new Set(selectedIds);
+    return {
       nodes: selectedNodes,
-      edges: internalEdges,
-    });
-  }, [selectedNodes, edges]);
+      edges: edges.filter((e) => ids.has(e.source) && ids.has(e.target)),
+    };
+  }, [selectedIds, selectedNodes, edges]);
 
-  const handleCut = useCallback(() => {
-    const selectedIds = new Set(selectedNodes.map((n) => n.id));
-    const internalEdges = edges.filter(
-      (e) => selectedIds.has(e.source) && selectedIds.has(e.target)
-    );
-    setClipboard({
-      nodes: selectedNodes,
-      edges: internalEdges,
-    });
-    recordHistory();
-    setNodes(nodes.filter((n) => !selectedIds.has(n.id)));
-    setEdges(
-      edges.filter((e) => !selectedIds.has(e.source) && !selectedIds.has(e.target))
-    );
-    setSelectedNodeId(null);
-  }, [selectedNodes, edges, nodes, recordHistory, setNodes, setEdges, setSelectedNodeId]);
+  const paste = useCallback(
+    (at: IPoint) => {
+      if (!clipboard || clipboard.nodes.length === 0) return;
 
-  const handleDeleteSelection = useCallback(() => {
-    const selectedIds = new Set(selectedNodes.map((n) => n.id));
-    recordHistory();
-    setNodes(nodes.filter((n) => !selectedIds.has(n.id)));
-    setEdges(
-      edges.filter((e) => !selectedIds.has(e.source) && !selectedIds.has(e.target))
-    );
-    setSelectedNodeId(null);
-  }, [selectedNodes, edges, nodes, recordHistory, setNodes, setEdges, setSelectedNodeId]);
+      recordHistory();
+      const stamp = Date.now();
+      const minX = Math.min(...clipboard.nodes.map((n) => n.position.x));
+      const minY = Math.min(...clipboard.nodes.map((n) => n.position.y));
 
-  const handlePaste = useCallback(() => {
-    if (!clipboard || !contextMenu) return;
+      const idMap = new Map<string, string>();
+      const pasted = clipboard.nodes.map((original, index) => {
+        const id = `node-${stamp}-${index}`;
+        idMap.set(original.id, id);
+        return {
+          ...original,
+          id,
+          position: {
+            x: at.x + (original.position.x - minX),
+            y: at.y + (original.position.y - minY),
+          },
+          data: { ...original.data, autoEdit: false },
+        };
+      });
 
-    recordHistory();
+      const pastedEdges = clipboard.edges.flatMap((edge, index) => {
+        const source = idMap.get(edge.source);
+        const target = idMap.get(edge.target);
+        return source && target ? [{ ...edge, id: `edge-${stamp}-${index}`, source, target }] : [];
+      });
 
-    const pastePos = reactFlowInstance.screenToFlowPosition({
-      x: contextMenu.x,
-      y: contextMenu.y,
-    });
+      setNodes([...nodes, ...pasted]);
+      setEdges([...edges, ...pastedEdges]);
+      setSelectedIds(pasted.map((n) => n.id));
+      // A paste is hand placement by definition, so stop the layout moving it.
+      if (layout.isAuto) setAutoLayoutMode(FREEFORM as typeof autoLayoutMode);
+    },
+    [
+      clipboard,
+      nodes,
+      edges,
+      recordHistory,
+      setNodes,
+      setEdges,
+      setSelectedIds,
+      layout.isAuto,
+      setAutoLayoutMode,
+    ],
+  );
 
-    const minX = Math.min(...clipboard.nodes.map((n) => n.position.x));
-    const minY = Math.min(...clipboard.nodes.map((n) => n.position.y));
+  /* ---------------------------------------------------------- context menu */
 
-    const idMap: Record<string, string> = {};
-    const newNodes = clipboard.nodes.map((oldNode, idx) => {
-      const newId = `node-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
-      idMap[oldNode.id] = newId;
+  const menuItems = (): IContextMenuItem[] => {
+    if (!menu) return [];
 
-      const dx = oldNode.position.x - minX;
-      const dy = oldNode.position.y - minY;
-
-      const pastedNode: Node<IDialogueNodeData> = {
-        ...oldNode,
-        id: newId,
-        position: {
-          x: pastePos.x + dx,
-          y: pastePos.y + dy,
-        },
-        selected: true,
-        data: {
-          ...oldNode.data,
-          id: newId,
-          title: oldNode.data.title,
-          autoEdit: false,
-        },
-      };
-      return pastedNode;
-    });
-
-    const newEdges: Edge[] = [];
-    clipboard.edges.forEach((oldEdge) => {
-      const newSource = idMap[oldEdge.source];
-      const newTarget = idMap[oldEdge.target];
-      if (newSource && newTarget) {
-        const strokeColor = '#64748b'; // Slate-500
-        newEdges.push({
-          ...oldEdge,
-          id: `edge-${newSource}-${newTarget}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          source: newSource,
-          target: newTarget,
-          style: { stroke: strokeColor, strokeWidth: 2 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: strokeColor },
-        });
-      }
-    });
-
-    const updatedNodes = nodes.map((n) => ({ ...n, selected: false }));
-
-    setNodes([...updatedNodes, ...newNodes]);
-    setEdges([...edges, ...newEdges]);
-
-    if (newNodes.length === 1) {
-      setSelectedNodeId(newNodes[0].id);
-    } else {
-      setSelectedNodeId(null);
-    }
-  }, [clipboard, contextMenu, nodes, edges, reactFlowInstance, recordHistory, setNodes, setEdges, setSelectedNodeId]);
-
-  const getNodeContextMenuItems = (): IContextMenuItem[] => {
-    if (!contextMenu || !contextMenu.id) return [];
-
-    if (selectedNodes.length > 1) {
+    if (menu.kind === 'edge' && menu.id) {
+      const id = menu.id;
       return [
         {
-          label: 'Cut Selection',
+          label: 'Delete Connection',
+          icon: <Trash2 size={14} className="text-destructive" />,
+          onClick: () => deleteEdge(id),
+        },
+      ];
+    }
+
+    if (menu.kind === 'node') {
+      const many = selectedIds.length > 1;
+      return [
+        {
+          label: many ? 'Cut Selection' : 'Cut Node',
           icon: <Scissors size={14} />,
           onClick: () => {
-            handleCut();
+            setClipboard(snapshot());
+            deleteSelection();
           },
         },
         {
-          label: 'Copy Selection',
+          label: many ? 'Copy Selection' : 'Copy Node',
           icon: <Copy size={14} />,
-          onClick: () => {
-            handleCopy();
-          },
+          onClick: () => setClipboard(snapshot()),
         },
         {
-          label: 'Delete Selection',
+          label: many ? 'Delete Selection' : 'Delete Node',
           icon: <Trash2 size={14} className="text-destructive" />,
-          onClick: () => {
-            handleDeleteSelection();
-          },
+          onClick: deleteSelection,
         },
       ];
     }
 
-    const node = nodes.find((n) => n.id === contextMenu.id);
-    if (!node) return [];
-
     return [
       {
-        label: 'Cut Node',
-        icon: <Scissors size={14} />,
-        onClick: () => {
-          setClipboard({ nodes: [node], edges: [] });
-          recordHistory();
-          deleteNode(node.id);
-        },
-      },
-      {
-        label: 'Copy Node',
-        icon: <Copy size={14} />,
-        onClick: () => {
-          setClipboard({ nodes: [node], edges: [] });
-        },
-      },
-      {
-        label: 'Delete Node',
-        icon: <Trash2 size={14} className="text-destructive" />,
-        onClick: () => {
-          deleteNode(node.id);
-        },
-      },
-    ];
-  };
-
-  const getEdgeContextMenuItems = (): IContextMenuItem[] => {
-    if (!contextMenu || !contextMenu.id) return [];
-    const edgeId = contextMenu.id;
-    return [
-      {
-        label: 'Delete Connection',
-        icon: <Trash2 size={14} className="text-destructive" />,
-        onClick: () => {
-          deleteEdge(edgeId);
-        },
-      },
-    ];
-  };
-
-  const getPaneContextMenuItems = (): IContextMenuItem[] => {
-    if (!clipboard) {
-      return [
-        {
-          label: 'Paste (Empty)',
-          icon: <ClipboardPaste size={14} />,
-          onClick: () => {},
-        },
-      ];
-    }
-    return [
-      {
-        label: clipboard.nodes.length > 1 ? 'Paste Selection' : 'Paste Node',
+        label: clipboard ? (clipboard.nodes.length > 1 ? 'Paste Selection' : 'Paste Node') : 'Paste (Empty)',
         icon: <ClipboardPaste size={14} />,
+        disabled: !clipboard,
         onClick: () => {
-          handlePaste();
+          const point = canvasRef.current?.clientToGraph({ x: menu.x, y: menu.y });
+          if (point) paste(point);
         },
       },
     ];
   };
 
+  const openMenu = (kind: MenuTarget['kind'], point: IPoint, id?: string) =>
+    setMenu({ x: point.x, y: point.y, kind, id });
 
+  /* ------------------------------------------------------------------ view */
 
   return (
-    <div className="flex w-full h-full overflow-hidden bg-background/95 text-foreground relative select-none font-sans">
-      
-      {/* Embedded Left Sidebar: Node Library */}
+    <div className="relative flex h-full w-full select-none overflow-hidden bg-background/95 font-sans text-foreground">
       {isLibraryOpen && (
-        <DialogueMapperLibrary 
-          className="border-r border-border bg-card/45 h-full z-10"
-          onAddNode={(type) => addNode(type, { x: 350, y: 150 })}
-          onDragStart={(e, type) => {
-            e.dataTransfer.setData('application/reactflow', type);
-            e.dataTransfer.effectAllowed = 'move';
-          }}
+        <DialogueMapperLibrary
+          className="z-10 h-full border-r border-border bg-card/45"
+          onAddNode={(type) => create(type, centreOfView(), keyboard.focusedId)}
         />
       )}
 
-      {/* Connection Warning Banner */}
       {connectionError && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-destructive/15 text-destructive border border-destructive/30 px-4 py-2 rounded-lg shadow-xl backdrop-blur flex items-center gap-2 text-xs font-semibold animate-slide-in-down select-text">
+        <div
+          role="alert"
+          className="animate-slide-in-down absolute left-1/2 top-16 z-50 flex -translate-x-1/2 select-text items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/15 px-4 py-2 text-xs font-semibold text-destructive shadow-xl backdrop-blur"
+        >
           <AlertCircle size={15} />
           <span>Semantic Rejection: {connectionError}</span>
         </div>
       )}
 
-
-      {/* Center Layout: React Flow Canvas */}
-      <main ref={containerRef} className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* Header Canvas Toolbar */}
-        <div className="w-full shrink-0 z-40 bg-card border-b border-border flex items-center px-4 py-2 select-none shadow-sm">
+      <main
+        ref={containerRef}
+        tabIndex={-1}
+        className="relative flex h-full min-w-0 flex-1 flex-col outline-none"
+      >
+        <div className="z-40 flex w-full shrink-0 select-none items-center border-b border-border bg-card px-4 py-2 shadow-sm">
           <FlowControlToolbar
             variant="header"
-            dragMode={dragMode}
-            onDragModeChange={setDragMode}
             autoLayoutMode={autoLayoutMode}
             onAutoLayoutModeChange={setAutoLayoutMode}
             onUndo={undoLayout}
@@ -881,107 +439,117 @@ const DialogueMappingCanvas: React.FC<DialogueMappingWidgetProps> = ({
           />
         </div>
 
-        {/* React Flow Editor */}
-        <div className="flex-1 w-full h-full min-h-0 relative">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeDragStart={recordHistory}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onNodeContextMenu={onNodeContextMenu}
-            onEdgeContextMenu={onEdgeContextMenu}
-            onPaneContextMenu={onPaneContextMenu}
-            onPaneClick={() => setContextMenu(null)}
-            onNodeClick={() => setContextMenu(null)}
-            onEdgeClick={() => setContextMenu(null)}
-            panOnDrag={dragMode === 'pan'}
-            selectionOnDrag={dragMode === 'select'}
-            selectionMode={SelectionMode.Partial}
-            nodeTypes={nodeTypes}
-            minZoom={0.1}
-            maxZoom={2}
-            panOnScroll={true}
-            panOnScrollMode={"all" as any}
-            zoomOnScroll={false}
-            proOptions={{ hideAttribution: true }}
+        <div className="relative h-full min-h-0 w-full flex-1">
+          <GraphCanvas
+            ref={canvasRef}
+            aria-label="Dialogue map"
+            onViewportChange={setViewport}
+            onSizeChange={setCanvasSize}
+            onCanvasClick={() => {
+              setMenu(null);
+              setSelectedIds([]);
+              keyboard.setFocusedId(null);
+            }}
+            onCanvasDoubleClick={(point) => create('question', point, null)}
+            onCanvasContextMenu={(point, event) =>
+              openMenu('pane', { x: event.clientX, y: event.clientY })
+            }
+            onDrop={(point, event) => {
+              const kind = readPaletteDrag(event);
+              if (kind) create(kind as IbisNodeType, point, null);
+            }}
+            overlay={
+              <div className="pointer-events-auto absolute bottom-3 right-3">
+                <GraphMiniMap
+                  nodes={laidOut}
+                  viewport={viewport}
+                  canvasSize={canvasSize}
+                  onViewportChange={(next) => canvasRef.current?.setViewport(next)}
+                  highlightIds={selectedIds}
+                  nodeColor={(n) => IBIS_COLOURS[(n as DialogueNode).kind] ?? '#64748b'}
+                  className="rounded-lg border border-border/60 bg-card/65"
+                />
+              </div>
+            }
           >
-            <Background color="hsl(var(--border))" gap={16} size={1} />
-            <Controls className="fill-foreground stroke-foreground text-foreground" />
-             <MiniMap 
-              nodeColor={(node) => {
-                const type = node.data?.type;
-                if (type === 'question') return '#0ea5e9';
-                if (type === 'idea') return '#eab308';
-                if (type === 'pro') return '#10b981';
-                if (type === 'con') return '#f43f5e';
-                if (type === 'note') return '#f59e0b';
-                if (type === 'decision') return '#a855f7';
-                if (type === 'map') return '#6366f1';
-                return '#64748b';
-              }}
-              maskColor="rgba(15, 23, 42, 0.6)"
-              className="border border-border/60 bg-card/65 rounded-lg"
-              pannable={true}
-              onClick={(_, position) => {
-                reactFlowInstance.setCenter(position.x, position.y, { zoom: reactFlowInstance.getZoom() });
-              }}
-            />
-          </ReactFlow>
+            <GraphEdgeLayer>
+              {edges.map((edge) => {
+                const source = byId.get(edge.source);
+                const target = byId.get(edge.target);
+                if (!source || !target) return null;
+
+                return (
+                  <GraphEdge
+                    key={edge.id}
+                    edge={edge}
+                    source={source}
+                    target={target}
+                    routing="smoothstep"
+                    onSelect={() => setMenu(null)}
+                    onContextMenu={(id, point) => openMenu('edge', point, id)}
+                  />
+                );
+              })}
+            </GraphEdgeLayer>
+
+            {laidOut.map((graphNode) => (
+              <GraphNode
+                key={graphNode.id}
+                node={graphNode}
+                selected={selectedIds.includes(graphNode.id)}
+                focused={keyboard.focusedId === graphNode.id}
+                onMove={layout.onMove}
+                onMoveEnd={() => recordHistory()}
+                onSelect={(id, event) => {
+                  setMenu(null);
+                  select(id, event);
+                }}
+                onActivate={(id) => keyboard.setEditingId(id)}
+                onContextMenu={(id, point) => {
+                  if (!selectedIds.includes(id)) select(id);
+                  openMenu('node', point, id);
+                }}
+                onConnectStart={(id) => keyboard.setConnectingFrom(id)}
+                onConnectEnd={(targetId) => {
+                  if (keyboard.connectingFrom && keyboard.connectingFrom !== targetId) {
+                    connectNodes(keyboard.connectingFrom, targetId);
+                  }
+                  keyboard.setConnectingFrom(null);
+                }}
+              >
+                <IbisNode
+                  type={graphNode.kind}
+                  data={graphNode.data}
+                  editing={keyboard.editingId === graphNode.id}
+                  onEditingChange={(editing) =>
+                    keyboard.setEditingId(editing ? graphNode.id : null)
+                  }
+                  onTitleChange={(title) =>
+                    useStore.getState().updateNode(graphNode.id, { title })
+                  }
+                />
+              </GraphNode>
+            ))}
+          </GraphCanvas>
         </div>
-
-        {/* Custom right-drag connection line overlay */}
-        {rightDragStartNodeId && currentMousePos && containerRef.current && (() => {
-          const startEl = document.querySelector(`[data-id="${rightDragStartNodeId}"]`);
-          if (!startEl) return null;
-          const rect = startEl.getBoundingClientRect();
-          const containerRect = containerRef.current.getBoundingClientRect();
-          const startX = rect.left + rect.width / 2 - containerRect.left;
-          const startY = rect.top + rect.height / 2 - containerRect.top;
-          const currentX = currentMousePos.clientX - containerRect.left;
-          const currentY = currentMousePos.clientY - containerRect.top;
-
-          return (
-            <svg className="absolute inset-0 pointer-events-none z-50 w-full h-full">
-              <line
-                x1={startX}
-                y1={startY}
-                x2={currentX}
-                y2={currentY}
-                stroke="#64748b"
-                strokeWidth={2}
-                strokeDasharray="4,4"
-              />
-            </svg>
-          );
-        })()}
       </main>
 
-      {/* Embedded Right Sidebar: Argument Inspector */}
       {isInspectorOpen && (
-        <div className="w-80 border-l border-border bg-card/45 h-full z-10 shrink-0">
-          <DialogueMapperInspector />
+        <div className="z-10 h-full w-80 shrink-0 border-l border-border bg-card/45">
+          <DialogueMapperInspector mapId={mapId} />
         </div>
       )}
 
-      {contextMenu && (
+      {menu && (
         <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          items={
-            contextMenu.targetType === 'node'
-              ? getNodeContextMenuItems()
-              : contextMenu.targetType === 'edge'
-              ? getEdgeContextMenuItems()
-              : getPaneContextMenuItems()
-          }
-          onClose={() => setContextMenu(null)}
+          x={menu.x}
+          y={menu.y}
+          items={menuItems()}
+          onClose={() => setMenu(null)}
         />
       )}
     </div>
   );
 };
+
 export default DialogueMappingWidget;
