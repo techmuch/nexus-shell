@@ -372,10 +372,24 @@ export const COMPONENTS: ComponentEntry[] = [
   {
     slug: 'sidebar-pane',
     name: 'SidebarPane',
-    tagline: 'Titled, closable container for sidebar content',
+    tagline: 'A docked side panel, on either edge',
     category: 'Chrome',
     demoFile: 'SidebarPane',
+    notes: [
+      'A pure container: it owns the header, close button and scrolling, and nothing about what goes inside.',
+      '**`side` docks it left or right.** One component, two edges — only the divider moves, and a right-hand pane keeps every feature the left one has. Before this prop existed every application hand-rolled its own `<div className="w-80 border-l …">`, and they all drifted apart.',
+      'For the store-backed variants the shell composes, see `ConnectedSidebarPane` and `ConnectedInspectorPane`. The latter reads `useInspectorStore` — a separate panel registry — so the two sides open and close independently. Register right-hand panels through `ShellLayout`’s `inspectorPanels`, exactly as you would `panels`.',
+    ],
     demos: [
+      {
+        export: 'BothEdges',
+        region: 'bothEdges',
+        title: 'Both edges at once',
+        description:
+          'A file tree on one side and properties on the other, each with its own rail. Note that the active-item marker mirrors, so it always faces the panel it opens.',
+        flush: true,
+        height: '460px',
+      },
       {
         export: 'Basic',
         region: 'basic',
@@ -679,10 +693,24 @@ export const COMPONENTS: ComponentEntry[] = [
   {
     slug: 'chat-pane',
     name: 'ChatPane',
-    tagline: 'Docked transcript with slash-command autocomplete',
+    tagline: 'Chat transcript that fills any host',
     category: 'Panels',
     demoFile: 'ChatPane',
+    notes: [
+      '**It carries no width or edge of its own.** Put it on the left rail, the right rail, or in a dockable tab — the host decides the shape. It used to hardcode `w-[320px] border-l`, which is exactly why it could only ever live in one place.',
+      'Register it with `chatPanel()` in `panels` or `inspectorPanels`, or register `ConnectedChatPane` as a tab component. `togglePanel(\'chat\')` finds it wherever it ended up.',
+      'Inside a host that draws a title bar it omits its own header, so you never get two. Pass `chrome` to force it either way.',
+    ],
     demos: [
+      {
+        export: 'Placement',
+        region: 'placement',
+        title: 'Either edge, same component',
+        description:
+          'Flip the side. Nothing about the chat pane changes — only which host it sits in, and the host owns the width and the divider.',
+        flush: true,
+        height: '440px',
+      },
       {
         export: 'Basic',
         region: 'basic',
@@ -712,13 +740,23 @@ export const COMPONENTS: ComponentEntry[] = [
   {
     slug: 'terminal-pane',
     name: 'TerminalPane',
-    tagline: 'Bottom-docked terminal log and input',
+    tagline: 'Terminal log and input, wherever you put it',
     category: 'Panels',
     demoFile: 'TerminalPane',
     notes: [
       'The component does not echo commands or interpret them. `clear`, `help` and anything app-specific stay yours — which is what makes it equally usable for a shell, a REPL, or a log viewer.',
+      '**It is no longer bound to the bottom of the workspace.** Register it with `terminalPanel()` for a side rail, or as a tab component for the docking area. Inside a host that sizes its children it drops its 250px default and fills instead; standalone it keeps it, or it would collapse to nothing.',
     ],
     demos: [
+      {
+        export: 'Hosted',
+        region: 'hosted',
+        title: 'In a tab, and in a side pane',
+        description:
+          'The same terminal in two hosts. Neither draws a second title bar, and neither leaves a dead gap below the input.',
+        flush: true,
+        height: '420px',
+      },
       {
         export: 'Basic',
         region: 'basic',

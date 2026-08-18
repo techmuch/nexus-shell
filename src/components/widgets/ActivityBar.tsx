@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { Settings } from 'lucide-react';
 import { cn } from '../../lib/cn';
+import type { PaneSide } from './SidebarPane';
 
 /** A single icon button in the {@link ActivityBar}. */
 export interface IActivityBarItem {
@@ -27,6 +28,13 @@ export interface ActivityBarProps {
    * deselect it — is the caller's decision, not the component's.
    */
   onSelect?: (id: string) => void;
+  /**
+   * Which edge of the shell the rail is docked to. Defaults to `"left"`.
+   *
+   * The divider and the active-item indicator both mirror, so a right-hand rail
+   * marks its selection on the edge facing the content.
+   */
+  side?: PaneSide;
   /** Extra classes merged onto the root `<aside>`. */
   className?: string;
   /** Accessible label for the landmark. Defaults to `"Activity Bar"`. */
@@ -38,11 +46,12 @@ const DEFAULT_BOTTOM_ITEMS: IActivityBarItem[] = [
 ];
 
 /**
- * The narrow vertical icon rail on the left edge of the shell, used to switch
- * which panel the sidebar shows.
+ * The narrow vertical icon rail at the edge of the shell, used to switch which
+ * panel the adjacent {@link SidebarPane} shows.
  *
- * Controlled — it holds no selection state. For the store-backed variant used
- * by `ShellLayout`, see `ConnectedActivityBar`.
+ * Controlled — it holds no selection state. `side` docks it left or right; for
+ * the store-backed variants used by `ShellLayout`, see `ConnectedActivityBar`
+ * and `ConnectedInspectorBar`.
  *
  * @example
  * ```tsx
@@ -58,6 +67,7 @@ export const ActivityBar = ({
   bottomItems = DEFAULT_BOTTOM_ITEMS,
   activeId = null,
   onSelect,
+  side = 'left',
   className,
   'aria-label': ariaLabel = 'Activity Bar',
 }: ActivityBarProps) => {
@@ -71,7 +81,11 @@ export const ActivityBar = ({
       aria-pressed={activeId === id}
       className={cn(
         'p-2 cursor-pointer rounded text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring',
-        activeId === id && 'text-foreground border-l-2 border-primary rounded-none',
+        activeId === id && [
+          'text-foreground border-primary rounded-none',
+          // The marker sits on the edge facing the panel it opens.
+          side === 'right' ? 'border-r-2' : 'border-l-2',
+        ],
       )}
     >
       <Icon size={20} />
@@ -82,8 +96,10 @@ export const ActivityBar = ({
     <aside
       role="navigation"
       aria-label={ariaLabel}
+      data-side={side}
       className={cn(
-        'w-12 h-full bg-muted border-r flex flex-col items-center py-2 select-none',
+        'w-12 h-full bg-muted flex flex-col items-center py-2 select-none',
+        side === 'right' ? 'border-l' : 'border-r',
         className,
       )}
     >

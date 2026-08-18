@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { SettingsPanel, SidebarPane, TreeWidget, type ITreeNode } from 'nexus-shell';
+import {
+  ActivityBar,
+  PropertyPanel,
+  SettingsPanel,
+  SidebarPane,
+  TreeWidget,
+  type ITreeNode,
+} from 'nexus-shell';
+import { Files, Search, Sliders, Tags } from 'lucide-react';
 
 const FILES: ITreeNode[] = [
   {
@@ -56,4 +64,79 @@ export const NotClosable = () => (
     <p className="p-4 text-sm text-muted-foreground">No close button on this one.</p>
   </SidebarPane>
 );
+// #endregion
+
+// #region bothEdges
+export const BothEdges = () => {
+  const [left, setLeft] = useState<string | null>('files');
+  const [right, setRight] = useState<string | null>('properties');
+
+  const toggle = (current: string | null, set: (v: string | null) => void) => (id: string) =>
+    set(current === id ? null : id);
+
+  return (
+    <div className="flex h-full bg-background">
+      <ActivityBar
+        items={[
+          { id: 'files', label: 'Explorer', icon: Files },
+          { id: 'search', label: 'Search', icon: Search },
+        ]}
+        activeId={left}
+        onSelect={toggle(left, setLeft)}
+      />
+
+      {left && (
+        <SidebarPane
+          title={left === 'files' ? 'Explorer' : 'Search'}
+          onClose={() => setLeft(null)}
+        >
+          {left === 'files' ? (
+            <TreeWidget data={FILES} />
+          ) : (
+            <p className="p-4 text-xs text-muted-foreground">Search results…</p>
+          )}
+        </SidebarPane>
+      )}
+
+      <div className="grid flex-1 place-items-center text-xs text-muted-foreground">
+        workspace
+      </div>
+
+      {/* The same component. Only `side` differs. */}
+      {right && (
+        <SidebarPane
+          title={right === 'properties' ? 'Properties' : 'Tags'}
+          side="right"
+          width="280px"
+          onClose={() => setRight(null)}
+        >
+          {right === 'properties' ? (
+            <PropertyPanel
+              subjects={[{ id: 'app', name: 'App.tsx', lines: 184, tracked: true }]}
+              fields={[
+                { key: 'name', label: 'Name' },
+                { key: 'lines', label: 'Lines', type: 'number' },
+                { key: 'tracked', label: 'Tracked', type: 'checkbox' },
+              ]}
+            />
+          ) : (
+            <p className="p-4 text-xs text-muted-foreground">No tags.</p>
+          )}
+        </SidebarPane>
+      )}
+
+      <ActivityBar
+        side="right"
+        items={[
+          { id: 'properties', label: 'Properties', icon: Sliders },
+          { id: 'tags', label: 'Tags', icon: Tags },
+        ]}
+        bottomItems={[]}
+        activeId={right}
+        onSelect={toggle(right, setRight)}
+        aria-label="Inspector Bar"
+      />
+    </div>
+  );
+};
 // #endregion

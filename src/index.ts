@@ -30,9 +30,17 @@
 export { ShellLayout, ShellLayout as NexusWorkspaceShell, type ShellLayoutProps } from './components/layout/ShellLayout';
 export {
   initializeShell,
+  togglePanel,
   DEFAULT_COMMAND_IDS,
   type InitializeShellOptions,
 } from './core/Boot';
+export {
+  PaneHostProvider,
+  usePaneHost,
+  useHostChrome,
+  type IPaneHost,
+  type PaneHostProviderProps,
+} from './components/layout/PaneHost';
 
 // Registries — how features register themselves with the shell
 export { commandRegistry, CommandRegistry, type ICommand } from './core/registry/CommandRegistry';
@@ -45,8 +53,16 @@ export { componentRegistry, type ComponentConstructor } from './core/registry/Co
 export { useChatStore, type ISlashCommandConfig } from './core/services/ChatService';
 export { useLayoutStore } from './core/services/LayoutService';
 export { useModalStore, type ModalType as ModalStoreType } from './core/services/ModalStoreService';
-export { useRightSidebarStore } from './core/services/RightSidebarService';
-export { useSidebarStore, type ISidebarPanel } from './core/services/SidebarService';
+export {
+  useSidebarStore,
+  useInspectorStore,
+  createSidebarStore,
+  CHAT_PANEL_ID,
+  TERMINAL_PANEL_ID,
+  type ISidebarPanel,
+  type SidebarState,
+  type SidebarStore,
+} from './core/services/SidebarService';
 export { useStatusBarStore, type IStatusBarWidgetConfig } from './core/services/StatusBarService';
 export { useTerminalStore } from './core/services/TerminalService';
 export { useThemeStore, type ThemeType } from './core/services/ThemeService';
@@ -81,7 +97,7 @@ export { Modal, type ModalProps, type ModalType } from './components/widgets/Mod
 export { QuickSearch, type QuickSearchProps, type IQuickSearchResult } from './components/widgets/QuickSearch';
 export { SearchWidget, type SearchWidgetProps, type ISearchResult } from './components/widgets/SearchWidget';
 export { SettingsPanel, type SettingsPanelProps, type ISettingsThemeOption, DEFAULT_SETTINGS_THEMES } from './components/widgets/SettingsPanel';
-export { SidebarPane, type SidebarPaneProps } from './components/widgets/SidebarPane';
+export { SidebarPane, type SidebarPaneProps, type PaneSide } from './components/widgets/SidebarPane';
 export { StatusBar, type StatusBarProps, type IStatusBarWidget } from './components/widgets/StatusBar';
 export { TerminalPane, type TerminalPaneProps } from './components/widgets/TerminalPane';
 export { ThemeSwitcher, type ThemeSwitcherProps, type IThemeOption, DEFAULT_THEME_OPTIONS } from './components/widgets/ThemeSwitcher';

@@ -3,7 +3,7 @@
     {
       "name": "ActivityBar",
       "file": "src/components/widgets/ActivityBar.tsx",
-      "description": "The narrow vertical icon rail on the left edge of the shell, used to switch\nwhich panel the sidebar shows.\n\nControlled — it holds no selection state. For the store-backed variant used\nby `ShellLayout`, see `ConnectedActivityBar`.",
+      "description": "The narrow vertical icon rail at the edge of the shell, used to switch which\npanel the adjacent {@link SidebarPane} shows.\n\nControlled — it holds no selection state. `side` docks it left or right; for\nthe store-backed variants used by `ShellLayout`, see `ConnectedActivityBar`\nand `ConnectedInspectorBar`.",
       "example": "<ActivityBar\n  items={[{ id: 'files', label: 'Explorer', icon: Files }]}\n  activeId={active}\n  onSelect={(id) => setActive(id === active ? null : id)}\n/>",
       "props": [
         {
@@ -47,6 +47,13 @@
           "type": "(id: string) => void",
           "description": "Called with the clicked item's id. Toggling — clicking the active item to\ndeselect it — is the caller's decision, not the component's.",
           "default": null
+        },
+        {
+          "name": "side",
+          "required": false,
+          "type": "PaneSide",
+          "description": "Which edge of the shell the rail is docked to. Defaults to `\"left\"`.\n\nThe divider and the active-item indicator both mirror, so a right-hand rail\nmarks its selection on the edge facing the content.",
+          "default": "\"left\""
         }
       ]
     },
@@ -89,9 +96,16 @@
     {
       "name": "ChatPane",
       "file": "src/components/widgets/ChatPane.tsx",
-      "description": "A docked chat panel: a scrolling transcript over a composer with slash-command\nautocomplete.\n\nFully controlled — it owns only the in-progress input and the suggestion\nhighlight. Messages, sending and visibility belong to the caller, so the same\ncomponent works against a local array, a websocket, or an LLM endpoint. For\nthe store-backed variant used by `ShellLayout`, see `ConnectedChatPane`.",
+      "description": "A chat panel: a scrolling transcript over a composer with slash-command\nautocomplete.\n\nFully controlled — it owns only the in-progress input and the suggestion\nhighlight. Messages, sending and visibility belong to the caller, so the same\ncomponent works against a local array, a websocket, or an LLM endpoint. For\nthe store-backed variant, see `ConnectedChatPane`.\n\n**It fills whatever hosts it.** Register it as a sidebar panel, an inspector\npanel or a dockable tab and it takes that shape; it carries no width or edge\nof its own. Inside a host that draws a title bar it omits its own header —\nsee `chrome` to override.",
       "example": "<ChatPane\n  messages={messages}\n  onSend={(text) => send(text)}\n  slashCommands={[{ command: 'clear', description: 'Clear the transcript' }]}\n  onClose={() => setOpen(false)}\n/>",
       "props": [
+        {
+          "name": "chrome",
+          "required": false,
+          "type": "boolean",
+          "description": "Draw the title bar.\n\nLeft unset, this follows the host: inside a `SidebarPane` or a dockable tab\nthe title is already drawn, so the pane omits its own. Set it explicitly to\nforce either way — which is also what lets the component be tested without\na host around it.",
+          "default": null
+        },
         {
           "name": "className",
           "required": false,
@@ -1293,6 +1307,35 @@
       ]
     },
     {
+      "name": "PaneHostProvider",
+      "file": "src/components/layout/PaneHost.tsx",
+      "description": "Declare that everything inside is hosted.\n\n`SidebarPane` and the shell's tab factory do this for you. Wrap your own\ncontainer in it if you draw a title bar and want hosted components to defer.",
+      "example": "<PaneHostProvider chrome placement=\"bottom\">\n  <MyTitleBar />\n  <ConnectedTerminalPane />\n</PaneHostProvider>",
+      "props": [
+        {
+          "name": "children",
+          "required": true,
+          "type": "ReactNode",
+          "description": "Everything that should see this host.",
+          "default": null
+        },
+        {
+          "name": "chrome",
+          "required": true,
+          "type": "boolean",
+          "description": "The host already draws a title bar and a close affordance, so a hosted\ncomponent should not draw its own.",
+          "default": null
+        },
+        {
+          "name": "placement",
+          "required": false,
+          "type": "'left' | 'right' | 'bottom' | 'tab'",
+          "description": "Where the host sits, when it knows. Useful for choosing a layout.",
+          "default": null
+        }
+      ]
+    },
+    {
       "name": "PropertyPanel",
       "file": "src/components/properties/PropertyPanel.tsx",
       "description": "An inspector: the properties of whatever is selected, as editable fields.\n\nGive it the selection and a list of field descriptors. It reads each\nproperty across every selected subject, renders the matching field, and hands\nback new copies on edit — it holds no state and mutates nothing.\n\nThree selection states are handled for you:\n\n- **none** — the empty state.\n- **one** — ordinary editing.\n- **several** — shared values edit together; where subjects disagree the\n  field shows *Mixed* rather than one subject's value, and editing applies to\n  all of them.\n\nThat last case is the one hand-rolled inspectors usually skip, and skipping\nit is how a multi-selection edit silently flattens data.\n\nEvery field is also exported on its own — reach for `TextField` and friends\nwhen a property needs bespoke arrangement, and use `FieldShell` to make a\ncustom control look like the rest.",
@@ -1619,6 +1662,13 @@
           "default": null
         },
         {
+          "name": "inspectorPanels",
+          "required": false,
+          "type": "ISidebarPanel[]",
+          "description": "Right-hand panels — inspectors, properties, anything about the current\nselection rather than about navigation.\n\nRegistered exactly like `panels`, against a separate store, so the two\nsides open and close independently: file tree on the left and properties on\nthe right, both at once. The right-hand rail appears only once at least one\nis registered.",
+          "default": null
+        },
+        {
           "name": "layoutModel",
           "required": false,
           "type": "Model",
@@ -1679,8 +1729,8 @@
     {
       "name": "SidebarPane",
       "file": "src/components/widgets/SidebarPane.tsx",
-      "description": "The collapsible panel beside the {@link ActivityBar}: a titled header with an\noptional close button, over a scrolling body.\n\nA pure container — it decides nothing about which panel is showing and holds\nno state. Render whatever you like as `children`. For the store-backed\nvariant that resolves the active panel from `useSidebarStore`, see\n`ConnectedSidebarPane`.",
-      "example": "<SidebarPane title=\"Explorer\" onClose={() => setActive(null)}>\n  <TreeWidget data={files} />\n</SidebarPane>",
+      "description": "A docked side panel: a titled header with an optional close button, over a\nscrolling body.\n\nA pure container — it decides nothing about which panel is showing and holds\nno state. Render whatever you like as `children`.\n\n`side` docks it left (beside the {@link ActivityBar}) or right, where it\nbecomes an inspector. Both are the same component deliberately: before this\nprop existed every application hand-rolled its own right-hand\n`<div className=\"w-80 border-l …\">`, and they all drifted apart.\n\nFor the store-backed variants used by `ShellLayout`, see\n`ConnectedSidebarPane` and `ConnectedInspectorPane`.",
+      "example": "<SidebarPane title=\"Explorer\" onClose={() => setActive(null)}>\n  <TreeWidget data={files} />\n</SidebarPane>\n\n<SidebarPane title=\"Properties\" side=\"right\" width=\"320px\">\n  <PropertyPanel subjects={selected} fields={fields} />\n</SidebarPane>",
       "props": [
         {
           "name": "title",
@@ -1709,6 +1759,13 @@
           "type": "() => void",
           "description": "Called when the close button is pressed. Omit it to hide the close button\nentirely — useful when the pane is always visible.",
           "default": null
+        },
+        {
+          "name": "side",
+          "required": false,
+          "type": "PaneSide",
+          "description": "Which edge of the shell the pane is docked to. Defaults to `\"left\"`.\n\nOnly the divider moves — a right-hand pane is the same container, so an\ninspector does not need a component of its own.",
+          "default": "\"left\""
         },
         {
           "name": "width",
@@ -1844,9 +1901,16 @@
     {
       "name": "TerminalPane",
       "file": "src/components/widgets/TerminalPane.tsx",
-      "description": "A bottom-docked terminal pane: a scrolling output log over a single-line\ninput.\n\nPresentational and fully controlled — it owns only the in-progress input\ntext. Visibility, history and command execution all belong to the caller.\nFor the store-backed variant with built-in `clear`/`help` handling, see\n`ConnectedTerminalPane`.",
+      "description": "A terminal pane: a scrolling output log over a single-line input.\n\nPresentational and fully controlled — it owns only the in-progress input\ntext. Visibility, history and command execution all belong to the caller.\nFor the store-backed variant with built-in `clear`/`help` handling, see\n`ConnectedTerminalPane`.\n\n**It fills whatever hosts it.** Bottom of the workspace, a side pane, or a\ndockable tab — register it wherever it belongs. Inside a host that draws a\ntitle bar it omits its own header and its own fixed height.",
       "example": "const [history, setHistory] = useState<string[]>([]);\n<TerminalPane\n  history={history}\n  onCommand={(cmd) => setHistory((h) => [...h, `$ ${cmd}`, run(cmd)])}\n  onClose={() => setOpen(false)}\n/>",
       "props": [
+        {
+          "name": "chrome",
+          "required": false,
+          "type": "boolean",
+          "description": "Draw the title bar.\n\nLeft unset, this follows the host: inside a `SidebarPane` or a dockable tab\nthe title is already drawn, so the pane omits its own. Set it explicitly to\nforce either way.",
+          "default": null
+        },
         {
           "name": "className",
           "required": false,
@@ -1858,8 +1922,8 @@
           "name": "height",
           "required": false,
           "type": "string",
-          "description": "Height of the pane, as a CSS length. Defaults to `\"250px\"`.",
-          "default": "\"250px\""
+          "description": "Height of the pane, as a CSS length.\n\nLeave it unset inside a host that sizes its own children — a side pane or a\ndockable tab — and the terminal fills the space instead. Defaults to\n`\"250px\"` only when standalone.",
+          "default": null
         },
         {
           "name": "history",

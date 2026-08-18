@@ -28,8 +28,10 @@ import { Boxes, Files } from 'lucide-react';
 import {
   AppTitle,
   ShellLayout,
+  chatPanel,
   componentRegistry,
   initializeShell,
+  terminalPanel,
   useLayoutStore,
 } from 'nexus-shell';
 import 'nexus-shell/style.css';
@@ -38,7 +40,13 @@ import 'nexus-shell/style.css';
 componentRegistry.register('editor', Editor);
 
 initializeShell({
-  panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileExplorer }],
+  panels: [
+    { id: 'files', label: 'Explorer', icon: Files, component: FileExplorer },
+    terminalPanel(),
+  ],
+  // Chat on the right rail. Move it to `panels` for the left, or register
+  // the component as a tab — nothing about it is bound to one edge.
+  inspectorPanels: [chatPanel()],
   commands: [
     { id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save },
   ],
@@ -56,6 +64,23 @@ createRoot(document.getElementById('root')!).render(
 That is a working IDE: dockable tabs, a command palette on `Cmd/Ctrl+Shift+P`, a
 terminal, a chat pane, and a themable frame.
 
+## Where things go
+
+The shell has four places a view can live, and nothing is nailed to one of
+them. Chat and the terminal are ordinary registrations, so they go wherever you
+put them — including into a dockable tab, alongside your own views.
+
+| Place | How |
+| :-- | :-- |
+| Left rail | `panels: [...]` |
+| Right rail | `inspectorPanels: [...]` |
+| Dockable tab | `componentRegistry.register(id, Component)` + `addTab(id)` |
+| Bottom of the workspace | A tab in the bottom row of your `initialLayoutJson` |
+
+Anything hosted in a pane or a tab is told so, and drops its own title bar —
+`SidebarPane` and the tab strip already draw one. Pass `chrome` explicitly to
+force it either way.
+
 ## Growing an app
 
 You add capability by **registering** it. None of this changes the layout, which
@@ -67,6 +92,8 @@ is what lets plugins and distant code contribute to the shell.
 | An action or hotkey | `commandRegistry.registerCommand({ id, label, keybinding, execute })` — appears in the palette automatically |
 | A menu entry | `menuRegistry.registerMenu('File', { id, label, commandId })` |
 | A sidebar panel | Add it to `panels`; it becomes an activity bar icon |
+| An inspector or properties panel | Add it to `inspectorPanels`; it docks right, with its own rail |
+| Chat or a terminal, anywhere | `chatPanel()` / `terminalPanel()` in `panels` or `inspectorPanels`, or register the component as a tab |
 | A status bar item | `useStatusBarStore.getState().addWidget(...)` |
 | A dialog from anywhere | `await useModalStore.getState().openConfirm('Sure?')` |
 | An unsaved-changes guard | `useLayoutStore.getState().setTabDirty(tabId, true)` |
@@ -114,8 +141,8 @@ shell's own frame and keep every registration working.
 
 | Component | What it is |
 | :-- | :-- |
-| `ActivityBar` | Vertical icon rail for switching sidebar panels |
-| `ChatPane` | Docked chat transcript with slash-command autocomplete |
+| `ActivityBar` | Vertical icon rail for switching side panels, either edge |
+| `ChatPane` | Chat transcript with slash-command autocomplete; fills any host |
 | `CommandPalette` | Filterable, keyboard-navigable command list |
 | `ContextMenu` | Floating menu positioned at viewport coordinates |
 | `DataGrid` | Sortable, filterable table with optional virtualisation |
@@ -124,9 +151,10 @@ shell's own frame and keep every registration working.
 | `QuickSearch` | Compact search field with grouped results, for the menu bar |
 | `SearchWidget` | Full-height search panel with autocomplete, for the sidebar |
 | `SettingsPanel` | Theme picker body for the settings sidebar |
-| `SidebarPane` | Titled, closable container for sidebar content |
+| `SidebarPane` | Titled, closable side panel; `side` docks it left or right |
 | `StatusBar` | Footer with left / center / right item groups |
-| `TerminalPane` | Bottom-docked terminal log and input |
+| `TerminalPane` | Terminal log and input; fills any host |
+| `PaneHostProvider` | Tells hosted components a title bar is already drawn |
 | `ThemeSwitcher` | Segmented theme control |
 | `TreeWidget` | Virtualised tree for any hierarchy, with drag-to-move and a data-driven menu |
 | `GraphCanvas` | Infinite pannable, zoomable field for node-and-edge editing |

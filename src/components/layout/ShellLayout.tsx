@@ -11,19 +11,28 @@ import {
 import 'flexlayout-react/style/light.css';
 import '../../styles/flexlayout-theme.css';
 
-import { ConnectedActivityBar } from '../../connected/ConnectedActivityBar';
-import { ConnectedChatPane } from '../../connected/ConnectedChatPane';
+import {
+  ConnectedActivityBar,
+  ConnectedInspectorBar,
+} from '../../connected/ConnectedActivityBar';
 import { ConnectedMenuBar } from '../../connected/ConnectedMenuBar';
-import { ConnectedSidebarPane } from '../../connected/ConnectedSidebarPane';
+import {
+  ConnectedInspectorPane,
+  ConnectedSidebarPane,
+} from '../../connected/ConnectedSidebarPane';
 import { ConnectedStatusBar } from '../../connected/ConnectedStatusBar';
-import { ConnectedTerminalPane } from '../../connected/ConnectedTerminalPane';
+import { PaneHostProvider } from './PaneHost';
 
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import { menuRegistry, type IMenuItemConfig } from '../../core/registry/MenuRegistry';
 import { useChatStore, type ISlashCommandConfig } from '../../core/services/ChatService';
 import { useLayoutStore } from '../../core/services/LayoutService';
 import { useModalStore } from '../../core/services/ModalStoreService';
-import { useSidebarStore, type ISidebarPanel } from '../../core/services/SidebarService';
+import {
+  useInspectorStore,
+  useSidebarStore,
+  type ISidebarPanel,
+} from '../../core/services/SidebarService';
 import {
   useStatusBarStore,
   type IStatusBarWidgetConfig,
@@ -36,6 +45,16 @@ export interface ShellLayoutProps {
    * renders its `component` in the sidebar when selected.
    */
   panels?: ISidebarPanel[];
+  /**
+   * Right-hand panels — inspectors, properties, anything about the current
+   * selection rather than about navigation.
+   *
+   * Registered exactly like `panels`, against a separate store, so the two
+   * sides open and close independently: file tree on the left and properties on
+   * the right, both at once. The right-hand rail appears only once at least one
+   * is registered.
+   */
+  inspectorPanels?: ISidebarPanel[];
   /** Slash commands available in the chat pane. */
   slashCommands?: ISlashCommandConfig[];
   /** Menu structure, keyed by top-level menu name. Items dispatch by `commandId`. */
@@ -120,6 +139,7 @@ export interface ShellLayoutProps {
  */
 export const ShellLayout = ({
   panels,
+  inspectorPanels,
   slashCommands,
   menuConfig,
   statusBarConfig,
@@ -134,12 +154,17 @@ export const ShellLayout = ({
   const { model, setModel, initLayout, isTabDirty, setTabDirty } = useLayoutStore();
   const theme = useThemeStore((s) => s.theme);
   const setPanels = useSidebarStore((s) => s.setPanels);
+  const setInspectorPanels = useInspectorStore((s) => s.setPanels);
   const setSlashCommands = useChatStore((s) => s.setSlashCommands);
   const setWidgets = useStatusBarStore((s) => s.setWidgets);
 
   useEffect(() => {
     if (panels) setPanels(panels);
   }, [panels, setPanels]);
+
+  useEffect(() => {
+    if (inspectorPanels) setInspectorPanels(inspectorPanels);
+  }, [inspectorPanels, setInspectorPanels]);
 
   useEffect(() => {
     if (slashCommands) setSlashCommands(slashCommands);
@@ -173,7 +198,13 @@ export const ShellLayout = ({
         : undefined;
 
       if (RegisteredComponent) {
-        return <RegisteredComponent node={node} {...config} />;
+        return (
+          // The tab strip is the title bar, so a component that draws its own
+          // — chat, terminal — omits it here.
+          <PaneHostProvider chrome placement="tab">
+            <RegisteredComponent node={node} {...config} />
+          </PaneHostProvider>
+        );
       }
       return <div className="p-4 text-sm">Unknown Component: {componentId}</div>;
     } catch (e) {
@@ -233,9 +264,9 @@ export const ShellLayout = ({
               onAction={onAction}
             />
           </div>
-          <ConnectedTerminalPane />
         </div>
-        <ConnectedChatPane />
+        <ConnectedInspectorPane />
+        <ConnectedInspectorBar />
       </div>
       <ConnectedStatusBar />
     </div>

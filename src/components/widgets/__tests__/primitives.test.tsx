@@ -106,6 +106,33 @@ describe('ActivityBar', () => {
     rerender(<ActivityBar items={items} bottomItems={[]} />);
     expect(screen.queryByLabelText('Settings')).not.toBeInTheDocument();
   });
+
+  it('docks left by default, and mirrors its divider on the right', () => {
+    const { rerender } = render(<ActivityBar items={items} bottomItems={[]} />);
+    const rail = () => screen.getByRole('navigation');
+
+    expect(rail()).toHaveAttribute('data-side', 'left');
+    expect(rail().className).toContain('border-r');
+
+    rerender(<ActivityBar items={items} bottomItems={[]} side="right" />);
+    expect(rail()).toHaveAttribute('data-side', 'right');
+    expect(rail().className).toContain('border-l');
+    expect(rail().className).not.toContain('border-r');
+  });
+
+  it('mirrors the active-item marker to face the panel it opens', () => {
+    const { rerender } = render(
+      <ActivityBar items={items} activeId="files" bottomItems={[]} />,
+    );
+    // On a left rail the marker sits on the left edge; on a right rail it has
+    // to move, or it points away from the panel it controls.
+    expect(screen.getByLabelText('Explorer').className).toContain('border-l-2');
+
+    rerender(
+      <ActivityBar items={items} activeId="files" bottomItems={[]} side="right" />,
+    );
+    expect(screen.getByLabelText('Explorer').className).toContain('border-r-2');
+  });
 });
 
 describe('SidebarPane', () => {
@@ -127,6 +154,36 @@ describe('SidebarPane', () => {
       </SidebarPane>,
     );
     expect(screen.getByText('custom content')).toBeInTheDocument();
+  });
+
+  it('docks left by default, and puts its divider on the other edge when right', () => {
+    const { rerender } = render(<SidebarPane title="Explorer">body</SidebarPane>);
+    const pane = () => screen.getByRole('tabpanel');
+
+    expect(pane()).toHaveAttribute('data-side', 'left');
+    expect(pane().className).toContain('border-r');
+
+    rerender(
+      <SidebarPane title="Properties" side="right">
+        body
+      </SidebarPane>,
+    );
+    expect(pane()).toHaveAttribute('data-side', 'right');
+    expect(pane().className).toContain('border-l');
+    expect(pane().className).not.toContain('border-r');
+  });
+
+  it('is the same pane on either side, width and all', () => {
+    render(
+      <SidebarPane title="Properties" side="right" width="320px" onClose={() => {}}>
+        <p>inspector</p>
+      </SidebarPane>,
+    );
+
+    // A right-hand pane is not a different component with different features.
+    expect(screen.getByLabelText('Properties Panel')).toHaveStyle({ width: '320px' });
+    expect(screen.getByLabelText('Close Panel')).toBeInTheDocument();
+    expect(screen.getByText('inspector')).toBeInTheDocument();
   });
 });
 
@@ -220,8 +277,7 @@ describe('Modal', () => {
       <Modal open type="prompt" title="Rename" defaultValue="old" onConfirm={onConfirm} />,
     );
     const input = screen.getByRole('textbox');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'new');
+    fireEvent.change(input, { target: { value: 'new' } });
     await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(onConfirm).toHaveBeenCalledWith('new');
   });

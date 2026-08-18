@@ -94,11 +94,9 @@ export const DialogueMapperInspector: React.FC<{ mapId?: string }> = ({ mapId })
   const selected = nodes.filter((node) => selectedIds.includes(node.id));
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-card/45 font-sans text-foreground">
-      <div className="flex shrink-0 items-center border-b border-border bg-card p-3">
-        <h3 className="text-sm font-bold tracking-tight">Argument Inspector</h3>
-      </div>
-
+    // No header of its own: whatever hosts this supplies the title — a
+    // `SidebarPane` when docked, the tab strip when opened as a tab.
+    <div className="relative flex h-full w-full flex-col overflow-hidden font-sans text-foreground">
       <div className="min-h-0 flex-1">
         <PropertyPanel<DialogueNode>
           subjects={selected}

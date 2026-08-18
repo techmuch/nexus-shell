@@ -22,21 +22,20 @@ const BUILT_IN_HELP = [
 /**
  * {@link TerminalPane} bound to `useTerminalStore`.
  *
- * Renders nothing while the store reports the terminal closed. Echoes each
- * command into history and handles `help` and `clear` internally; anything else
- * is offered to `onCommand` before falling back to a not-found message.
+ * Echoes each command into history and handles `help` and `clear` internally;
+ * anything else is offered to `onCommand` before falling back to a not-found
+ * message.
+ *
+ * Visibility belongs to whatever hosts it. Register it with `terminalPanel()`
+ * for a side pane, or as a tab component for the docking area.
  */
 export const ConnectedTerminalPane = ({
   onCommand,
   ...props
 }: ConnectedTerminalPaneProps) => {
-  const isOpen = useTerminalStore((s) => s.isOpen);
   const history = useTerminalStore((s) => s.history);
-  const setOpen = useTerminalStore((s) => s.setOpen);
   const addHistory = useTerminalStore((s) => s.addHistory);
   const clearHistory = useTerminalStore((s) => s.clearHistory);
-
-  if (!isOpen) return null;
 
   const handleCommand = (command: string) => {
     addHistory(`$ ${command}`);
@@ -60,7 +59,6 @@ export const ConnectedTerminalPane = ({
       {...props}
       history={history}
       onCommand={handleCommand}
-      onClose={() => setOpen(false)}
     />
   );
 };

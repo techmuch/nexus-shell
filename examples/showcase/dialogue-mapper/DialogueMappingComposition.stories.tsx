@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { DialogueMappingWidget } from './DialogueMappingWidget';
 import { DialogueMapperLibraryWidget } from './DialogueMapperLibraryWidget';
 import { ArgumentInspectorWidget } from './ArgumentInspectorWidget';
+import { SidebarPane } from '../../../src/index';
 
 const meta: Meta = {
   title: 'Examples/Dialogue Mapper/Workbench',
@@ -27,25 +28,25 @@ const mockNode = {
 export const UnifiedWorkbench: React.FC = () => {
   return (
     <div className="flex w-screen h-screen bg-background text-foreground overflow-hidden font-sans">
-      {/* Left Sidebar: Node Library */}
-      <div className="w-[300px] h-full flex-shrink-0 flex flex-col border-r border-border bg-card/30">
+      {/* Both rails are the same component. Only `side` differs — which is the
+          whole point of composing a workbench out of the library's own pieces
+          rather than hand-rolling each edge. */}
+      <SidebarPane title="IBIS Node Library" width="300px" className="bg-card/30">
         <DialogueMapperLibraryWidget />
-      </div>
+      </SidebarPane>
 
-      {/* Main Area: Dialogue Mapping Canvas */}
       <div className="flex-1 h-full flex flex-col min-w-0 relative">
         <DialogueMappingWidget mapId="default" node={mockNode as any} />
       </div>
 
-      {/* Right Sidebar: Property/Argument Inspector */}
-      <div className="w-[340px] h-full flex-shrink-0 flex flex-col border-l border-border bg-card/30">
-        <div className="p-3 border-b border-border bg-card flex items-center shrink-0">
-          <h3 className="font-bold text-sm tracking-tight">Argument Inspector</h3>
-        </div>
-        <div className="flex-1 overflow-hidden relative">
-          <ArgumentInspectorWidget node={mockNode as any} />
-        </div>
-      </div>
+      <SidebarPane
+        title="Argument Inspector"
+        side="right"
+        width="340px"
+        className="bg-card/30"
+      >
+        <ArgumentInspectorWidget node={mockNode as any} />
+      </SidebarPane>
     </div>
   );
 };

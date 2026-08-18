@@ -2,12 +2,10 @@ import { commandRegistry } from '../../../src/core/registry/CommandRegistry';
 import { menuRegistry } from '../../../src/core/registry/MenuRegistry';
 import { pluginRegistry } from '../../../src/core/registry/PluginRegistry';
 import { useLayoutStore } from '../../../src/core/services/LayoutService';
-import { useSidebarStore } from '../../../src/core/services/SidebarService';
-import { useRightSidebarStore } from '../../../src/core/services/RightSidebarService';
+import { useInspectorStore, useSidebarStore } from '../../../src/core/services/SidebarService';
 import { useChatStore } from '../../../src/core/services/ChatService';
 import { useThemeStore, ThemeType } from '../../../src/core/services/ThemeService';
 import { useStatusBarStore } from '../../../src/core/services/StatusBarService';
-import { useTerminalStore } from '../../../src/core/services/TerminalService';
 import { useModalStore } from '../../../src/core/services/ModalStoreService';
 import { ExamplePlugin } from '../plugins/ExamplePlugin';
 import { Files, Search, GitGraph, Plug, GitBranch, Bell, MessageCircle, Terminal as TerminalIcon } from "lucide-react";
@@ -19,6 +17,9 @@ import { MockupReviewWidget } from '../mockup-reviewer/MockupReviewWidget';
 import { DialogueMappingWidget } from '../dialogue-mapper/DialogueMappingWidget';
 import { DialogueMapperLibraryWidget } from '../dialogue-mapper/DialogueMapperLibraryWidget';
 import { ArgumentInspectorWidget } from '../dialogue-mapper/ArgumentInspectorWidget';
+import { chatPanel, terminalPanel } from '../../../src/connected/panels';
+import { ConnectedTerminalPane } from '../../../src/connected/ConnectedTerminalPane';
+import { togglePanel } from '../../../src/core/Boot';
 
 /**
  * Initializes the shell's core commands and menus.
@@ -31,6 +32,11 @@ export const initializeShell = async () => {
   componentRegistry.register('dialogue-map', DialogueMappingWidget);
   componentRegistry.register('dialogue-library', DialogueMapperLibraryWidget);
   componentRegistry.register('argument-inspector', ArgumentInspectorWidget);
+
+  // The terminal as a dockable tab. It used to be nailed along the bottom of
+  // the workspace; registering it like any other component means it can be
+  // split, moved and closed with everything else.
+  componentRegistry.register('terminal', ConnectedTerminalPane);
   // Register Core Status Bar Widgets
   useStatusBarStore.getState().setWidgets([
     {
@@ -58,7 +64,7 @@ export const initializeShell = async () => {
       label: 'Terminal',
       icon: TerminalIcon,
       alignment: 'right',
-      onClick: () => useTerminalStore.getState().toggle(),
+      onClick: () => togglePanel('terminal'),
       priority: 110,
     },
     {
@@ -111,6 +117,14 @@ export const initializeShell = async () => {
     },
   ]);
 
+  // Chat on the right rail, terminal available as a tab. Both were fixed slots
+  // in the shell until they became ordinary registrations — this file is now
+  // the only thing deciding where they live.
+  useInspectorStore.getState().setPanels([
+    chatPanel(),
+    terminalPanel({ id: 'terminal-pane', label: 'Terminal (docked)' }),
+  ]);
+
   // Register Core Slash Commands
   useChatStore.getState().setSlashCommands([
     {
@@ -153,7 +167,7 @@ export const initializeShell = async () => {
     id: 'nexus.toggle-chat',
     label: 'Toggle Chat Pane',
     keybinding: 'Control+I',
-    execute: () => useRightSidebarStore.getState().toggleChat(),
+    execute: () => togglePanel('chat'),
   });
 
   commandRegistry.registerCommand({

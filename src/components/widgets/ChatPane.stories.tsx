@@ -27,14 +27,19 @@ const meta = {
     docs: {
       description: {
         component:
-          'A docked chat panel: a scrolling transcript over a composer with slash-command autocomplete. Fully controlled — it owns only the draft input and the suggestion highlight, so the same component backs a local array, a websocket or an LLM endpoint. Type `/` to see the autocomplete. See `ConnectedChatPane` for the variant bound to `useChatStore`.',
+          'A chat panel: a scrolling transcript over a composer with slash-command autocomplete. Fully controlled — it owns only the draft input and the suggestion highlight, so the same component backs a local array, a websocket or an LLM endpoint. Type `/` to see the autocomplete.\n\n**It fills whatever hosts it** — left rail, right rail or a dockable tab — and carries no width or edge of its own. See `ConnectedChatPane` for the variant bound to `useChatStore`, and `chatPanel()` for a ready-made registration.',
       },
     },
   },
   decorators: [
     (Story) => (
+      // The pane fills its host, so the host is what decides it is 320px wide
+      // and sits on the right. That decision used to be baked into the
+      // component, which is why it could only ever live in one place.
       <div className="h-[460px] flex justify-end bg-background">
-        <Story />
+        <div className="w-[320px] border-l border-border">
+          <Story />
+        </div>
       </div>
     ),
   ],

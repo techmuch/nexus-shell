@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, Terminal, User, X } from 'lucide-react';
 import { cn } from '../../lib/cn';
+import { useHostChrome } from '../layout/PaneHost';
 
 /** A single message in the {@link ChatPane} transcript. */
 export interface IChatMessage {
@@ -42,6 +43,15 @@ export interface ChatPaneProps {
   placeholder?: string;
   /** Shown in place of the transcript when `messages` is empty. */
   emptyState?: React.ReactNode;
+  /**
+   * Draw the title bar.
+   *
+   * Left unset, this follows the host: inside a `SidebarPane` or a dockable tab
+   * the title is already drawn, so the pane omits its own. Set it explicitly to
+   * force either way — which is also what lets the component be tested without
+   * a host around it.
+   */
+  chrome?: boolean;
   /** Extra classes merged onto the root element. */
   className?: string;
 }
@@ -57,13 +67,18 @@ const DEFAULT_EMPTY_STATE = (
 );
 
 /**
- * A docked chat panel: a scrolling transcript over a composer with slash-command
+ * A chat panel: a scrolling transcript over a composer with slash-command
  * autocomplete.
  *
  * Fully controlled — it owns only the in-progress input and the suggestion
  * highlight. Messages, sending and visibility belong to the caller, so the same
  * component works against a local array, a websocket, or an LLM endpoint. For
- * the store-backed variant used by `ShellLayout`, see `ConnectedChatPane`.
+ * the store-backed variant, see `ConnectedChatPane`.
+ *
+ * **It fills whatever hosts it.** Register it as a sidebar panel, an inspector
+ * panel or a dockable tab and it takes that shape; it carries no width or edge
+ * of its own. Inside a host that draws a title bar it omits its own header —
+ * see `chrome` to override.
  *
  * @example
  * ```tsx
@@ -84,8 +99,10 @@ export const ChatPane = ({
   title = 'Chat',
   placeholder = 'Send a message…',
   emptyState = DEFAULT_EMPTY_STATE,
+  chrome,
   className,
 }: ChatPaneProps) => {
+  const showChrome = useHostChrome(chrome);
   const [input, setInput] = useState('');
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -150,28 +167,33 @@ export const ChatPane = ({
       role="complementary"
       aria-label={title}
       className={cn(
-        'w-[320px] h-full bg-muted border-l border-border flex flex-col select-none shrink-0',
+        // Fills whatever hosts it — a side pane, a dockable tab, your own box.
+        // It used to hardcode `w-[320px] border-l`, which is why it could only
+        // ever live in one place.
+        'h-full w-full min-h-0 bg-muted flex flex-col select-none',
         className,
       )}
     >
-      <div className="h-10 flex items-center justify-between px-4 shrink-0">
-        <div className="flex items-center space-x-2 text-muted-foreground">
-          <MessageCircle size={13} />
-          <span className="text-[11px] font-bold uppercase tracking-widest">
-            {title}
-          </span>
+      {showChrome && (
+        <div className="h-10 flex items-center justify-between px-4 shrink-0">
+          <div className="flex items-center space-x-2 text-muted-foreground">
+            <MessageCircle size={13} />
+            <span className="text-[11px] font-bold uppercase tracking-widest">
+              {title}
+            </span>
+          </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close Chat"
+              className="p-1 rounded hover:bg-accent hover:text-foreground text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close Chat"
-            className="p-1 rounded hover:bg-accent hover:text-foreground text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
+      )}
 
       <div
         ref={scrollRef}

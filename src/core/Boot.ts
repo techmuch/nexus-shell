@@ -1,13 +1,19 @@
 import { commandRegistry, type ICommand } from './registry/CommandRegistry';
 import { menuRegistry, type IMenuItemConfig } from './registry/MenuRegistry';
+import { componentRegistry } from './registry/ComponentRegistry';
 import { useChatStore, type ISlashCommandConfig } from './services/ChatService';
-import { useRightSidebarStore } from './services/RightSidebarService';
-import { useSidebarStore, type ISidebarPanel } from './services/SidebarService';
+import { useLayoutStore } from './services/LayoutService';
+import {
+  CHAT_PANEL_ID,
+  TERMINAL_PANEL_ID,
+  useInspectorStore,
+  useSidebarStore,
+  type ISidebarPanel,
+} from './services/SidebarService';
 import {
   useStatusBarStore,
   type IStatusBarWidgetConfig,
 } from './services/StatusBarService';
-import { useTerminalStore } from './services/TerminalService';
 import { useThemeStore, type ThemeType } from './services/ThemeService';
 import { BUNDLED_THEMES } from '../lib/themes';
 
@@ -17,6 +23,12 @@ export interface InitializeShellOptions {
    * renders its `component` in the sidebar when selected.
    */
   panels?: ISidebarPanel[];
+  /**
+   * Right-hand panels — inspectors and properties, as opposed to navigation.
+   * Registered against `useInspectorStore`, so they open and close
+   * independently of the left-hand sidebar.
+   */
+  inspectorPanels?: ISidebarPanel[];
   /** Menus keyed by top-level name. Items dispatch through their `commandId`. */
   menus?: Record<string, IMenuItemConfig[]>;
   /** Commands available to the palette, menus and keybindings. */
@@ -53,17 +65,45 @@ export const DEFAULT_COMMAND_IDS = [
   ...THEME_COMMANDS.map((c) => c.id),
 ] as const;
 
+/**
+ * Toggle a panel wherever it happens to be registered.
+ *
+ * Chat and terminal are no longer nailed to one edge, so a command that toggled
+ * a fixed slot would be wrong the moment you moved them. This looks the id up
+ * in the left rail, then the right, and finally opens it as a tab — which is
+ * also what makes `Control+\`` keep working when the terminal is a tab.
+ *
+ * Returns `false` when the id is registered nowhere, so a caller can tell the
+ * difference between "toggled" and "nothing to toggle".
+ */
+export const togglePanel = (id: string): boolean => {
+  for (const store of [useSidebarStore, useInspectorStore]) {
+    if (store.getState().panels.some((panel) => panel.id === id)) {
+      store.getState().toggleSidebar(id);
+      return true;
+    }
+  }
+
+  if (componentRegistry.get(id)) {
+    // A tab, then. `addTab` focuses an existing one rather than duplicating it.
+    useLayoutStore.getState().addTab(id);
+    return true;
+  }
+
+  return false;
+};
+
 const DEFAULT_COMMANDS: ICommand[] = [
   {
     id: 'view.toggleTerminal',
     label: 'View: Toggle Terminal',
     keybinding: 'Control+`',
-    execute: () => useTerminalStore.getState().toggle(),
+    execute: () => togglePanel(TERMINAL_PANEL_ID),
   },
   {
     id: 'view.toggleChat',
     label: 'View: Toggle Chat',
-    execute: () => useRightSidebarStore.getState().toggleChat(),
+    execute: () => togglePanel(CHAT_PANEL_ID),
   },
   {
     id: 'view.toggleSidebar',
@@ -129,6 +169,7 @@ const DEFAULT_MENUS: Record<string, IMenuItemConfig[]> = {
 export const initializeShell = (options: InitializeShellOptions = {}): void => {
   const {
     panels,
+    inspectorPanels,
     menus,
     commands,
     statusBar,
@@ -153,6 +194,7 @@ export const initializeShell = (options: InitializeShellOptions = {}): void => {
   }
 
   if (panels) useSidebarStore.getState().setPanels(panels);
+  if (inspectorPanels) useInspectorStore.getState().setPanels(inspectorPanels);
   if (statusBar) useStatusBarStore.getState().setWidgets(statusBar);
   if (slashCommands) useChatStore.getState().setSlashCommands(slashCommands);
 };

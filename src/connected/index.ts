@@ -10,12 +10,21 @@
  * components when you want control.
  */
 
-export { ConnectedActivityBar, type ConnectedActivityBarProps } from './ConnectedActivityBar';
+export { chatPanel, terminalPanel } from './panels';
+export {
+  ConnectedActivityBar,
+  ConnectedInspectorBar,
+  type ConnectedActivityBarProps,
+} from './ConnectedActivityBar';
 export { ConnectedChatPane, type ConnectedChatPaneProps } from './ConnectedChatPane';
 export { ConnectedCommandPalette, type ConnectedCommandPaletteProps } from './ConnectedCommandPalette';
 export { ConnectedMenuBar, type ConnectedMenuBarProps } from './ConnectedMenuBar';
 export { ConnectedModal, type ConnectedModalProps } from './ConnectedModal';
-export { ConnectedSidebarPane, type ConnectedSidebarPaneProps } from './ConnectedSidebarPane';
+export {
+  ConnectedInspectorPane,
+  ConnectedSidebarPane,
+  type ConnectedSidebarPaneProps,
+} from './ConnectedSidebarPane';
 export { ConnectedStatusBar, type ConnectedStatusBarProps } from './ConnectedStatusBar';
 export { ConnectedTerminalPane, type ConnectedTerminalPaneProps } from './ConnectedTerminalPane';
 export { ConnectedThemeSwitcher, type ConnectedThemeSwitcherProps } from './ConnectedThemeSwitcher';

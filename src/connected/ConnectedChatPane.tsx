@@ -1,6 +1,5 @@
 import { ChatPane, type ChatPaneProps } from '../components/widgets/ChatPane';
 import { useChatStore } from '../core/services/ChatService';
-import { useRightSidebarStore } from '../core/services/RightSidebarService';
 
 export type ConnectedChatPaneProps = Omit<
   ChatPaneProps,
@@ -15,20 +14,19 @@ export type ConnectedChatPaneProps = Omit<
 };
 
 /**
- * {@link ChatPane} bound to `useChatStore` and `useRightSidebarStore`.
+ * {@link ChatPane} bound to `useChatStore` and `useChatVisibilityStore`.
  *
- * Renders nothing while the right sidebar reports chat closed. Appends each
- * submission to the transcript, then either dispatches a registered slash
- * command's `execute` or hands the text to `onSend`.
+ * Appends each submission to the transcript, then either dispatches a
+ * registered slash command's `execute` or hands the text to `onSend`.
+ *
+ * Visibility belongs to whatever hosts it — a pane closes by closing the pane,
+ * a tab by closing the tab. Register it with `chatPanel()`, or as a tab
+ * component, and put it wherever it belongs.
  */
 export const ConnectedChatPane = ({ onSend, ...props }: ConnectedChatPaneProps) => {
-  const isChatOpen = useRightSidebarStore((s) => s.isChatOpen);
-  const setChatOpen = useRightSidebarStore((s) => s.setChatOpen);
   const messages = useChatStore((s) => s.messages);
   const slashCommands = useChatStore((s) => s.slashCommands);
   const addMessage = useChatStore((s) => s.addMessage);
-
-  if (!isChatOpen) return null;
 
   const handleSend = (text: string) => {
     addMessage({ role: 'user', text });
@@ -53,7 +51,6 @@ export const ConnectedChatPane = ({ onSend, ...props }: ConnectedChatPaneProps) 
       messages={messages}
       slashCommands={slashCommands}
       onSend={handleSend}
-      onClose={() => setChatOpen(false)}
     />
   );
 };

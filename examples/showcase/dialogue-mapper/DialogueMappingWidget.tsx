@@ -11,6 +11,7 @@ import {
   GraphMiniMap,
   GraphNode,
   readPaletteDrag,
+  SidebarPane,
   useGraphKeyboard,
   useGraphLayout,
   type GraphCanvasHandle,
@@ -535,9 +536,15 @@ export const DialogueMappingWidget: React.FC<DialogueMappingWidgetProps> = ({
       </main>
 
       {isInspectorOpen && (
-        <div className="z-10 h-full w-80 shrink-0 border-l border-border bg-card/45">
+        <SidebarPane
+          title="Argument Inspector"
+          side="right"
+          width="320px"
+          onClose={() => setIsInspectorOpen(false)}
+          className="z-10 bg-card/45"
+        >
           <DialogueMapperInspector mapId={mapId} />
-        </div>
+        </SidebarPane>
       )}
 
       {menu && (

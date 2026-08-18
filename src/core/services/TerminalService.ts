@@ -1,19 +1,24 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 
+/**
+ * The terminal's scrollback.
+ *
+ * Visibility used to live here too, back when the terminal had exactly one
+ * place it could be. It is now registered like any other panel, so whatever
+ * hosts it owns whether it is showing — see `terminalPanel()` and
+ * `togglePanel()`.
+ */
 interface TerminalState {
-  isOpen: boolean;
   history: string[];
-  setOpen: (open: boolean) => void;
-  toggle: () => void;
   addHistory: (line: string) => void;
   clearHistory: () => void;
 }
 
 export const useTerminalStore = create<TerminalState>((set) => ({
-  isOpen: false,
-  history: ['Welcome to Nexus Shell Terminal v0.1.0', 'Type "help" for a list of commands.'],
-  setOpen: (open) => set({ isOpen: open }),
-  toggle: () => set((state) => ({ isOpen: !state.isOpen })),
+  history: [
+    'Welcome to Nexus Shell Terminal v0.1.0',
+    'Type "help" for a list of commands.',
+  ],
   addHistory: (line) => set((state) => ({ history: [...state.history, line] })),
   clearHistory: () => set({ history: [] }),
-}))
+}));

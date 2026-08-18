@@ -12,6 +12,7 @@ import {
   NumberField,
   PropertyPanel,
   SelectField,
+  SidebarPane,
   StaticField,
   TagField,
   TextAreaField,
@@ -287,7 +288,10 @@ export const GraphInspector = () => {
         </GraphCanvas>
       </div>
 
-      <div className="w-[300px] shrink-0 border-l border-border">
+      {/* `SidebarPane` docks the inspector — the same pane the shell uses on
+          the left, with `side="right"`. There is no separate right-pane
+          component to learn. */}
+      <SidebarPane title="Properties" side="right" width="300px">
         <PropertyPanel<Node>
           subjects={selected}
           fields={FIELDS}
@@ -308,7 +312,7 @@ export const GraphInspector = () => {
             )
           }
         />
-      </div>
+      </SidebarPane>
     </div>
   );
 };
