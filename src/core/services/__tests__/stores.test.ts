@@ -1,12 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { PANE_SIDES, paneStore } from '../PaneService';
 import { useThemeStore } from '../ThemeService';
-import { useSidebarStore, ISidebarPanel } from '../SidebarService';
 import { useLayoutStore, defaultLayout } from '../LayoutService';
-import { Search } from 'lucide-react';
-import React from 'react';
-
-// Mock component for panel testing
-const DummyComponent = () => React.createElement('div', null, 'Dummy');
 
 describe('Zustand Stores Unit Tests', () => {
   beforeEach(() => {
@@ -15,8 +10,10 @@ describe('Zustand Stores Unit Tests', () => {
     
     // Reset stores to initial states using setter methods to trigger side-effects
     useThemeStore.getState().setTheme('light');
-    useSidebarStore.getState().setActiveSidebar(null);
-    useSidebarStore.getState().setPanels([]);
+    PANE_SIDES.forEach((side) => {
+      paneStore(side).getState().setActivePanel(null);
+      paneStore(side).getState().setPanels([]);
+    });
     useLayoutStore.getState().initLayout(defaultLayout, false);
     useLayoutStore.getState().setStorageKey('nexus-shell-layout');
   });
@@ -46,52 +43,6 @@ describe('Zustand Stores Unit Tests', () => {
     });
   });
 
-  describe('SidebarService (useSidebarStore)', () => {
-    it('should have initial activeSidebar as null and empty panels', () => {
-      const state = useSidebarStore.getState();
-      expect(state.activeSidebar).toBeNull();
-      expect(state.panels).toEqual([]);
-    });
-
-    it('should set active sidebar and update localStorage', () => {
-      const { setActiveSidebar } = useSidebarStore.getState();
-      
-      setActiveSidebar('explorer');
-      expect(useSidebarStore.getState().activeSidebar).toBe('explorer');
-      expect(localStorage.getItem('nexus-shell-sidebar')).toBe('explorer');
-
-      setActiveSidebar(null);
-      expect(useSidebarStore.getState().activeSidebar).toBeNull();
-      expect(localStorage.getItem('nexus-shell-sidebar')).toBeNull();
-    });
-
-    it('should toggle sidebar active state', () => {
-      const { toggleSidebar } = useSidebarStore.getState();
-
-      toggleSidebar('search');
-      expect(useSidebarStore.getState().activeSidebar).toBe('search');
-      expect(localStorage.getItem('nexus-shell-sidebar')).toBe('search');
-
-      toggleSidebar('search');
-      expect(useSidebarStore.getState().activeSidebar).toBeNull();
-      expect(localStorage.getItem('nexus-shell-sidebar')).toBeNull();
-    });
-
-    it('should set panels', () => {
-      const { setPanels } = useSidebarStore.getState();
-      const mockPanels: ISidebarPanel[] = [
-        {
-          id: 'test-panel',
-          label: 'Test Panel',
-          icon: Search,
-          component: DummyComponent
-        }
-      ];
-
-      setPanels(mockPanels);
-      expect(useSidebarStore.getState().panels).toEqual(mockPanels);
-    });
-  });
 
   describe('LayoutService (useLayoutStore)', () => {
     it('should have correct initial state', () => {

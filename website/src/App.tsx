@@ -4,6 +4,7 @@ import { Home } from '@site/pages/Home';
 import { GettingStarted } from '@site/pages/GettingStarted';
 import { Architecture } from '@site/pages/Architecture';
 import { Theming } from '@site/pages/Theming';
+import { Showcase } from '@site/pages/Showcase';
 import { ComponentsIndex } from '@site/pages/ComponentsIndex';
 import { ComponentPage } from '@site/pages/ComponentPage';
 
@@ -47,6 +48,7 @@ export const App = () => {
     if (route === '/docs/getting-started') return <GettingStarted />;
     if (route === '/docs/architecture') return <Architecture />;
     if (route === '/docs/theming') return <Theming />;
+    if (route === '/showcase') return <Showcase />;
     return <NotFound route={route} />;
   })();
 

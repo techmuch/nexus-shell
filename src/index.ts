@@ -54,15 +54,20 @@ export { useChatStore, type ISlashCommandConfig } from './core/services/ChatServ
 export { useLayoutStore } from './core/services/LayoutService';
 export { useModalStore, type ModalType as ModalStoreType } from './core/services/ModalStoreService';
 export {
-  useSidebarStore,
-  useInspectorStore,
-  createSidebarStore,
+  createPaneStore,
+  paneStore,
+  setPanels,
+  useLeftPaneStore,
+  useRightPaneStore,
+  useBottomPaneStore,
+  PANE_SIDES,
   CHAT_PANEL_ID,
   TERMINAL_PANEL_ID,
-  type ISidebarPanel,
-  type SidebarState,
-  type SidebarStore,
-} from './core/services/SidebarService';
+  SETTINGS_PANEL_ID,
+  type IPanel,
+  type PaneState,
+  type PaneStore,
+} from './core/services/PaneService';
 export { useStatusBarStore, type IStatusBarWidgetConfig } from './core/services/StatusBarService';
 export { useTerminalStore } from './core/services/TerminalService';
 export { useThemeStore, type ThemeType } from './core/services/ThemeService';

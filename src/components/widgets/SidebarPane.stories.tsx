@@ -7,12 +7,12 @@ import { TreeWidget } from './TreeWidget';
 import { PropertyPanel } from '../properties/PropertyPanel';
 
 /**
- * One pane, either edge.
+ * One pane, three edges.
  *
- * `side` is the only difference between the explorer on the left and an
- * inspector on the right. Before it existed, every application hand-rolled its
- * own `<div className="w-80 border-l …">` — nine of them in this repo alone —
- * and they all drifted apart.
+ * `side` is the only difference between the explorer on the left, an inspector
+ * on the right and a terminal drawer along the bottom. Before it existed, every
+ * application hand-rolled its own `<div className="w-80 border-l …">` — nine of
+ * them in this repo alone — and they all drifted apart.
  */
 
 const meta = {
@@ -23,7 +23,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'A docked side panel: titled header, optional close button, scrolling body. `side` docks it left or right; only the divider moves.\n\nFor the store-backed variants the shell composes, see `ConnectedSidebarPane` and `ConnectedInspectorPane` — the latter reads `useInspectorStore`, a separate registry, so the two sides open and close independently.',
+          'A docked side panel: titled header, optional close button, scrolling body. `side` docks it `left`, `right` or `bottom`; only the divider and the sizing axis move.\n\nFor the store-backed variant the shell composes, see `ConnectedPane` — one component for every edge, since each edge keeps its own registry and its own open panel.',
       },
     },
   },
@@ -145,4 +145,38 @@ export const BothEdges: Story = {
       </div>
     );
   },
+};
+
+/**
+ * All three edges. Each keeps its own open panel, so an explorer, an inspector
+ * and a drawer are showing at once — the normal way to work, not a special
+ * case.
+ *
+ * The bottom pane sits inside the workspace column rather than spanning the
+ * window, so it never pushes the side panes around.
+ */
+export const AllThreeEdges: Story = {
+  args: { title: 'Explorer' },
+  render: () => (
+    <div className="flex h-[520px] bg-background">
+      <SidebarPane title="Explorer" width="220px" onClose={() => {}}>
+        <TreeWidget data={FILES} />
+      </SidebarPane>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="grid flex-1 place-items-center text-xs text-muted-foreground">
+          workspace
+        </div>
+        <SidebarPane title="Terminal" side="bottom" height="160px" onClose={() => {}}>
+          <pre className="p-3 font-mono text-[11px] text-muted-foreground">
+            $ npm test{'\n'}363 passed
+          </pre>
+        </SidebarPane>
+      </div>
+
+      <SidebarPane title="Properties" side="right" width="260px" onClose={() => {}}>
+        <PropertyPanel subjects={SUBJECT} fields={FIELDS} />
+      </SidebarPane>
+    </div>
+  ),
 };

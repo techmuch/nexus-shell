@@ -2,7 +2,7 @@ import { commandRegistry } from '../../../src/core/registry/CommandRegistry';
 import { menuRegistry } from '../../../src/core/registry/MenuRegistry';
 import { pluginRegistry } from '../../../src/core/registry/PluginRegistry';
 import { useLayoutStore } from '../../../src/core/services/LayoutService';
-import { useInspectorStore, useSidebarStore } from '../../../src/core/services/SidebarService';
+import { setPanels } from '../../../src/core/services/PaneService';
 import { useChatStore } from '../../../src/core/services/ChatService';
 import { useThemeStore, ThemeType } from '../../../src/core/services/ThemeService';
 import { useStatusBarStore } from '../../../src/core/services/StatusBarService';
@@ -17,7 +17,7 @@ import { MockupReviewWidget } from '../mockup-reviewer/MockupReviewWidget';
 import { DialogueMappingWidget } from '../dialogue-mapper/DialogueMappingWidget';
 import { DialogueMapperLibraryWidget } from '../dialogue-mapper/DialogueMapperLibraryWidget';
 import { ArgumentInspectorWidget } from '../dialogue-mapper/ArgumentInspectorWidget';
-import { chatPanel, terminalPanel } from '../../../src/connected/panels';
+import { chatPanel, settingsPanel, terminalPanel } from '../../../src/connected/panels';
 import { ConnectedTerminalPane } from '../../../src/connected/ConnectedTerminalPane';
 import { togglePanel } from '../../../src/core/Boot';
 
@@ -89,8 +89,10 @@ export const initializeShell = async () => {
     }
   ]);
 
-  // Register Core Sidebar Panels
-  useSidebarStore.getState().setPanels([
+  // Every panel, every edge, in one list. `side` is the whole placement API —
+  // moving chat to the left rail or the terminal into the bottom drawer is a
+  // one-word change here, and nothing else in the app knows the difference.
+  setPanels([
     {
       id: 'files',
       label: 'Explorer',
@@ -115,14 +117,10 @@ export const initializeShell = async () => {
       icon: Plug,
       component: () => <div className="p-4 text-sm italic text-muted-foreground">Extension manager view...</div>,
     },
-  ]);
+    settingsPanel(),
 
-  // Chat on the right rail, terminal available as a tab. Both were fixed slots
-  // in the shell until they became ordinary registrations — this file is now
-  // the only thing deciding where they live.
-  useInspectorStore.getState().setPanels([
-    chatPanel(),
-    terminalPanel({ id: 'terminal-pane', label: 'Terminal (docked)' }),
+    chatPanel({ side: 'right' }),
+    terminalPanel({ side: 'bottom' }),
   ]);
 
   // Register Core Slash Commands

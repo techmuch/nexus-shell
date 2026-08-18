@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Files, Search } from 'lucide-react';
+import { Files, Search, Settings } from 'lucide-react';
 
 import { ActivityBar } from '../ActivityBar';
 import { ChatPane } from '../ChatPane';
@@ -100,11 +100,19 @@ describe('ActivityBar', () => {
     expect(screen.getByLabelText('Explorer')).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('renders a default Settings item, and omits it when bottomItems is empty', () => {
+  it('has no bottom group unless one is given', () => {
     const { rerender } = render(<ActivityBar items={items} />);
-    expect(screen.getByLabelText('Settings')).toBeInTheDocument();
-    rerender(<ActivityBar items={items} bottomItems={[]} />);
+    // It used to default to a Settings item, so every rail grew one whether the
+    // app had settings or not. Settings is now an ordinary panel.
     expect(screen.queryByLabelText('Settings')).not.toBeInTheDocument();
+
+    rerender(
+      <ActivityBar
+        items={items}
+        bottomItems={[{ id: 'settings', label: 'Settings', icon: Settings }]}
+      />,
+    );
+    expect(screen.getByLabelText('Settings')).toBeInTheDocument();
   });
 
   it('docks left by default, and mirrors its divider on the right', () => {

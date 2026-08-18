@@ -4,6 +4,7 @@ import {
   PropertyPanel,
   SettingsPanel,
   SidebarPane,
+  TerminalPane,
   TreeWidget,
   type ITreeNode,
 } from 'nexus-shell';
@@ -139,4 +140,38 @@ export const BothEdges = () => {
     </div>
   );
 };
+// #endregion
+
+// #region allEdges
+export const AllEdges = () => (
+  // One component, three edges. Each keeps its own open panel, so nothing has
+  // to close for something else to open.
+  <div className="flex h-full bg-background">
+    <SidebarPane title="Explorer" width="220px" onClose={() => {}}>
+      <TreeWidget data={FILES} />
+    </SidebarPane>
+
+    <div className="flex min-w-0 flex-1 flex-col">
+      <div className="grid flex-1 place-items-center text-xs text-muted-foreground">
+        workspace
+      </div>
+      {/* The drawer lives inside the workspace column, so it spans the docking
+          area only — not the full window under the side panes. */}
+      <SidebarPane title="Terminal" side="bottom" height="150px" onClose={() => {}}>
+        <TerminalPane history={['$ npm test', '363 passed']} />
+      </SidebarPane>
+    </div>
+
+    <SidebarPane title="Properties" side="right" width="260px" onClose={() => {}}>
+      <PropertyPanel
+        subjects={[{ id: 'app', name: 'App.tsx', lines: 184, tracked: true }]}
+        fields={[
+          { key: 'name', label: 'Name' },
+          { key: 'lines', label: 'Lines', type: 'number' },
+          { key: 'tracked', label: 'Tracked', type: 'checkbox' },
+        ]}
+      />
+    </SidebarPane>
+  </div>
+);
 // #endregion

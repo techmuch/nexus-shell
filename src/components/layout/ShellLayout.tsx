@@ -11,15 +11,9 @@ import {
 import 'flexlayout-react/style/light.css';
 import '../../styles/flexlayout-theme.css';
 
-import {
-  ConnectedActivityBar,
-  ConnectedInspectorBar,
-} from '../../connected/ConnectedActivityBar';
+import { ConnectedPaneRail } from '../../connected/ConnectedPaneRail';
 import { ConnectedMenuBar } from '../../connected/ConnectedMenuBar';
-import {
-  ConnectedInspectorPane,
-  ConnectedSidebarPane,
-} from '../../connected/ConnectedSidebarPane';
+import { ConnectedPane } from '../../connected/ConnectedPane';
 import { ConnectedStatusBar } from '../../connected/ConnectedStatusBar';
 import { PaneHostProvider } from './PaneHost';
 
@@ -28,11 +22,7 @@ import { menuRegistry, type IMenuItemConfig } from '../../core/registry/MenuRegi
 import { useChatStore, type ISlashCommandConfig } from '../../core/services/ChatService';
 import { useLayoutStore } from '../../core/services/LayoutService';
 import { useModalStore } from '../../core/services/ModalStoreService';
-import {
-  useInspectorStore,
-  useSidebarStore,
-  type ISidebarPanel,
-} from '../../core/services/SidebarService';
+import { setPanels, type IPanel } from '../../core/services/PaneService';
 import {
   useStatusBarStore,
   type IStatusBarWidgetConfig,
@@ -41,20 +31,17 @@ import { useThemeStore } from '../../core/services/ThemeService';
 
 export interface ShellLayoutProps {
   /**
-   * Sidebar panels to register. Each becomes an icon in the activity bar and
-   * renders its `component` in the sidebar when selected.
-   */
-  panels?: ISidebarPanel[];
-  /**
-   * Right-hand panels — inspectors, properties, anything about the current
-   * selection rather than about navigation.
+   * Panels to register, for every edge.
    *
-   * Registered exactly like `panels`, against a separate store, so the two
-   * sides open and close independently: file tree on the left and properties on
-   * the right, both at once. The right-hand rail appears only once at least one
-   * is registered.
+   * Each panel's `side` decides where it docks — `"left"`, `"right"` or
+   * `"bottom"`, defaulting to left — and each edge keeps its own open panel, so
+   * a file tree, an inspector and a terminal can all be showing at once. A rail
+   * appears only once its edge has a panel.
+   *
+   * Placement is data on the panel rather than a separate prop per side, so
+   * moving something is a one-word change.
    */
-  inspectorPanels?: ISidebarPanel[];
+  panels?: IPanel[];
   /** Slash commands available in the chat pane. */
   slashCommands?: ISlashCommandConfig[];
   /** Menu structure, keyed by top-level menu name. Items dispatch by `commandId`. */
@@ -96,8 +83,8 @@ export interface ShellLayoutProps {
 }
 
 /**
- * The complete application shell: menu bar, activity bar, sidebar, a
- * `flexlayout-react` docking workspace, terminal, chat pane and status bar.
+ * The complete application shell: menu bar, a docked pane and rail on each
+ * edge, a `flexlayout-react` docking workspace, and a status bar.
  *
  * **This is where an application starts.** Call {@link initializeShell} once to
  * register your commands, menus and panels, render this component, and add
@@ -126,7 +113,11 @@ export interface ShellLayoutProps {
  * componentRegistry.register('editor', Editor);
  *
  * initializeShell({
- *   panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }],
+ *   panels: [
+ *     { id: 'files', label: 'Explorer', icon: Files, component: FileTree },
+ *     chatPanel({ side: 'right' }),
+ *     terminalPanel({ side: 'bottom' }),
+ *   ],
  *   commands: [{ id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save }],
  *   menus: { File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] },
  *   statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],
@@ -139,7 +130,6 @@ export interface ShellLayoutProps {
  */
 export const ShellLayout = ({
   panels,
-  inspectorPanels,
   slashCommands,
   menuConfig,
   statusBarConfig,
@@ -153,18 +143,12 @@ export const ShellLayout = ({
 }: ShellLayoutProps) => {
   const { model, setModel, initLayout, isTabDirty, setTabDirty } = useLayoutStore();
   const theme = useThemeStore((s) => s.theme);
-  const setPanels = useSidebarStore((s) => s.setPanels);
-  const setInspectorPanels = useInspectorStore((s) => s.setPanels);
   const setSlashCommands = useChatStore((s) => s.setSlashCommands);
   const setWidgets = useStatusBarStore((s) => s.setWidgets);
 
   useEffect(() => {
     if (panels) setPanels(panels);
-  }, [panels, setPanels]);
-
-  useEffect(() => {
-    if (inspectorPanels) setInspectorPanels(inspectorPanels);
-  }, [inspectorPanels, setInspectorPanels]);
+  }, [panels]);
 
   useEffect(() => {
     if (slashCommands) setSlashCommands(slashCommands);
@@ -249,8 +233,8 @@ export const ShellLayout = ({
         right={rightMenuBarContent}
       />
       <div className="flex-1 flex overflow-hidden">
-        <ConnectedActivityBar />
-        <ConnectedSidebarPane />
+        <ConnectedPaneRail side="left" />
+        <ConnectedPane side="left" />
         <div className="flex-1 flex flex-col min-w-0 bg-card">
           <div className="flex-1 relative h-full w-full">
             <Layout
@@ -264,9 +248,12 @@ export const ShellLayout = ({
               onAction={onAction}
             />
           </div>
+          {/* The bottom drawer sits inside the workspace column, so it spans the
+              docking area only — not the full window under the side panes. */}
+          <ConnectedPane side="bottom" />
         </div>
-        <ConnectedInspectorPane />
-        <ConnectedInspectorBar />
+        <ConnectedPane side="right" />
+        <ConnectedPaneRail side="right" />
       </div>
       <ConnectedStatusBar />
     </div>

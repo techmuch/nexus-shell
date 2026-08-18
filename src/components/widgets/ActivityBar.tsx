@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Settings } from 'lucide-react';
+
 import { cn } from '../../lib/cn';
 import type { PaneSide } from './SidebarPane';
 
@@ -17,8 +17,12 @@ export interface ActivityBarProps {
   /** Items rendered in the main (top) group, in order. */
   items?: IActivityBarItem[];
   /**
-   * Items rendered in the bottom group, below the flex spacer. Defaults to a
-   * single Settings item. Pass `[]` to render no bottom group.
+   * Items rendered in the bottom group, below the flex spacer. Empty by
+   * default.
+   *
+   * This used to default to a Settings item, which meant every rail grew one
+   * whether the app had settings or not. Settings is now an ordinary panel with
+   * `align: 'end'` — see `settingsPanel()`.
    */
   bottomItems?: IActivityBarItem[];
   /** Id of the currently active item, or `null` when nothing is selected. */
@@ -34,16 +38,12 @@ export interface ActivityBarProps {
    * The divider and the active-item indicator both mirror, so a right-hand rail
    * marks its selection on the edge facing the content.
    */
-  side?: PaneSide;
+  side?: Exclude<PaneSide, 'bottom'>;
   /** Extra classes merged onto the root `<aside>`. */
   className?: string;
   /** Accessible label for the landmark. Defaults to `"Activity Bar"`. */
   'aria-label'?: string;
 }
-
-const DEFAULT_BOTTOM_ITEMS: IActivityBarItem[] = [
-  { id: 'settings', label: 'Settings', icon: Settings },
-];
 
 /**
  * The narrow vertical icon rail at the edge of the shell, used to switch which
@@ -64,7 +64,7 @@ const DEFAULT_BOTTOM_ITEMS: IActivityBarItem[] = [
  */
 export const ActivityBar = ({
   items = [],
-  bottomItems = DEFAULT_BOTTOM_ITEMS,
+  bottomItems = [],
   activeId = null,
   onSelect,
   side = 'left',

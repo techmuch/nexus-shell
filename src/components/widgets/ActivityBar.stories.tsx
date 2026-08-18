@@ -28,7 +28,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The narrow vertical icon rail on the left edge of the shell. Controlled — it holds no selection state, so toggle behaviour (clicking the active item to deselect) is your decision. See `ConnectedActivityBar` for the variant bound to `useSidebarStore`.',
+          'The narrow vertical icon rail at an edge of the shell. Controlled — it holds no selection state, so toggle behaviour (clicking the active item to deselect) is your decision.\n\n`side` docks it left or right; the divider and the active-item marker both mirror. See `ConnectedPaneRail` for the variant bound to a pane store, which derives its items from the panels registered on that edge.',
       },
     },
   },
@@ -68,7 +68,7 @@ export const Interactive: Story = {
   },
 };
 
-/** `bottomItems` controls the group below the spacer. Replace it or pass `[]` to remove it. */
+/** `bottomItems` is the group below the spacer — conventionally settings and account. It is empty unless you supply it. */
 export const CustomBottomItems: Story = {
   args: {
     items: ITEMS.slice(0, 3),

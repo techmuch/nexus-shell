@@ -4,7 +4,7 @@ import { cn } from '../../lib/cn';
 import { PaneHostProvider } from '../layout/PaneHost';
 
 /** Which edge of the shell a pane or rail is docked to. */
-export type PaneSide = 'left' | 'right';
+export type PaneSide = 'left' | 'right' | 'bottom';
 
 export interface SidebarPaneProps {
   /**
@@ -19,8 +19,10 @@ export interface SidebarPaneProps {
    * entirely — useful when the pane is always visible.
    */
   onClose?: () => void;
-  /** Fixed pane width, as a CSS length. Defaults to `"300px"`. */
+  /** Fixed pane width, as a CSS length. Ignored when `side` is `"bottom"`. Defaults to `"300px"`. */
   width?: string;
+  /** Fixed pane height, as a CSS length. Only used when `side` is `"bottom"`. Defaults to `"240px"`. */
+  height?: string;
   /**
    * Which edge of the shell the pane is docked to. Defaults to `"left"`.
    *
@@ -45,8 +47,9 @@ export interface SidebarPaneProps {
  * prop existed every application hand-rolled its own right-hand
  * `<div className="w-80 border-l …">`, and they all drifted apart.
  *
- * For the store-backed variants used by `ShellLayout`, see
- * `ConnectedSidebarPane` and `ConnectedInspectorPane`.
+ * `bottom` docks it below the workspace, where `width` gives way to `height`.
+ *
+ * For the store-backed variant used by `ShellLayout`, see `ConnectedPane`.
  *
  * @example
  * ```tsx
@@ -57,6 +60,10 @@ export interface SidebarPaneProps {
  * <SidebarPane title="Properties" side="right" width="320px">
  *   <PropertyPanel subjects={selected} fields={fields} />
  * </SidebarPane>
+ *
+ * <SidebarPane title="Terminal" side="bottom" height="240px">
+ *   <ConnectedTerminalPane />
+ * </SidebarPane>
  * ```
  */
 export const SidebarPane = ({
@@ -64,6 +71,7 @@ export const SidebarPane = ({
   children,
   onClose,
   width = '300px',
+  height = '240px',
   side = 'left',
   className,
 }: SidebarPaneProps) => (
@@ -71,11 +79,14 @@ export const SidebarPane = ({
     role="tabpanel"
     aria-label={`${title} Panel`}
     data-side={side}
-    style={{ width }}
+    // A bottom pane spans the width it is given and is sized vertically; the
+    // side panes are the other way round.
+    style={side === 'bottom' ? { height } : { width }}
     className={cn(
-      'h-full bg-muted flex flex-col select-none shrink-0',
+      'bg-muted flex flex-col select-none shrink-0',
+      side === 'bottom' ? 'w-full' : 'h-full',
       // The divider always faces the content it separates from.
-      side === 'right' ? 'border-l' : 'border-r',
+      { left: 'border-r', right: 'border-l', bottom: 'border-t' }[side],
       className,
     )}
   >

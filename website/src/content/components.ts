@@ -363,7 +363,7 @@ export const COMPONENTS: ComponentEntry[] = [
         export: 'BottomItems',
         region: 'bottomItems',
         title: 'Custom bottom group',
-        description: '`bottomItems` replaces the default Settings item. Pass `[]` to remove the group.',
+        description: '`bottomItems` is the group below the spacer, empty unless supplied. `ConnectedPaneRail` fills it from panels declaring `align: \'end\'`.',
         flush: true,
         height: '320px',
       },
@@ -377,14 +377,23 @@ export const COMPONENTS: ComponentEntry[] = [
     demoFile: 'SidebarPane',
     notes: [
       'A pure container: it owns the header, close button and scrolling, and nothing about what goes inside.',
-      '**`side` docks it left or right.** One component, two edges — only the divider moves, and a right-hand pane keeps every feature the left one has. Before this prop existed every application hand-rolled its own `<div className="w-80 border-l …">`, and they all drifted apart.',
-      'For the store-backed variants the shell composes, see `ConnectedSidebarPane` and `ConnectedInspectorPane`. The latter reads `useInspectorStore` — a separate panel registry — so the two sides open and close independently. Register right-hand panels through `ShellLayout`’s `inspectorPanels`, exactly as you would `panels`.',
+      '**`side` docks it `left`, `right` or `bottom`.** One component, three edges — only the divider and the sizing axis move, and every edge keeps every feature the others have. Before this prop existed every application hand-rolled its own `<div className="w-80 border-l …">`, and they all drifted apart.',
+      'For the store-backed variant the shell composes, see `ConnectedPane`. One component serves every edge, because each edge keeps its own registry and its own open panel — so a file tree, an inspector and a terminal drawer can all be showing at once. Register panels through `ShellLayout`’s single `panels` prop and set each one’s `side`.',
     ],
     demos: [
       {
+        export: 'AllEdges',
+        region: 'allEdges',
+        title: 'All three edges at once',
+        description:
+          'An explorer, a drawer and an inspector, each keeping its own open panel. Nothing has to close for something else to open.',
+        flush: true,
+        height: '480px',
+      },
+      {
         export: 'BothEdges',
         region: 'bothEdges',
-        title: 'Both edges at once',
+        title: 'Rails on both sides',
         description:
           'A file tree on one side and properties on the other, each with its own rail. Note that the active-item marker mirrors, so it always faces the panel it opens.',
         flush: true,
@@ -698,7 +707,7 @@ export const COMPONENTS: ComponentEntry[] = [
     demoFile: 'ChatPane',
     notes: [
       '**It carries no width or edge of its own.** Put it on the left rail, the right rail, or in a dockable tab — the host decides the shape. It used to hardcode `w-[320px] border-l`, which is exactly why it could only ever live in one place.',
-      'Register it with `chatPanel()` in `panels` or `inspectorPanels`, or register `ConnectedChatPane` as a tab component. `togglePanel(\'chat\')` finds it wherever it ended up.',
+      'Register it with `chatPanel({ side: \'right\' })`, or register `ConnectedChatPane` as a tab component. `togglePanel(\'chat\')` finds it wherever it ended up.',
       'Inside a host that draws a title bar it omits its own header, so you never get two. Pass `chrome` to force it either way.',
     ],
     demos: [

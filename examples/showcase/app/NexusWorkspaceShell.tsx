@@ -7,8 +7,8 @@ import '../../../src/styles/flexlayout-theme.css';
 import { DialogueMappingWidget } from '../dialogue-mapper/DialogueMappingWidget';
 import { ConnectedThemeSwitcher } from '../../../src/connected/ConnectedThemeSwitcher';
 import { AppTitle } from '../../../src/components/widgets/AppTitle';
-import { ConnectedActivityBar } from '../../../src/connected/ConnectedActivityBar';
-import { ConnectedSidebarPane } from '../../../src/connected/ConnectedSidebarPane';
+import { ConnectedPaneRail } from '../../../src/connected/ConnectedPaneRail';
+import { ConnectedPane } from '../../../src/connected/ConnectedPane';
 import { ProjectPropertiesWidget } from './ProjectPropertiesWidget';
 import { ConnectedMenuBar } from '../../../src/connected/ConnectedMenuBar';
 import { useThemeStore } from '../../../src/core/services/ThemeService';
@@ -98,8 +98,8 @@ export const NexusWorkspaceShell: React.FC<NexusWorkspaceShellProps> = ({
 
       {/* 2. Main FlexLayout Workspace */}
       <div className="flex-1 overflow-hidden min-h-0 relative bg-muted/20 flex flex-row">
-        <ConnectedActivityBar />
-        <ConnectedSidebarPane />
+        <ConnectedPaneRail side="left" />
+        <ConnectedPane side="left" />
         <main className="flex-1 overflow-hidden relative">
           <Layout 
             model={model} 

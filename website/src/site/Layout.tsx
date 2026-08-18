@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { BookOpen, Github, Menu, Moon, Rocket, Sun, X } from 'lucide-react';
-import { cn } from 'nexus-shell';
+import { BookOpen, Github, Menu, Moon, Palette, Rocket, Search, Sun, X } from 'lucide-react';
+import { BUNDLED_THEMES, cn } from 'nexus-shell';
 import { Link, useRouter } from '@site/lib/router';
 import { componentsByCategory } from '@site/content/components';
+import { QuickSearchModal } from '@site/site/QuickSearchModal';
 
 declare const __SITE_BASE__: string;
 
@@ -12,9 +13,9 @@ const STORYBOOK_URL = `${__SITE_BASE__.replace(/\/$/, '')}/storybook/`;
 const THEME_KEY = 'nexus-site-theme';
 
 const useTheme = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+  const [theme, setTheme] = useState<string>(() => {
     const saved = localStorage.getItem(THEME_KEY);
-    return saved === 'light' ? 'light' : 'dark';
+    return saved || 'dark';
   });
 
   useEffect(() => {
@@ -22,13 +23,16 @@ const useTheme = () => {
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
-  return { theme, toggle: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')) };
+  const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+
+  return { theme, setTheme, toggle };
 };
 
 const NAV = [
   { to: '/', label: 'Home' },
   { to: '/docs/getting-started', label: 'Getting Started' },
   { to: '/docs/architecture', label: 'Architecture' },
+  { to: '/showcase', label: 'Showcase' },
   { to: '/components', label: 'Components' },
 ];
 
@@ -75,6 +79,7 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
           {item('/docs/getting-started', 'Getting Started')}
           {item('/docs/architecture', 'Architecture')}
           {item('/docs/theming', 'Theming')}
+          {item('/showcase', 'Showcase & Examples')}
           {item('/components', 'All components')}
         </div>
       </div>
@@ -100,13 +105,26 @@ export const Layout = ({
   children: ReactNode;
   sidebar?: boolean;
 }) => {
-  const { theme, toggle } = useTheme();
+  const { theme, setTheme, toggle } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Global Cmd+K / Ctrl+K shortcut listener
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col antialiased">
       <header className="sticky top-0 z-40 h-16 border-b border-border/80 bg-background/85 backdrop-blur-xl">
-        <div className="max-w-[1400px] mx-auto h-full px-4 sm:px-6 flex items-center gap-6">
+        <div className="max-w-[1400px] mx-auto h-full px-4 sm:px-6 flex items-center gap-4 sm:gap-6">
           <button
             type="button"
             onClick={() => setMobileOpen((o) => !o)}
@@ -120,24 +138,56 @@ export const Layout = ({
             <Wordmark />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium" aria-label="Main">
+          <nav className="hidden md:flex items-center gap-1 text-sm font-medium" aria-label="Main">
             {NAV.slice(1).map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
-                className="px-3.5 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors"
               >
                 {n.label}
               </Link>
             ))}
           </nav>
 
-          <div className="flex-1" />
+          <div className="flex-1 max-w-sm ml-2">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg border border-border/70 bg-card/40 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all shadow-xs"
+            >
+              <span className="flex items-center gap-2">
+                <Search size={14} className="text-primary" />
+                <span className="hidden sm:inline">Search docs & components…</span>
+                <span className="sm:hidden">Search…</span>
+              </span>
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-muted border border-border text-muted-foreground">
+                ⌘K
+              </kbd>
+            </button>
+          </div>
 
           <div className="flex items-center gap-2">
+            {/* Multi-theme selector */}
+            <div className="relative flex items-center gap-1 px-2 py-1 rounded-lg border border-border/70 bg-card/40 text-xs">
+              <Palette size={14} className="text-primary shrink-0" />
+              <select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                aria-label="Theme selector"
+                className="bg-transparent text-xs text-muted-foreground hover:text-foreground focus:outline-none cursor-pointer font-medium pr-1"
+              >
+                {BUNDLED_THEMES.map((t) => (
+                  <option key={t.id} value={t.id} className="bg-card text-foreground">
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <a
               href={STORYBOOK_URL}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-border/70 text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all"
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-border/70 text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all"
             >
               <BookOpen size={14} className="text-primary" />
               Storybook
@@ -193,6 +243,9 @@ export const Layout = ({
               <Rocket size={14} className="text-primary" />
               <span>Get started</span>
             </Link>
+            <Link to="/showcase" className="hover:text-foreground transition-colors font-medium">
+              Showcase
+            </Link>
             <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors font-medium">
               GitHub
             </a>
@@ -202,7 +255,9 @@ export const Layout = ({
           </div>
         </div>
       </footer>
+
+      {/* Global QuickSearch modal */}
+      <QuickSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 };
-

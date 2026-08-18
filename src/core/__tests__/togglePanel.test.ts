@@ -2,7 +2,7 @@ import { Terminal } from 'lucide-react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { togglePanel } from '../Boot';
 import { componentRegistry } from '../registry/ComponentRegistry';
-import { useInspectorStore, useSidebarStore } from '../services/SidebarService';
+import { PANE_SIDES, paneStore, useLeftPaneStore, useRightPaneStore, useBottomPaneStore } from '../services/PaneService';
 import { useLayoutStore } from '../services/LayoutService';
 
 /**
@@ -20,39 +20,45 @@ const panel = (id: string) => ({
 
 beforeEach(() => {
   localStorage.clear();
-  useSidebarStore.setState({ activeSidebar: null, panels: [] });
-  useInspectorStore.setState({ activeSidebar: null, panels: [] });
+  PANE_SIDES.forEach((side) => paneStore(side).setState({ activePanel: null, panels: [] }));
   vi.restoreAllMocks();
 });
 
 describe('togglePanel', () => {
   it('toggles a panel on the left rail', () => {
-    useSidebarStore.getState().setPanels([panel('terminal')]);
+    useLeftPaneStore.getState().setPanels([panel('terminal')]);
 
     expect(togglePanel('terminal')).toBe(true);
-    expect(useSidebarStore.getState().activeSidebar).toBe('terminal');
+    expect(useLeftPaneStore.getState().activePanel).toBe('terminal');
 
     togglePanel('terminal');
-    expect(useSidebarStore.getState().activeSidebar).toBeNull();
+    expect(useLeftPaneStore.getState().activePanel).toBeNull();
+  });
+
+  it('toggles a panel in the bottom drawer', () => {
+    useBottomPaneStore.getState().setPanels([panel('terminal')]);
+
+    expect(togglePanel('terminal')).toBe(true);
+    expect(useBottomPaneStore.getState().activePanel).toBe('terminal');
   });
 
   it('toggles a panel on the right rail', () => {
-    useInspectorStore.getState().setPanels([panel('chat')]);
+    useRightPaneStore.getState().setPanels([panel('chat')]);
 
     expect(togglePanel('chat')).toBe(true);
-    expect(useInspectorStore.getState().activeSidebar).toBe('chat');
+    expect(useRightPaneStore.getState().activePanel).toBe('chat');
     // The left rail is untouched.
-    expect(useSidebarStore.getState().activeSidebar).toBeNull();
+    expect(useLeftPaneStore.getState().activePanel).toBeNull();
   });
 
   it('prefers the rail it is actually registered on', () => {
     // Same id registered right only — the left rail must not swallow it.
-    useSidebarStore.getState().setPanels([panel('files')]);
-    useInspectorStore.getState().setPanels([panel('chat')]);
+    useLeftPaneStore.getState().setPanels([panel('files')]);
+    useRightPaneStore.getState().setPanels([panel('chat')]);
 
     togglePanel('chat');
-    expect(useInspectorStore.getState().activeSidebar).toBe('chat');
-    expect(useSidebarStore.getState().activeSidebar).toBeNull();
+    expect(useRightPaneStore.getState().activePanel).toBe('chat');
+    expect(useLeftPaneStore.getState().activePanel).toBeNull();
   });
 
   it('opens a registered tab when the id is not a panel', () => {

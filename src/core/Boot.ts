@@ -5,11 +5,12 @@ import { useChatStore, type ISlashCommandConfig } from './services/ChatService';
 import { useLayoutStore } from './services/LayoutService';
 import {
   CHAT_PANEL_ID,
+  PANE_SIDES,
   TERMINAL_PANEL_ID,
-  useInspectorStore,
-  useSidebarStore,
-  type ISidebarPanel,
-} from './services/SidebarService';
+  paneStore,
+  setPanels,
+  type IPanel,
+} from './services/PaneService';
 import {
   useStatusBarStore,
   type IStatusBarWidgetConfig,
@@ -22,13 +23,7 @@ export interface InitializeShellOptions {
    * Sidebar panels to register. Each becomes an icon in the activity bar and
    * renders its `component` in the sidebar when selected.
    */
-  panels?: ISidebarPanel[];
-  /**
-   * Right-hand panels — inspectors and properties, as opposed to navigation.
-   * Registered against `useInspectorStore`, so they open and close
-   * independently of the left-hand sidebar.
-   */
-  inspectorPanels?: ISidebarPanel[];
+  panels?: IPanel[];
   /** Menus keyed by top-level name. Items dispatch through their `commandId`. */
   menus?: Record<string, IMenuItemConfig[]>;
   /** Commands available to the palette, menus and keybindings. */
@@ -77,9 +72,10 @@ export const DEFAULT_COMMAND_IDS = [
  * difference between "toggled" and "nothing to toggle".
  */
 export const togglePanel = (id: string): boolean => {
-  for (const store of [useSidebarStore, useInspectorStore]) {
+  for (const side of PANE_SIDES) {
+    const store = paneStore(side);
     if (store.getState().panels.some((panel) => panel.id === id)) {
-      store.getState().toggleSidebar(id);
+      store.getState().togglePanel(id);
       return true;
     }
   }
@@ -110,9 +106,9 @@ const DEFAULT_COMMANDS: ICommand[] = [
     label: 'View: Toggle Sidebar',
     keybinding: 'Control+b',
     execute: () => {
-      const { activeSidebar, panels, setActiveSidebar } = useSidebarStore.getState();
+      const { activePanel, panels, setActivePanel } = paneStore('left').getState();
       // Reopen the first registered panel when nothing is showing.
-      setActiveSidebar(activeSidebar ? null : (panels[0]?.id ?? null));
+      setActivePanel(activePanel ? null : (panels[0]?.id ?? null));
     },
   },
   ...THEME_COMMANDS,
@@ -157,7 +153,10 @@ const DEFAULT_MENUS: Record<string, IMenuItemConfig[]> = {
  * componentRegistry.register('editor', Editor);
  *
  * initializeShell({
- *   panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }],
+ *   panels: [
+ *     { id: 'files', label: 'Explorer', icon: Files, component: FileTree },
+ *     chatPanel({ side: 'right' }),
+ *   ],
  *   commands: [{ id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save }],
  *   menus: { File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] },
  *   statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],
@@ -169,7 +168,6 @@ const DEFAULT_MENUS: Record<string, IMenuItemConfig[]> = {
 export const initializeShell = (options: InitializeShellOptions = {}): void => {
   const {
     panels,
-    inspectorPanels,
     menus,
     commands,
     statusBar,
@@ -193,8 +191,7 @@ export const initializeShell = (options: InitializeShellOptions = {}): void => {
     menuRegistry.setMenus(mergedMenus);
   }
 
-  if (panels) useSidebarStore.getState().setPanels(panels);
-  if (inspectorPanels) useInspectorStore.getState().setPanels(inspectorPanels);
+  if (panels) setPanels(panels);
   if (statusBar) useStatusBarStore.getState().setWidgets(statusBar);
   if (slashCommands) useChatStore.getState().setSlashCommands(slashCommands);
 };
