@@ -48,6 +48,39 @@ export interface PaneState {
 export type PaneStore = UseBoundStore<StoreApi<PaneState>>;
 
 /**
+ * Persistence that survives having no `localStorage`.
+ *
+ * Stores are created at module scope, so these run on import — before any
+ * component renders, and in environments that have no DOM at all. Touching
+ * `localStorage` unguarded there throws and takes the whole import down with
+ * it, which breaks server-side rendering and any test file that has not set up
+ * jsdom. The pane simply starts closed instead.
+ *
+ * The try/catch is not redundant with the `typeof` check: Safari's private mode
+ * and browsers with site data blocked expose `localStorage` but throw on
+ * access.
+ */
+const readStored = (key: string): string | null => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const writeStored = (key: string, value: string | null): void => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (value === null) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, value);
+  } catch {
+    // Storage is unavailable or full. The pane still works for this session;
+    // it just will not be remembered across reloads.
+  }
+};
+
+/**
  * A pane store bound to one storage key.
  *
  * Exported so an application with a docked region the shell doesn't provide
@@ -58,13 +91,12 @@ export const createPaneStore = (storageKey: string): PaneStore =>
     // Read at creation, so a restored pane is open on first paint rather than
     // flashing closed and then opening.
     const remember = (id: string | null) => {
-      if (id === null) localStorage.removeItem(storageKey);
-      else localStorage.setItem(storageKey, id);
+      writeStored(storageKey, id);
       return id;
     };
 
     return {
-      activePanel: localStorage.getItem(storageKey),
+      activePanel: readStored(storageKey),
       panels: [],
 
       setActivePanel: (id) => set({ activePanel: remember(id) }),
@@ -74,7 +106,24 @@ export const createPaneStore = (storageKey: string): PaneStore =>
           activePanel: remember(state.activePanel === id ? null : id),
         })),
 
-      setPanels: (panels) => set({ panels }),
+      setPanels: (panels) =>
+        set((state) => {
+          // A restored id outlives the panel it names: rename or remove a panel
+          // between releases and the stored value now points at nothing, which
+          // would open the pane onto "Panel content not found" on first paint.
+          // Registration is the first moment we can tell, so it is checked here.
+          //
+          // Only once panels actually exist, though — an empty registry means
+          // "not configured yet", and treating that as "the panel is gone"
+          // would discard the restored state of any app that registers in two
+          // steps.
+          const isStale =
+            panels.length > 0 &&
+            state.activePanel !== null &&
+            !panels.some((panel) => panel.id === state.activePanel);
+
+          return isStale ? { panels, activePanel: remember(null) } : { panels };
+        }),
     };
   });
 

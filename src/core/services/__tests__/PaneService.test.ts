@@ -1,5 +1,5 @@
 import { Files, Sliders, Terminal } from 'lucide-react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   PANE_SIDES,
   createPaneStore,
@@ -120,6 +120,97 @@ describe('setPanels routes by side', () => {
     expect(panels.find((p) => p.id === 'settings')?.align).toBe('end');
     // Nothing reserved: 'settings' is an ordinary id with ordinary data.
     expect(panels.find((p) => p.id === 'files')?.align).toBeUndefined();
+  });
+});
+
+describe('a restored panel that no longer exists', () => {
+  it('is cleared once the real panels register', () => {
+    localStorage.setItem('test-stale', 'panel-from-an-older-release');
+    const store = createPaneStore('test-stale');
+    expect(store.getState().activePanel).toBe('panel-from-an-older-release');
+
+    // Registration is the first moment the id can be checked against reality.
+    store.getState().setPanels([panel('files')]);
+
+    // Otherwise the pane opens onto "Panel content not found" on first paint.
+    expect(store.getState().activePanel).toBeNull();
+    expect(localStorage.getItem('test-stale')).toBeNull();
+  });
+
+  it('survives an empty registration, which means "not configured yet"', () => {
+    localStorage.setItem('test-empty', 'files');
+    const store = createPaneStore('test-empty');
+
+    // An app that registers in two steps must not lose its restored state.
+    store.getState().setPanels([]);
+    expect(store.getState().activePanel).toBe('files');
+
+    store.getState().setPanels([panel('files')]);
+    expect(store.getState().activePanel).toBe('files');
+  });
+
+  it('leaves a still-valid id alone', () => {
+    localStorage.setItem('test-valid', 'files');
+    const store = createPaneStore('test-valid');
+
+    store.getState().setPanels([panel('files'), panel('search')]);
+    expect(store.getState().activePanel).toBe('files');
+  });
+});
+
+describe('without usable localStorage', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /**
+   * Stores are created at module scope, so an unguarded `localStorage` read
+   * throws on import — breaking SSR and any test file without jsdom. Private
+   * mode and blocked site data reach the same place from a real browser.
+   */
+  it('creates a store rather than throwing', () => {
+    const throwing = {
+      getItem: () => {
+        throw new Error('SecurityError: storage is disabled');
+      },
+      setItem: () => {
+        throw new Error('SecurityError: storage is disabled');
+      },
+      removeItem: () => {
+        throw new Error('SecurityError: storage is disabled');
+      },
+    };
+    vi.stubGlobal('localStorage', throwing);
+
+    let store!: ReturnType<typeof createPaneStore>;
+    expect(() => {
+      store = createPaneStore('test-no-storage');
+    }).not.toThrow();
+
+    // The pane simply starts closed.
+    expect(store.getState().activePanel).toBeNull();
+  });
+
+  it('still opens and closes panels in memory', () => {
+    const throwing = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('QuotaExceededError');
+      },
+      removeItem: () => {
+        throw new Error('QuotaExceededError');
+      },
+    };
+    vi.stubGlobal('localStorage', throwing);
+
+    const store = createPaneStore('test-write-fails');
+
+    // Persistence is best-effort; the session must keep working without it.
+    expect(() => store.getState().setActivePanel('files')).not.toThrow();
+    expect(store.getState().activePanel).toBe('files');
+
+    expect(() => store.getState().togglePanel('files')).not.toThrow();
+    expect(store.getState().activePanel).toBeNull();
   });
 });
 
