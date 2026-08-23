@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
@@ -79,6 +79,13 @@ export const QuickSearch = <T extends IQuickSearchResult = IQuickSearchResult>({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Namespace for option ids, so `aria-activedescendant` still resolves to one
+   * element when several QuickSearch instances share a page.
+   */
+  const baseId = useId();
+  const optionId = (index: number) => `${baseId}-option-${index}`;
+
   const order = useMemo(() => {
     if (categories) return categories;
     return [...new Set(results.map((r) => r.category))];
@@ -139,6 +146,11 @@ export const QuickSearch = <T extends IQuickSearchResult = IQuickSearchResult>({
     }
   };
 
+  /** The dropdown is only rendered — and only referenceable — when both hold. */
+  const isExpanded = isOpen && !!query.trim();
+  const listboxId = `${baseId}-listbox`;
+  const activeOption = ordered[selectedIndex];
+
   return (
     <div ref={containerRef} className={cn('relative w-full', className)}>
       <div className="relative flex items-center">
@@ -150,7 +162,16 @@ export const QuickSearch = <T extends IQuickSearchResult = IQuickSearchResult>({
           ref={inputRef}
           type="text"
           role="combobox"
-          aria-expanded={isOpen}
+          aria-expanded={isExpanded}
+          aria-controls={isExpanded ? listboxId : undefined}
+          // Without this the highlight moved by the arrow keys is purely
+          // visual: a screen reader announces nothing as the user navigates,
+          // because focus never leaves the input. Pointing at the highlighted
+          // option's id is what the combobox pattern uses to announce it.
+          aria-activedescendant={
+            isExpanded && activeOption ? optionId(selectedIndex) : undefined
+          }
+          aria-autocomplete="list"
           aria-label={placeholder}
           value={query}
           placeholder={placeholder}
@@ -177,9 +198,11 @@ export const QuickSearch = <T extends IQuickSearchResult = IQuickSearchResult>({
         )}
       </div>
 
-      {isOpen && query.trim() && (
+      {isExpanded && (
         <div
+          id={listboxId}
           role="listbox"
+          aria-label={placeholder}
           className="absolute right-0 md:left-0 mt-1.5 w-80 max-h-[380px] bg-popover text-popover-foreground border border-border shadow-lg rounded-lg overflow-hidden flex flex-col z-[100] animate-in fade-in-50 slide-in-from-top-1 duration-100"
         >
           <div className="flex-1 overflow-y-auto py-1">
@@ -206,6 +229,7 @@ export const QuickSearch = <T extends IQuickSearchResult = IQuickSearchResult>({
                       return (
                         <div
                           key={`${item.category}-${item.id}`}
+                          id={optionId(flatIndex)}
                           role="option"
                           aria-selected={isSelected}
                           onClick={() => choose(item)}
