@@ -18,6 +18,7 @@ import { ConnectedStatusBar } from '../../connected/ConnectedStatusBar';
 import { ConnectedModal } from '../../connected/ConnectedModal';
 import { ConnectedCommandPalette } from '../../connected/ConnectedCommandPalette';
 import { useKeyboardShortcuts } from '../../core/services/KeyboardService';
+import { TabContext, workspace } from '../../core/services/Workspace';
 import { PaneHostProvider } from './PaneHost';
 
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
@@ -186,10 +187,25 @@ export const ShellLayout = ({
   // Seed the workspace once on mount. Deliberately not reactive to
   // `initialLayoutJson`: re-running it would discard the arrangement the user
   // has since made every time the prop's identity changed.
+  //
+  // A layout restored from storage wins over `initialLayoutJson`, which only
+  // seeds a first run — and becomes what `workspace.reset()` returns to.
   useEffect(() => {
     if (layoutModel) return;
-    if (!initialLayoutJson && !disableLocalStorage) return;
-    initLayout(initialLayoutJson, disableLocalStorage);
+    const { restored } = useLayoutStore.getState();
+    if (disableLocalStorage) {
+      initLayout(initialLayoutJson, true);
+    } else if (initialLayoutJson) {
+      if (restored) useLayoutStore.setState({ fallbackLayout: initialLayoutJson });
+      else initLayout(initialLayoutJson, false);
+    }
+
+    // Saved tabs under a renamed component move to its new id, and tabs for
+    // components that no longer exist go, when the app asked for that.
+    workspace.normalizeAliases();
+    if (useLayoutStore.getState().options.onUnknownComponent === 'drop') {
+      workspace.dropUnknown();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -207,12 +223,26 @@ export const ShellLayout = ({
         return (
           // The tab strip is the title bar, so a component that draws its own
           // — chat, terminal — omits it here.
-          <PaneHostProvider chrome placement="tab">
-            <RegisteredComponent node={node} {...config} />
-          </PaneHostProvider>
+          <TabContext.Provider value={{ id: node.getId() }}>
+            <PaneHostProvider chrome placement="tab">
+              <RegisteredComponent node={node} {...config} />
+            </PaneHostProvider>
+          </TabContext.Provider>
         );
       }
-      return <div className="p-4 text-sm">Unknown Component: {componentId}</div>;
+      const policy = useLayoutStore.getState().options.onUnknownComponent;
+      if (typeof policy === 'function') return policy(componentId ?? '');
+      // `'drop'` closes these on mount; render nothing in the meantime.
+      if (policy === 'drop') return null;
+      return (
+        <div className="p-4 text-sm text-muted-foreground" data-nexus-unknown-component={componentId}>
+          <p className="font-medium text-foreground">This view is no longer available.</p>
+          <p className="mt-1">
+            The saved layout names <code className="font-mono">{componentId}</code>, which this
+            application does not register. Close the tab, or reset the layout.
+          </p>
+        </div>
+      );
     } catch (e) {
       console.error('Error in component factory:', e);
       return (

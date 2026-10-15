@@ -2,7 +2,7 @@ import { commandRegistry, type ICommand } from './registry/CommandRegistry';
 import { menuRegistry, type IMenuItemConfig } from './registry/MenuRegistry';
 import { componentRegistry } from './registry/ComponentRegistry';
 import { useChatStore, type ISlashCommandConfig } from './services/ChatService';
-import { useLayoutStore } from './services/LayoutService';
+import { configureLayout, useLayoutStore, type LayoutOptions } from './services/LayoutService';
 import {
   CHAT_PANEL_ID,
   PANE_SIDES,
@@ -43,6 +43,12 @@ export interface InitializeShellOptions {
    * to `true`, and is ignored when `defaultCommands` is `false`.
    */
   defaultMenus?: boolean;
+  /**
+   * Persisted-layout versioning and the unknown-component policy. See
+   * {@link LayoutOptions}. Applying it re-reads the saved layout through
+   * `migrate`.
+   */
+  layout?: LayoutOptions;
 }
 
 /** One `theme.<id>` command per bundled theme, generated from the registry. */
@@ -175,7 +181,10 @@ export const initializeShell = (options: InitializeShellOptions = {}): void => {
     slashCommands,
     defaultCommands = true,
     defaultMenus = true,
+    layout,
   } = options;
+
+  if (layout) configureLayout(layout);
 
   if (defaultCommands) {
     DEFAULT_COMMANDS.forEach((command) => commandRegistry.registerCommand(command));

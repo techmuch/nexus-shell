@@ -46,12 +46,38 @@ export {
 export { commandRegistry, CommandRegistry, type ICommand } from './core/registry/CommandRegistry';
 export { menuRegistry, MenuRegistry, type IMenuItemConfig } from './core/registry/MenuRegistry';
 export { pluginRegistry, type IPlugin, type PluginStatus } from './core/registry/PluginRegistry';
-export { componentRegistry, type ComponentConstructor } from './core/registry/ComponentRegistry';
+export {
+  componentRegistry,
+  ComponentRegistry,
+  type ComponentConstructor,
+  type ComponentAliasOptions,
+} from './core/registry/ComponentRegistry';
+
+// The workspace — open, focus, close and inspect tabs without touching
+// FlexLayout. Prefer this to `useLayoutStore().model`.
+export {
+  workspace,
+  useWorkspaceSnapshot,
+  useTab,
+  TabContext,
+  type TabRef,
+  type WorkspaceSnapshot,
+  type OpenTabOptions,
+  type UseTabOptions,
+  type UseTabResult,
+} from './core/services/Workspace';
 
 // Stores — the shell's state, as zustand hooks. Read or drive them from
 // anywhere, including outside React.
 export { useChatStore, type ISlashCommandConfig } from './core/services/ChatService';
-export { useLayoutStore } from './core/services/LayoutService';
+export {
+  useLayoutStore,
+  configureLayout,
+  defaultLayout,
+  type AddTabOptions,
+  type LayoutOptions,
+  type UnknownComponentPolicy,
+} from './core/services/LayoutService';
 export { useModalStore, type ModalType as ModalStoreType } from './core/services/ModalStoreService';
 export {
   createPaneStore,
@@ -71,7 +97,11 @@ export {
 export { useStatusBarStore, type IStatusBarWidgetConfig } from './core/services/StatusBarService';
 export { useTerminalStore } from './core/services/TerminalService';
 export { useThemeStore, type ThemeType } from './core/services/ThemeService';
-export { useUserProfileStore, type UserProfileState } from './core/services/UserProfileService';
+export {
+  useUserProfileStore,
+  DEFAULT_USER_PROFILE,
+  type UserProfileState,
+} from './core/services/UserProfileService';
 export { useKeyboardShortcuts } from './core/services/KeyboardService';
 
 // ---------------------------------------------------------------------------
@@ -179,6 +209,7 @@ export {
 
 // Utilities
 export { cn } from './lib/cn';
+export { STORAGE_KEYS } from './lib/storage';
 export {
   BUNDLED_THEMES,
   BUNDLED_THEME_CLASSES,
