@@ -103,7 +103,15 @@ export {
 } from './core/services/PaneService';
 export { useStatusBarStore, type IStatusBarWidgetConfig } from './core/services/StatusBarService';
 export { useTerminalStore } from './core/services/TerminalService';
-export { useThemeStore, type ThemeType } from './core/services/ThemeService';
+export {
+  useThemeStore,
+  registerTheme,
+  useThemeTokens,
+  getThemeTokens,
+  type ThemeType,
+  type IThemeInfo,
+  type ThemeTokens,
+} from './core/services/ThemeService';
 export {
   useUserProfileStore,
   DEFAULT_USER_PROFILE,

@@ -7,6 +7,25 @@ import { ConnectedThemeSwitcher } from '../../src/connected/ConnectedThemeSwitch
 import { NexusWorkspaceShell } from './app/NexusWorkspaceShell'
 import { ConnectedModal } from '../../src/connected/ConnectedModal'
 import { UnifiedWorkbench } from './dialogue-mapper/DialogueMappingComposition.stories'
+import type { IJsonModel } from 'flexlayout-react'
+
+/**
+ * What a first visit shows. The library's default layout is empty from 0.3.0
+ * — it used to open a `welcome` tab every app had to register — so the
+ * showcase seeds its own. A layout the visitor has since arranged is restored
+ * instead.
+ */
+const initialLayout: IJsonModel = {
+  global: { tabEnableClose: true, tabSetEnableMaximize: false, tabSetEnableDivide: true },
+  borders: [],
+  layout: {
+    type: 'row',
+    weight: 100,
+    children: [
+      { type: 'tabset', weight: 100, children: [{ type: 'tab', name: 'Welcome', component: 'welcome' }] },
+    ],
+  },
+}
 
 function App() {
   useKeyboardShortcuts()
@@ -38,7 +57,8 @@ function App() {
     <div className="h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
       <ConnectedModal />
       <ConnectedCommandPalette />
-      <ShellLayout 
+      <ShellLayout
+        initialLayoutJson={initialLayout}
         rightMenuBarContent={
           <div className="flex items-center space-x-3 select-none">
             <ConnectedThemeSwitcher />

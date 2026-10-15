@@ -31,7 +31,7 @@ const missing = ids.filter((id) => !css.includes(`.theme-${id}{`));
 if (missing.length > 0) {
   console.error(
     `check-themes: missing from ${STYLESHEET}: ${missing.join(', ')}\n` +
-      'Theme blocks must stay outside @layer base or Tailwind will drop them.',
+      'Theme blocks must stay in the native nexus.themes layer, never Tailwind\'s @layer base, or Tailwind will drop them.',
   );
   process.exit(1);
 }

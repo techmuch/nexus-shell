@@ -22,6 +22,12 @@ export interface IBundledTheme {
   shortLabel: string;
   /** One line on what the theme is, used in documentation. */
   description: string;
+  /**
+   * Whether the theme is light or dark overall. For code that cannot read CSS
+   * tokens — chart and canvas libraries choosing a palette — and for the
+   * browser's `color-scheme`.
+   */
+  scheme: 'light' | 'dark';
 }
 
 export const BUNDLED_THEMES = [
@@ -30,24 +36,28 @@ export const BUNDLED_THEMES = [
     label: 'Light',
     shortLabel: 'Light',
     description: 'Neutral light theme. The default.',
+    scheme: 'light',
   },
   {
     id: 'dark',
     label: 'Dark',
     shortLabel: 'Dark',
     description: 'Low-glare dark theme on a soft grey base.',
+    scheme: 'dark',
   },
   {
     id: 'gt',
     label: 'Georgia Tech',
     shortLabel: 'GT',
     description: 'Buzz Gold (#EAAA00) on Tech Tower White.',
+    scheme: 'light',
   },
   {
     id: 'tamu',
     label: 'Texas A&M',
     shortLabel: 'TAMU',
     description: 'Aggie Maroon (#500000) on white.',
+    scheme: 'light',
   },
 ] as const satisfies readonly IBundledTheme[];
 

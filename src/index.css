@@ -1,10 +1,55 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ---------------------------------------------------------------------------
+ * Cascade layers
+ *
+ * Everything the shell ships lives in `nexus.*` layers, so an application's
+ * own styles win without a specificity fight. Unlayered CSS beats every
+ * layer, and an app's layers win too once `nexus` is declared first — import
+ * `nexus-shell/style.css` before your own CSS, or put
+ * `@layer nexus, theme, base, components, utilities;` at the top of your
+ * entry stylesheet (Tailwind v4).
+ *
+ * Inside the shell, order is what keeps the parts from fighting each other,
+ * because a later layer beats an earlier one whatever the specificity:
+ *
+ *   reset      Tailwind's preflight. First, so FlexLayout's class rules beat
+ *              its element resets (`button { padding: 0 }`).
+ *   base       Token defaults and Tailwind's per-element variables.
+ *   vendor     flexlayout-react's stylesheet, bundled here rather than
+ *              imported from JavaScript, so it is layered with everything
+ *              else and consumers' test runners never see a CSS import.
+ *   overrides  The shell's theming of vendor CSS.
+ *   components, utilities  Tailwind output for the shell's own markup.
+ *   themes     `.theme-*` token blocks. Last, so they beat `:root` defaults.
+ *
+ * `nexus-shell/style.no-reset.css` is this stylesheet without `nexus.reset`,
+ * for apps that bring their own preflight.
+ * ------------------------------------------------------------------------- */
 
+@layer nexus.reset, nexus.base, nexus.vendor, nexus.overrides, nexus.components, nexus.utilities, nexus.themes;
+
+@import 'tailwindcss/src/css/preflight.css' layer(nexus.reset);
+@import 'flexlayout-react/style/light.css' layer(nexus.vendor);
+@import './styles/flexlayout-theme.css' layer(nexus.overrides);
+
+@layer nexus.base {
+  @tailwind base;
+}
+@layer nexus.components {
+  @tailwind components;
+}
+@layer nexus.utilities {
+  @tailwind utilities;
+  /* Without this, Tailwind appends hover:, focus: etc. after everything —
+     outside any layer. */
+  @tailwind variants;
+}
+
+/* Tailwind hoists this into `@tailwind base`, inside `nexus.base`. */
 @layer base {
   :root {
     --radius: 0.5rem;
+    /* Fully rounded shapes — pills, avatars. Set to 0 with --radius for a square UI. */
+    --radius-pill: 9999px;
   }
 
   * {
@@ -16,13 +61,15 @@
   }
 }
 
+@layer nexus.themes {
 /* ---------------------------------------------------------------------------
  * Themes
  *
- * Deliberately outside `@layer base`. Tailwind tree-shakes unused rules within
- * a layer, and a theme class is only ever applied at runtime — `theme-${id}` —
- * so nothing in the content globs references it literally. Inside a layer these
- * blocks would be dropped from the build and the theme would silently not work.
+ * In the native `nexus.themes` layer, never Tailwind's `@layer base`: Tailwind
+ * tree-shakes unused rules within its own layers, and a theme class is only
+ * ever applied at runtime — `theme-${id}` — so nothing in the content globs
+ * references it literally. Inside a Tailwind layer these blocks would be
+ * dropped from the build and the theme would silently not work.
  *
  * Keep in sync with `src/lib/themes.ts`; `src/lib/__tests__/themes.test.ts`
  * fails if a registered theme has no block here, or omits a token.
@@ -148,7 +195,9 @@
   --input: 0 15% 87%;
   --ring: 0 100% 16%;
 }
+}
 
+@layer nexus.overrides {
 /* React Flow controls theme override */
 .react-flow__controls {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
@@ -175,5 +224,4 @@
 .react-flow__controls-button svg {
   fill: currentColor !important;
 }
-
-
+}

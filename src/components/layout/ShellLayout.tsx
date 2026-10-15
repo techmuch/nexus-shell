@@ -8,8 +8,10 @@ import {
   type Action,
   type IJsonModel,
 } from 'flexlayout-react';
-import 'flexlayout-react/style/light.css';
-import '../../styles/flexlayout-theme.css';
+// FlexLayout's stylesheet and the shell's theming of it are bundled into
+// style.css (see src/index.css), not imported here: a CSS import in library
+// JavaScript lands unlayered in the consumer's cascade, and breaks test runners
+// that cannot load CSS.
 
 import { ConnectedPaneRail } from '../../connected/ConnectedPaneRail';
 import { ConnectedMenuBar } from '../../connected/ConnectedMenuBar';

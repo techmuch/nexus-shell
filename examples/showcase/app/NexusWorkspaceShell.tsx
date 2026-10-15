@@ -1,7 +1,6 @@
 import React from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import { Layout, TabNode } from 'flexlayout-react';
-import 'flexlayout-react/style/light.css';
 import '../../../src/styles/flexlayout-theme.css';
 
 import { DialogueMappingWidget } from '../dialogue-mapper/DialogueMappingWidget';

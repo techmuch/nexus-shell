@@ -15,7 +15,8 @@
       "require": "./dist/nexus-shell.umd.js",
       "types": "./dist/index.d.ts"
     },
-    "./style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css",
+    "./style.no-reset.css": "./dist/style.no-reset.css"
   },
   "scripts": {
     "dev": "vite",
@@ -31,26 +32,27 @@
     "site:test": "vitest run --config website/vitest.config.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && node scripts/build-css-variants.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
     "e2e": "playwright test --config examples/showcase/e2e/playwright.config.ts",
     "e2e:update": "playwright test --config examples/showcase/e2e/playwright.config.ts --update-snapshots",
     "preview": "vite preview",
-    "check:themes": "node scripts/check-themes-bundled.mjs"
+    "check:themes": "node scripts/check-themes-bundled.mjs",
+    "check:css": "node scripts/check-css.mjs"
   },
   "peerDependencies": {
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zustand": "^4.5.0 || ^5.0.0"
   },
   "dependencies": {
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.3.0",
     "lucide-react": "^0.378.0",
     "react-virtuoso": "^4.18.1",
-    "flexlayout-react": "^0.7.15",
-    "zustand": "^4.5.2"
+    "flexlayout-react": "^0.7.15"
   },
   "devDependencies": {
     "@deck.gl/geo-layers": "^9.2.11",
@@ -89,7 +91,8 @@
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
     "vite-plugin-dts": "^3.9.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "zustand": "^4.5.2"
   },
   "overrides": {
     "react": "$react",

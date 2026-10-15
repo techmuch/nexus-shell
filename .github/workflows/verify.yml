@@ -43,14 +43,25 @@ jobs:
       - name: Build library
         run: npm run build
 
-      # Theme blocks live outside `@layer base` precisely so Tailwind can't
-      # tree-shake them — a theme class is only ever applied at runtime, so
-      # nothing references it literally. This asserts they survived the build.
+      # Theme blocks live in the native `nexus.themes` layer, not Tailwind's
+      # `@layer base`, precisely so Tailwind can't tree-shake them — a theme
+      # class is only ever applied at runtime, so nothing references it
+      # literally. This asserts they survived the build.
       - name: Check every theme reached the built stylesheet
         run: node scripts/check-themes-bundled.mjs
+
+      # Every rule must be inside a `nexus.*` cascade layer, the no-reset
+      # variant must exist, and the JS bundles must not import CSS.
+      - name: Check the stylesheets are layered
+        run: node scripts/check-css.mjs
 
       - name: Build Storybook
         run: npm run build-storybook
 
       - name: Build site
         run: npm run site:build
+
+      # zustand is a peer dependency (^4.5 || ^5), so consumers dedupe to their
+      # own copy. Prove the library works on the other major too.
+      - name: Test against zustand 5
+        run: npm install --no-save zustand@5 && npm test
