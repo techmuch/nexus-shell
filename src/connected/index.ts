@@ -10,7 +10,7 @@
  * components when you want control.
  */
 
-export { chatPanel, terminalPanel, settingsPanel } from './panels';
+export { chatPanel, terminalPanel, settingsPanel, type ChatPanelOptions } from './panels';
 export { ConnectedPaneRail, type ConnectedPaneRailProps } from './ConnectedPaneRail';
 export { ConnectedChatPane, type ConnectedChatPaneProps } from './ConnectedChatPane';
 export { ConnectedCommandPalette, type ConnectedCommandPaletteProps } from './ConnectedCommandPalette';

@@ -13,6 +13,13 @@ export interface IChatMessage {
   text: string;
   /** Optional display name shown above the bubble. Defaults from `role`. */
   author?: string;
+  /**
+   * Still being written — a streamed reply in progress. Renders a typing
+   * indicator while `text` is empty, and a caret after it once text arrives.
+   */
+  pending?: boolean;
+  /** The reply failed. Rendered in the destructive colour. */
+  error?: boolean;
 }
 
 /** A `/`-prefixed shortcut offered in the composer's autocomplete. */
@@ -215,14 +222,37 @@ export const ChatPane = ({
                     <span>{message.author ?? (isUser ? 'You' : 'Assistant')}</span>
                   </div>
                   <div
+                    aria-busy={message.pending || undefined}
                     className={cn(
                       'max-w-[85%] rounded-lg px-3 py-2 text-xs whitespace-pre-wrap break-words',
                       isUser
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card border border-border text-foreground',
+                      message.error && 'border-destructive/50 text-destructive bg-destructive/10',
                     )}
                   >
-                    {message.text}
+                    {message.pending && !message.text ? (
+                      <span
+                        role="status"
+                        aria-label={`${message.author ?? 'Assistant'} is typing`}
+                        className="inline-flex gap-1 py-1"
+                      >
+                        {[0, 1, 2].map((i) => (
+                          <span
+                            key={i}
+                            className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
+                            style={{ animationDelay: `${i * 150}ms` }}
+                          />
+                        ))}
+                      </span>
+                    ) : (
+                      <>
+                        {message.text}
+                        {message.pending && (
+                          <span aria-hidden className="ml-0.5 inline-block w-1.5 h-3 align-middle bg-current animate-pulse" />
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               );

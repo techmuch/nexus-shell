@@ -26,6 +26,12 @@ export class ComponentRegistry {
     this.components.set(id, component);
   }
 
+  /** Remove every component and alias. For tests; see `resetShell`. */
+  clear(): void {
+    this.components.clear();
+    this.aliases.clear();
+  }
+
   /** Remove a registration. Aliases pointing at it are left in place. */
   unregister(id: string): void {
     this.components.delete(id);

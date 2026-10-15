@@ -1,16 +1,24 @@
 import { ChatPane, type ChatPaneProps } from '../components/widgets/ChatPane';
-import { useChatStore } from '../core/services/ChatService';
+import {
+  chatReplyApi,
+  useChatStore,
+  type ChatSendHandler,
+} from '../core/services/ChatService';
 
 export type ConnectedChatPaneProps = Omit<
   ChatPaneProps,
   'messages' | 'slashCommands' | 'onSend' | 'onClose'
 > & {
   /**
-   * Handle a plain (non-slash) message. Append any reply with
-   * `useChatStore.getState().addMessage(...)`. Without this, user messages are
-   * recorded but nothing responds.
+   * Handle a plain (non-slash) message. The second argument answers it —
+   * `chat.reply(text)`, or `chat.stream()` for a streamed reply. A rejected
+   * promise is shown as a failed reply.
+   *
+   * Falls back to the app-wide handler (`useChatStore().setSendHandler`, or
+   * `initializeShell({ chat: { onSend } })`). With neither, the pane says so
+   * rather than silently swallowing the message.
    */
-  onSend?: (text: string) => void;
+  onSend?: ChatSendHandler;
 };
 
 /**
@@ -27,6 +35,7 @@ export const ConnectedChatPane = ({ onSend, ...props }: ConnectedChatPaneProps) 
   const messages = useChatStore((s) => s.messages);
   const slashCommands = useChatStore((s) => s.slashCommands);
   const addMessage = useChatStore((s) => s.addMessage);
+  const sendHandler = useChatStore((s) => s.sendHandler);
 
   const handleSend = (text: string) => {
     addMessage({ role: 'user', text });
@@ -42,7 +51,25 @@ export const ConnectedChatPane = ({ onSend, ...props }: ConnectedChatPaneProps) 
       return;
     }
 
-    onSend?.(text);
+    const handler = onSend ?? sendHandler;
+    if (!handler) {
+      addMessage({ role: 'assistant', text: 'Nothing is connected to this chat yet.', error: true });
+      return;
+    }
+    const fail = (e: unknown) =>
+      useChatStore.getState().addMessage({
+        role: 'assistant',
+        text: `Something went wrong: ${e instanceof Error ? e.message : String(e)}`,
+        error: true,
+      });
+    try {
+      const result = handler(text, chatReplyApi);
+      if (result && typeof (result as Promise<void>).catch === 'function') {
+        (result as Promise<void>).catch(fail);
+      }
+    } catch (e) {
+      fail(e);
+    }
   };
 
   return (

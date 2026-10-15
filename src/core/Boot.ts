@@ -5,7 +5,7 @@ import {
   useCommandPaletteStore,
 } from './services/CommandPaletteService';
 import { componentRegistry } from './registry/ComponentRegistry';
-import { useChatStore, type ISlashCommandConfig } from './services/ChatService';
+import { useChatStore, type ChatSendHandler, type ISlashCommandConfig } from './services/ChatService';
 import { configureLayout, useLayoutStore, type LayoutOptions } from './services/LayoutService';
 import {
   CHAT_PANEL_ID,
@@ -53,6 +53,8 @@ export interface InitializeShellOptions {
    * `migrate`.
    */
   layout?: LayoutOptions;
+  /** The chat pane's app-wide send handler. See `ChatSendHandler`. */
+  chat?: { onSend?: ChatSendHandler };
 }
 
 /** One `theme.<id>` command per bundled theme, generated from the registry. */
@@ -194,7 +196,10 @@ export const initializeShell = (options: InitializeShellOptions = {}): void => {
     defaultCommands = true,
     defaultMenus = true,
     layout,
+    chat,
   } = options;
+
+  if (chat?.onSend) useChatStore.getState().setSendHandler(chat.onSend);
 
   if (layout) configureLayout(layout);
 

@@ -76,7 +76,14 @@ export {
 
 // Stores — the shell's state, as zustand hooks. Read or drive them from
 // anywhere, including outside React.
-export { useChatStore, type ISlashCommandConfig } from './core/services/ChatService';
+export {
+  useChatStore,
+  chatReplyApi,
+  type ISlashCommandConfig,
+  type ChatSendHandler,
+  type ChatReplyApi,
+  type ChatStream,
+} from './core/services/ChatService';
 export {
   useLayoutStore,
   configureLayout,
@@ -85,7 +92,12 @@ export {
   type LayoutOptions,
   type UnknownComponentPolicy,
 } from './core/services/LayoutService';
-export { useModalStore, type ModalType as ModalStoreType } from './core/services/ModalStoreService';
+export {
+  useModalStore,
+  type ModalType as ModalStoreType,
+  type CustomModalOptions,
+  type CustomModalRender,
+} from './core/services/ModalStoreService';
 export {
   createPaneStore,
   paneStore,
@@ -145,7 +157,14 @@ export { AppTitle, type AppTitleProps } from './components/widgets/AppTitle';
 export { ChatPane, type ChatPaneProps, type IChatMessage, type ISlashCommand } from './components/widgets/ChatPane';
 export { CommandPalette, type CommandPaletteProps, type ICommandItem } from './components/widgets/CommandPalette';
 export { ContextMenu, type ContextMenuProps, type IContextMenuItem } from './components/widgets/ContextMenu';
-export { DataGrid, type DataGridProps, type IDataGridColumn } from './components/widgets/DataGrid';
+export {
+  DataGrid,
+  type DataGridProps,
+  type IDataGridColumn,
+  type DataGridKey,
+  type DataGridSort,
+  type DataGridRowState,
+} from './components/widgets/DataGrid';
 export { MenuBar, type MenuBarProps, type IMenuItem } from './components/widgets/MenuBar';
 export { Modal, type ModalProps, type ModalType } from './components/widgets/Modal';
 export { QuickSearch, type QuickSearchProps, type IQuickSearchResult } from './components/widgets/QuickSearch';
@@ -243,6 +262,15 @@ export {
   type IBundledTheme,
   type BundledThemeId,
 } from './lib/themes';
+
+// Testing — reset the shell between tests, drive a real headless workspace.
+// Also importable as `nexus-shell/testing`.
+export {
+  resetShell,
+  createTestWorkspace,
+  type ResetShellOptions,
+  type TestWorkspaceOptions,
+} from './testing';
 
 // Styles — bundled into dist/style.css by the library build
 import './index.css';

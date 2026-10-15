@@ -52,6 +52,12 @@ export class CommandRegistry {
     if (this.commands.delete(id)) this.notify();
   }
 
+  /** Remove every command. For tests; see `resetShell`. */
+  clear(): void {
+    this.commands.clear();
+    this.notify();
+  }
+
   /** Whether a command with this id is registered. */
   hasCommand(id: string): boolean {
     return this.commands.has(id);

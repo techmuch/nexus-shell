@@ -10,11 +10,61 @@ export interface ISlashCommandConfig extends ISlashCommand {
   execute: (args: string[]) => void;
 }
 
+/** A reply being written, returned by {@link ChatReplyApi.stream}. */
+export interface ChatStream {
+  /** The message id. */
+  id: string;
+  /** Append text as it arrives. */
+  append: (chunk: string) => void;
+  /** Finish. `text` replaces the accumulated text when given. */
+  done: (text?: string) => void;
+  /** Finish as failed, showing `message`. */
+  fail: (message: string) => void;
+}
+
+/** Helpers handed to a send handler for answering. */
+export interface ChatReplyApi {
+  /** Add a complete assistant reply. Returns its id. */
+  reply: (text: string, options?: { author?: string }) => string;
+  /** Start a streamed assistant reply, shown as typing until text arrives. */
+  stream: (options?: { author?: string }) => ChatStream;
+}
+
+/**
+ * What runs when the user sends a message that is not a slash command.
+ *
+ * Return a promise to have a rejection shown in the transcript as a failed
+ * reply, rather than lost.
+ *
+ * @example
+ * ```ts
+ * chatPanel({
+ *   onSend: async (text, chat) => {
+ *     const reply = chat.stream();
+ *     for await (const chunk of llm.stream(text)) reply.append(chunk);
+ *     reply.done();
+ *   },
+ * });
+ * ```
+ */
+export type ChatSendHandler = (text: string, chat: ChatReplyApi) => void | Promise<void>;
+
 interface ChatState {
   messages: IChatMessage[];
   slashCommands: ISlashCommandConfig[];
+  /**
+   * The app-wide send handler, used by any `ConnectedChatPane` not given its
+   * own `onSend`. Set with `setSendHandler` or `initializeShell({ chat })`.
+   */
+  sendHandler: ChatSendHandler | null;
+  setSendHandler: (handler: ChatSendHandler | null) => void;
   setMessages: (messages: IChatMessage[]) => void;
-  addMessage: (message: Omit<IChatMessage, 'id'> & { id?: string }) => void;
+  /** Append a message. Returns its id. */
+  addMessage: (message: Omit<IChatMessage, 'id'> & { id?: string }) => string;
+  /** Change a message in place — mark it done, fix its text. */
+  updateMessage: (id: string, patch: Partial<Omit<IChatMessage, 'id'>>) => void;
+  /** Append text to a message, for streamed replies. */
+  appendToMessage: (id: string, chunk: string) => void;
   clearMessages: () => void;
   setSlashCommands: (commands: ISlashCommandConfig[]) => void;
   /**
@@ -47,10 +97,21 @@ const nextId = () => `msg-${Date.now()}-${(messageCounter += 1)}`;
 export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   slashCommands: [],
+  sendHandler: null,
+  setSendHandler: (sendHandler) => set({ sendHandler }),
   setMessages: (messages) => set({ messages }),
-  addMessage: (message) =>
+  addMessage: (message) => {
+    const id = message.id ?? nextId();
+    set((state) => ({ messages: [...state.messages, { ...message, id }] }));
+    return id;
+  },
+  updateMessage: (id, patch) =>
     set((state) => ({
-      messages: [...state.messages, { ...message, id: message.id ?? nextId() }],
+      messages: state.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+    })),
+  appendToMessage: (id, chunk) =>
+    set((state) => ({
+      messages: state.messages.map((m) => (m.id === id ? { ...m, text: m.text + chunk } : m)),
     })),
   clearMessages: () => set({ messages: [] }),
   setSlashCommands: (slashCommands) => set({ slashCommands }),
@@ -73,5 +134,22 @@ export const useChatStore = create<ChatState>((set) => ({
       slashCommands: state.slashCommands.filter((c) => c.command !== command),
     })),
 }));
+
+/** The {@link ChatReplyApi} bound to the shell's chat store. */
+export const chatReplyApi: ChatReplyApi = {
+  reply: (text, options = {}) =>
+    useChatStore.getState().addMessage({ role: 'assistant', text, author: options.author }),
+  stream: (options = {}) => {
+    const store = useChatStore.getState();
+    const id = store.addMessage({ role: 'assistant', text: '', author: options.author, pending: true });
+    return {
+      id,
+      append: (chunk) => useChatStore.getState().appendToMessage(id, chunk),
+      done: (text) =>
+        useChatStore.getState().updateMessage(id, { pending: false, ...(text !== undefined ? { text } : {}) }),
+      fail: (message) => useChatStore.getState().updateMessage(id, { pending: false, error: true, text: message }),
+    };
+  },
+};
 
 export type { IChatMessage, ISlashCommand };

@@ -1,4 +1,6 @@
+import { createElement } from 'react';
 import { MessageCircle, Settings, Terminal } from 'lucide-react';
+import type { ChatSendHandler } from '../core/services/ChatService';
 import {
   CHAT_PANEL_ID,
   SETTINGS_PANEL_ID,
@@ -32,12 +34,33 @@ import { ConnectedTerminalPane } from './ConnectedTerminalPane';
  * rebuilding the descriptor by hand.
  */
 
-/** The chat pane, as a registerable panel. */
-export const chatPanel = (overrides: Partial<IPanel> = {}): IPanel => ({
+/** Options for {@link chatPanel}: panel overrides plus the chat's wiring. */
+export type ChatPanelOptions = Partial<IPanel> & {
+  /**
+   * Answer plain messages. See `ChatSendHandler`. Without it the panel uses
+   * the app-wide handler from `initializeShell({ chat })`, if any.
+   */
+  onSend?: ChatSendHandler;
+  /** Composer placeholder. */
+  placeholder?: string;
+};
+
+/**
+ * The chat pane, as a registerable panel.
+ *
+ * @example
+ * ```ts
+ * chatPanel({ side: 'bottom', onSend: async (text, chat) => chat.reply(await ask(text)) })
+ * ```
+ */
+export const chatPanel = ({ onSend, placeholder, ...overrides }: ChatPanelOptions = {}): IPanel => ({
   id: CHAT_PANEL_ID,
   label: 'Chat',
   icon: MessageCircle,
-  component: ConnectedChatPane,
+  component:
+    onSend || placeholder
+      ? () => createElement(ConnectedChatPane, { onSend, placeholder })
+      : ConnectedChatPane,
   ...overrides,
 });
 

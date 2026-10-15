@@ -16,7 +16,12 @@
       "types": "./dist/index.d.ts"
     },
     "./style.css": "./dist/style.css",
-    "./style.no-reset.css": "./dist/style.no-reset.css"
+    "./style.no-reset.css": "./dist/style.no-reset.css",
+    "./testing": {
+      "import": "./dist/nexus-shell.es.js",
+      "require": "./dist/nexus-shell.umd.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "scripts": {
     "dev": "vite",

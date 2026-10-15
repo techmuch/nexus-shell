@@ -4,7 +4,7 @@ import { useSingleton } from '../lib/singleton';
 
 export type ConnectedModalProps = Omit<
   ModalProps,
-  'open' | 'type' | 'title' | 'message' | 'defaultValue' | 'onConfirm' | 'onCancel'
+  'open' | 'type' | 'title' | 'message' | 'defaultValue' | 'onConfirm' | 'onCancel' | 'children'
 >;
 
 /**
@@ -21,7 +21,7 @@ export type ConnectedModalProps = Omit<
  * or `null`, `confirm` to a boolean, `alert` to `undefined`.
  */
 export const ConnectedModal = (props: ConnectedModalProps) => {
-  const { isOpen, type, title, message, defaultValue, close } = useModalStore();
+  const { isOpen, type, title, message, defaultValue, close, render, size, closeOnBackdrop } = useModalStore();
   const live = useSingleton('nexus.modal');
 
   const handleConfirm = (value?: string) => {
@@ -31,7 +31,8 @@ export const ConnectedModal = (props: ConnectedModalProps) => {
   };
 
   const handleCancel = () => {
-    if (type === 'prompt') close(null);
+    if (render) close(undefined);
+    else if (type === 'prompt') close(null);
     else if (type === 'confirm') close(false);
     else close();
   };
@@ -48,6 +49,10 @@ export const ConnectedModal = (props: ConnectedModalProps) => {
       defaultValue={defaultValue}
       onConfirm={handleConfirm}
       onCancel={handleCancel}
-    />
+      size={render ? size : props.size}
+      closeOnBackdrop={render ? closeOnBackdrop : props.closeOnBackdrop}
+    >
+      {render ? render((value) => close(value)) : undefined}
+    </Modal>
   );
 };
