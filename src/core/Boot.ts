@@ -1,5 +1,9 @@
 import { commandRegistry, type ICommand } from './registry/CommandRegistry';
-import { menuRegistry, type IMenuItemConfig } from './registry/MenuRegistry';
+import { menuRegistry, mergeMenus, type IMenuItemConfig } from './registry/MenuRegistry';
+import {
+  COMMAND_PALETTE_COMMAND_ID,
+  useCommandPaletteStore,
+} from './services/CommandPaletteService';
 import { componentRegistry } from './registry/ComponentRegistry';
 import { useChatStore, type ISlashCommandConfig } from './services/ChatService';
 import { configureLayout, useLayoutStore, type LayoutOptions } from './services/LayoutService';
@@ -60,6 +64,7 @@ const THEME_COMMANDS: ICommand[] = BUNDLED_THEMES.map((theme) => ({
 
 /** The command ids `initializeShell` registers unless told not to. */
 export const DEFAULT_COMMAND_IDS = [
+  COMMAND_PALETTE_COMMAND_ID,
   'view.toggleTerminal',
   'view.toggleChat',
   'view.toggleSidebar',
@@ -98,6 +103,12 @@ export const togglePanel = (id: string): boolean => {
 
 const DEFAULT_COMMANDS: ICommand[] = [
   {
+    id: COMMAND_PALETTE_COMMAND_ID,
+    label: 'View: Command Palette',
+    keybinding: 'Mod+Shift+P',
+    execute: () => useCommandPaletteStore.getState().toggle(),
+  },
+  {
     id: 'view.toggleTerminal',
     label: 'View: Toggle Terminal',
     keybinding: 'Control+`',
@@ -123,6 +134,7 @@ const DEFAULT_COMMANDS: ICommand[] = [
 
 const DEFAULT_MENUS: Record<string, IMenuItemConfig[]> = {
   View: [
+    { id: 'view.commandPalette', label: 'Command Palette', commandId: COMMAND_PALETTE_COMMAND_ID },
     { id: 'view.terminal', label: 'Toggle Terminal', commandId: 'view.toggleTerminal' },
     { id: 'view.chat', label: 'Toggle Chat', commandId: 'view.toggleChat' },
     { id: 'view.sidebar', label: 'Toggle Sidebar', commandId: 'view.toggleSidebar' },
@@ -187,16 +199,23 @@ export const initializeShell = (options: InitializeShellOptions = {}): void => {
   if (layout) configureLayout(layout);
 
   if (defaultCommands) {
-    DEFAULT_COMMANDS.forEach((command) => commandRegistry.registerCommand(command));
+    // Only where nothing is registered yet, so an app's own override of a
+    // built-in id survives a second `initializeShell` call.
+    DEFAULT_COMMANDS.forEach((command) => {
+      if (!commandRegistry.hasCommand(command.id)) commandRegistry.registerCommand(command);
+    });
   }
 
   commands?.forEach((command) => commandRegistry.registerCommand(command));
 
-  // Menus are set rather than appended, so the caller's config wins outright.
-  const mergedMenus = {
-    ...(defaultCommands && defaultMenus ? DEFAULT_MENUS : {}),
-    ...(menus ?? {}),
-  };
+  // The app's menus come first and in its order. A menu the defaults also
+  // define (View) keeps the app's items and gains the built-in ones it does
+  // not already have, by id or by command — so declaring your own View menu
+  // no longer silently drops the theme switcher.
+  const mergedMenus = mergeMenus(
+    menus ?? {},
+    defaultCommands && defaultMenus ? DEFAULT_MENUS : {},
+  );
   if (Object.keys(mergedMenus).length > 0) {
     menuRegistry.setMenus(mergedMenus);
   }

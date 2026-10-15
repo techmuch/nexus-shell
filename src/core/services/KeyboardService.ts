@@ -1,10 +1,29 @@
 import { useEffect } from 'react';
-import { commandRegistry } from '../registry/CommandRegistry';
+import { commandRegistry, type ICommand } from '../registry/CommandRegistry';
+import {
+  hasCommandModifier,
+  isEditableTarget,
+  matchesKeybinding,
+} from '../../lib/keybinding';
+
+/** Whether `command`'s shortcut may fire for this event. */
+const shouldFire = (command: ICommand, event: KeyboardEvent): boolean => {
+  if (!command.keybinding || !matchesKeybinding(event, command.keybinding)) return false;
+  if (isEditableTarget(event.target)) {
+    const allowed = command.allowInInputs ?? hasCommandModifier(command.keybinding);
+    if (!allowed) return false;
+  }
+  if (command.when && !command.when()) return false;
+  return true;
+};
 
 /** Dispatch a key event to the first command bound to it. */
 const handleKeyDown = (event: KeyboardEvent) => {
+  // Mid-composition keystrokes belong to the IME; a handled event belongs to
+  // whoever handled it.
+  if (event.isComposing || event.defaultPrevented) return;
   for (const command of commandRegistry.getCommands()) {
-    if (command.keybinding && isMatch(event, command.keybinding)) {
+    if (shouldFire(command, event)) {
       event.preventDefault();
       command.execute();
       break;
@@ -25,6 +44,10 @@ let mounted = 0;
  * `ShellLayout` mounts this itself (opt out with `keyboardShortcuts={false}`).
  * Mount it yourself only when you render the shell's parts without
  * `ShellLayout`. Mounting it more than once is harmless.
+ *
+ * Bindings use `KeyboardEvent.key`; see `parseKeybinding` for the syntax.
+ * Bare keys and Shift+key do not fire while the user is typing in a field
+ * unless the command sets `allowInInputs`.
  */
 export const useKeyboardShortcuts = (enabled = true) => {
   useEffect(() => {
@@ -37,30 +60,3 @@ export const useKeyboardShortcuts = (enabled = true) => {
     };
   }, [enabled]);
 };
-
-/**
- * Simple keybinding matcher.
- * Supports "Control+N", "Shift+Alt+P", etc.
- */
-function isMatch(event: KeyboardEvent, binding: string): boolean {
-  const parts = binding.split('+');
-  const key = parts.pop()?.toLowerCase();
-  
-  const needsCtrl = parts.includes('Control') || parts.includes('Ctrl');
-  const needsShift = parts.includes('Shift');
-  const needsAlt = parts.includes('Alt');
-  const needsMeta = parts.includes('Meta') || parts.includes('Cmd');
-
-  const hasCtrl = event.ctrlKey;
-  const hasShift = event.shiftKey;
-  const hasAlt = event.altKey;
-  const hasMeta = event.metaKey;
-
-  return (
-    event.key.toLowerCase() === key &&
-    hasCtrl === needsCtrl &&
-    hasShift === needsShift &&
-    hasAlt === needsAlt &&
-    hasMeta === needsMeta
-  );
-}

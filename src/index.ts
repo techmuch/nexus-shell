@@ -44,7 +44,14 @@ export {
 
 // Registries — how features register themselves with the shell
 export { commandRegistry, CommandRegistry, type ICommand } from './core/registry/CommandRegistry';
-export { menuRegistry, MenuRegistry, type IMenuItemConfig } from './core/registry/MenuRegistry';
+export {
+  menuRegistry,
+  MenuRegistry,
+  mergeMenus,
+  type IMenuItemConfig,
+  type MenuContributionOptions,
+} from './core/registry/MenuRegistry';
+export { useCommand, useCommands } from './core/registry/useCommand';
 export { pluginRegistry, type IPlugin, type PluginStatus } from './core/registry/PluginRegistry';
 export {
   componentRegistry,
@@ -103,6 +110,10 @@ export {
   type UserProfileState,
 } from './core/services/UserProfileService';
 export { useKeyboardShortcuts } from './core/services/KeyboardService';
+export {
+  useCommandPaletteStore,
+  COMMAND_PALETTE_COMMAND_ID,
+} from './core/services/CommandPaletteService';
 
 // ---------------------------------------------------------------------------
 // Store-connected pieces
@@ -210,6 +221,13 @@ export {
 // Utilities
 export { cn } from './lib/cn';
 export { STORAGE_KEYS } from './lib/storage';
+export {
+  formatKeybinding,
+  parseKeybinding,
+  matchesKeybinding,
+  isMac,
+  type ParsedKeybinding,
+} from './lib/keybinding';
 export {
   BUNDLED_THEMES,
   BUNDLED_THEME_CLASSES,

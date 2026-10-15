@@ -309,7 +309,7 @@ export const ShellLayout = ({
       </div>
       <ConnectedStatusBar />
       {modal && <ConnectedModal />}
-      {commandPalette && <ConnectedCommandPalette />}
+      {commandPalette && <ConnectedCommandPalette bindShortcuts={keyboardShortcuts} />}
     </div>
   );
 };
