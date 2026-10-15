@@ -67,7 +67,14 @@
           "name": "title",
           "required": true,
           "type": "string",
-          "description": "Primary line. Rendered uppercase in a mono face.",
+          "description": "Primary line. Rendered uppercase in a mono face unless told otherwise.",
+          "default": null
+        },
+        {
+          "name": "casing",
+          "required": false,
+          "type": "'upper' | 'none'",
+          "description": "`'upper'` (default) renders the title in capitals; `'none'` keeps it as\nwritten — for names whose casing is the brand (`InboxQL`, `iOS`).",
           "default": null
         },
         {
@@ -83,6 +90,13 @@
           "type": "React.ReactNode",
           "description": "Element shown in the leading badge, typically a 16px `lucide-react` icon.\nOmit to render no badge at all.",
           "default": null
+        },
+        {
+          "name": "mono",
+          "required": false,
+          "type": "boolean",
+          "description": "Render the title in the monospace face. Defaults to `true`.",
+          "default": "true"
         },
         {
           "name": "subtitle",
@@ -359,8 +373,8 @@
     {
       "name": "DataGrid",
       "file": "src/components/widgets/DataGrid.tsx",
-      "description": "A sortable, filterable data table with optional row virtualisation.\n\nFiltering and sorting are handled internally against the `data` you pass — a\ncase-insensitive match across all values, and click-to-sort on columns marked\n`sortable`. For server-side paging or sorting, filter upstream and set\n`showFilter={false}`.",
-      "example": "<DataGrid\n  columns={[\n    { key: 'name', header: 'Name', sortable: true },\n    { key: 'status', header: 'Status', width: 120,\n      render: (v) => <Badge>{v}</Badge> },\n  ]}\n  data={rows}\n  onRowClick={(row) => select(row.id)}\n/>",
+      "description": "A sortable, filterable, keyboard-driven data table with optional row\nvirtualisation, multi-selection and expandable rows.\n\nFiltering and sorting are handled internally against the `data` you pass — a\ncase-insensitive match across all values, and click-to-sort on columns marked\n`sortable`. For server-side sorting, control `sort` and set `manualSort`;\nfor paging, use `onEndReached`; for server-side filtering, filter upstream\nand set `showFilter={false}`.\n\nKeyboard: the grid is one tab stop. ↑/↓, Home/End and PageUp/PageDown move\nfocus (`onFocusRow`); Enter activates (`onActivate`); Space selects; with\n`selectionMode=\"multiple\"`, Shift extends, Mod+A selects all and Escape\nclears; →/← expand and collapse.",
+      "example": "<DataGrid\n  columns={[\n    { key: 'subject', header: 'Subject', sortable: true },\n    { key: 'from', header: 'From', width: 200 },\n  ]}\n  data={messages}\n  selectionMode=\"multiple\"\n  selectedKeys={selected}\n  onSelectionChange={setSelected}\n  onFocusRow={(m) => preview(m)}\n  onActivate={(m) => open(m)}\n  onEndReached={loadMore}\n/>",
       "props": [
         {
           "name": "columns",
@@ -384,6 +398,13 @@
           "default": null
         },
         {
+          "name": "expandedKeys",
+          "required": false,
+          "type": "DataGridKey[]",
+          "description": "Expanded row keys, controlled. Omit to let the grid hold them.",
+          "default": null
+        },
+        {
           "name": "loading",
           "required": false,
           "type": "boolean",
@@ -391,10 +412,59 @@
           "default": "false"
         },
         {
+          "name": "manualSort",
+          "required": false,
+          "type": "boolean",
+          "description": "The rows arrive already sorted (by a server, say), so only show the\nindicators. Defaults to `false`.",
+          "default": "false"
+        },
+        {
+          "name": "onActivate",
+          "required": false,
+          "type": "(row: T, index: number) => void",
+          "description": "Called on Enter and double-click. The \"open\" gesture, distinct from\nmoving focus.",
+          "default": null
+        },
+        {
+          "name": "onEndReached",
+          "required": false,
+          "type": "() => void",
+          "description": "Called when the user scrolls near the last row, to load the next page.",
+          "default": null
+        },
+        {
+          "name": "onExpandedChange",
+          "required": false,
+          "type": "(keys: DataGridKey[]) => void",
+          "description": "Called with the new set of expanded keys.",
+          "default": null
+        },
+        {
+          "name": "onFocusRow",
+          "required": false,
+          "type": "(row: T, index: number) => void",
+          "description": "Called when the keyboard focus moves to a row (arrows, Home/End,\nPageUp/PageDown, or a click). The \"preview\" gesture — update a detail\nview without taking the user anywhere.",
+          "default": null
+        },
+        {
           "name": "onRowClick",
           "required": false,
           "type": "(row: T) => void",
-          "description": "Called with the clicked row.",
+          "description": "Called with the clicked row. Also on Enter/Space when nothing else handles them.",
+          "default": null
+        },
+        {
+          "name": "onSelectionChange",
+          "required": false,
+          "type": "(keys: DataGridKey[], rows: T[]) => void",
+          "description": "Called with the new selection, in row order.",
+          "default": null
+        },
+        {
+          "name": "onSortChange",
+          "required": false,
+          "type": "(sort: DataGridSort) => void",
+          "description": "Called with the new sort when a header is clicked.",
           "default": null
         },
         {
@@ -405,6 +475,20 @@
           "default": null
         },
         {
+          "name": "renderExpanded",
+          "required": false,
+          "type": "(row: T) => React.ReactNode",
+          "description": "Content shown beneath an expanded row, spanning every column — a\nthread's messages, a record's detail. Rows gain a disclosure chevron;\nArrowRight expands the focused row and ArrowLeft collapses it.",
+          "default": null
+        },
+        {
+          "name": "rowClassName",
+          "required": false,
+          "type": "(row: T, state: DataGridRowState) => string | undefined",
+          "description": "Extra classes for a row, from its data and state.",
+          "default": null
+        },
+        {
           "name": "rowKey",
           "required": false,
           "type": "keyof T",
@@ -412,11 +496,32 @@
           "default": "\"id\""
         },
         {
+          "name": "rowProps",
+          "required": false,
+          "type": "(row: T) => React.HTMLAttributes<HTMLTableRowElement> & Record<`data-${string}`, unknown>",
+          "description": "Extra attributes for a row's `<tr>`, e.g. `data-*` hooks.",
+          "default": null
+        },
+        {
+          "name": "selectedKeys",
+          "required": false,
+          "type": "DataGridKey[]",
+          "description": "Selected row keys, controlled. Omit to let the grid hold them.",
+          "default": null
+        },
+        {
           "name": "selectedRowId",
           "required": false,
           "type": "string | number",
-          "description": "Value of `rowKey` on the row to highlight as selected.",
+          "description": "Value of `rowKey` on the row to highlight as selected. The single-select\nshorthand; prefer `selectedKeys` with `selectionMode`.",
           "default": null
+        },
+        {
+          "name": "selectionMode",
+          "required": false,
+          "type": "'none' | 'single' | 'multiple'",
+          "description": "`'single'` selects on click and Space; `'multiple'` adds Mod-click to\ntoggle, Shift-click and Shift+Arrow to extend, Mod+A to select all and\nEscape to clear. Defaults to `'none'` (or `'single'` when `selectedKeys`\nis passed).",
+          "default": "'none'"
         },
         {
           "name": "showFilter",
@@ -424,6 +529,13 @@
           "type": "boolean",
           "description": "Show the built-in filter box above the grid. Defaults to `true`.",
           "default": "true"
+        },
+        {
+          "name": "sort",
+          "required": false,
+          "type": "DataGridSort",
+          "description": "Sort state, controlled. Omit to let the grid hold it.",
+          "default": null
         },
         {
           "name": "virtualized",
@@ -1061,7 +1173,7 @@
     {
       "name": "Modal",
       "file": "src/components/widgets/Modal.tsx",
-      "description": "A centered modal dialog covering the three common blocking interactions:\nalert, confirm and prompt.\n\nFully controlled — it owns only the prompt's draft text. Escape, backdrop\nclick and the close button all route to `onCancel`; Enter routes to\n`onConfirm`. For the promise-based variant driven by `useModalStore` (so you\ncan `await openConfirm(...)` from anywhere), see `ConnectedModal`.",
+      "description": "A centered modal dialog covering the three common blocking interactions —\nalert, confirm and prompt — or, given `children`, any content at all.\n\nKeyboard focus is trapped inside while open and returned to whatever had it\nwhen the dialog closes. In a content dialog, the first element marked\n`data-autofocus` (else the first focusable one) receives focus.\n\nFully controlled — it owns only the prompt's draft text. Escape, backdrop\nclick and the close button all route to `onCancel`; Enter routes to\n`onConfirm`. For the promise-based variant driven by `useModalStore` (so you\ncan `await openConfirm(...)` from anywhere), see `ConnectedModal`.",
       "example": "<Modal\n  open={open}\n  type=\"prompt\"\n  title=\"Rename file\"\n  message=\"Enter a new name.\"\n  defaultValue=\"untitled.ts\"\n  onConfirm={(name) => rename(name)}\n  onCancel={() => setOpen(false)}\n/>",
       "props": [
         {
@@ -1086,11 +1198,25 @@
           "default": "\"Cancel\""
         },
         {
+          "name": "children",
+          "required": false,
+          "type": "React.ReactNode",
+          "description": "Arbitrary dialog content — a form, an editor, a review panel. Replaces\nthe message, icon, prompt input and default buttons; supply your own\nactions with `footer`. Enter is not intercepted, so textareas work.",
+          "default": null
+        },
+        {
           "name": "className",
           "required": false,
           "type": "string",
           "description": "Extra classes merged onto the dialog surface.",
           "default": null
+        },
+        {
+          "name": "closeOnBackdrop",
+          "required": false,
+          "type": "boolean",
+          "description": "Whether a click on the backdrop cancels. Defaults to `true`.",
+          "default": "true"
         },
         {
           "name": "confirmLabel",
@@ -1104,6 +1230,13 @@
           "required": false,
           "type": "string",
           "description": "Initial value of the input when `type` is `\"prompt\"`.",
+          "default": null
+        },
+        {
+          "name": "footer",
+          "required": false,
+          "type": "React.ReactNode",
+          "description": "Action row for a content dialog. Omit for none.",
           "default": null
         },
         {
@@ -1133,6 +1266,13 @@
           "type": "string",
           "description": "Placeholder for the prompt input.",
           "default": null
+        },
+        {
+          "name": "size",
+          "required": false,
+          "type": "'sm' | 'md' | 'lg' | 'xl' | 'full'",
+          "description": "Dialog width. Defaults to `\"md\"`.",
+          "default": "\"md\""
         },
         {
           "name": "type",
@@ -1648,6 +1788,13 @@
           "default": null
         },
         {
+          "name": "commandPalette",
+          "required": false,
+          "type": "boolean",
+          "description": "Mount the command palette (`Cmd/Ctrl+Shift+P`). Defaults to `true`.",
+          "default": "true"
+        },
+        {
           "name": "disableLocalStorage",
           "required": false,
           "type": "boolean",
@@ -1662,6 +1809,13 @@
           "default": null
         },
         {
+          "name": "keyboardShortcuts",
+          "required": false,
+          "type": "boolean",
+          "description": "Bind registered commands' keybindings to the window. Defaults to `true`.\nWithout it, every shortcut the menus advertise does nothing.",
+          "default": "true"
+        },
+        {
           "name": "layoutModel",
           "required": false,
           "type": "Model",
@@ -1673,6 +1827,13 @@
           "required": false,
           "type": "Record<string, IMenuItemConfig[]>",
           "description": "Menu structure, keyed by top-level menu name. Items dispatch by `commandId`.",
+          "default": null
+        },
+        {
+          "name": "modal",
+          "required": false,
+          "type": "boolean",
+          "description": "Mount the modal host that `useModalStore` dialogs render into. Defaults to\n`true`. The shell's own dirty-tab confirmation depends on it.",
           "default": null
         },
         {

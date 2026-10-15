@@ -181,3 +181,11 @@ describe('content modal', () => {
     expect(onCancel).not.toHaveBeenCalled();
   });
 });
+
+describe('chat handler typing', () => {
+  it('accepts an async handler that returns the reply id, as the README shows', () => {
+    const ask = async (t: string) => `answer to ${t}`;
+    const panel = chatPanel({ side: 'right', onSend: async (text, chat) => chat.reply(await ask(text)) });
+    expect(panel.id).toBe('chat');
+  });
+});

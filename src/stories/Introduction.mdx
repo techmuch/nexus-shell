@@ -35,7 +35,7 @@ componentRegistry.register('editor', Editor);
 
 initializeShell({
   panels: [{ id: 'files', label: 'Explorer', icon: Files, component: FileTree }],
-  commands: [{ id: 'file.save', label: 'File: Save', keybinding: 'Control+s', execute: save }],
+  commands: [{ id: 'file.save', label: 'File: Save', keybinding: 'Mod+S', execute: save }],
   menus: { File: [{ id: 'save', label: 'Save', commandId: 'file.save' }] },
   statusBar: [{ id: 'branch', label: 'main', alignment: 'left' }],
 });
@@ -53,7 +53,7 @@ You add capability by **registering** it, not by restructuring the layout.
 
 | To add | Do this |
 | :-- | :-- |
-| A new view or tab | `componentRegistry.register(id, Component)`, then open it with `useLayoutStore().addTab(id, title)` |
+| A new view or tab | `componentRegistry.register(id, Component)`, then open it with `workspace.open(id, { title })` — it focuses the tab if already open |
 | An action or hotkey | `commandRegistry.registerCommand({ id, label, keybinding, execute })` — it appears in the palette automatically |
 | A menu entry | Add an item with that `commandId` to `menus` |
 | A sidebar panel | Add it to `panels`; it becomes an activity bar icon |

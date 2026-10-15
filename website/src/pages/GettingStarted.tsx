@@ -28,7 +28,7 @@ import {
   ShellLayout,
   componentRegistry,
   initializeShell,
-  useLayoutStore,
+  workspace,
 } from 'nexus-shell';
 import 'nexus-shell/style.css';
 
@@ -44,7 +44,7 @@ initializeShell({
     {
       id: 'file.save',
       label: 'File: Save',
-      keybinding: 'Control+s',
+      keybinding: 'Mod+S',
       execute: () => save(),
     },
   ],
@@ -55,7 +55,7 @@ initializeShell({
 });
 
 // Open something on startup.
-useLayoutStore.getState().addTab('editor', 'App.tsx');
+workspace.open('editor', { title: 'App.tsx' });
 
 createRoot(document.getElementById('root')!).render(
   <ShellLayout title={<AppTitle title="Acme Studio" icon={<Boxes size={16} />} />} />,
@@ -64,7 +64,7 @@ createRoot(document.getElementById('root')!).render(
 const ADD_VIEW = `componentRegistry.register('settings', SettingsView);
 
 // Open it from a command, a menu entry, or on startup.
-useLayoutStore.getState().addTab('settings', 'Settings');`;
+workspace.open('settings', { title: 'Settings' });`;
 
 const ADD_COMMAND = `commandRegistry.registerCommand({
   id: 'git.commit',

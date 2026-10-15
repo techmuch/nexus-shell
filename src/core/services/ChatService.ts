@@ -47,7 +47,7 @@ export interface ChatReplyApi {
  * });
  * ```
  */
-export type ChatSendHandler = (text: string, chat: ChatReplyApi) => void | Promise<void>;
+export type ChatSendHandler = (text: string, chat: ChatReplyApi) => void | Promise<unknown>;
 
 interface ChatState {
   messages: IChatMessage[];

@@ -84,8 +84,9 @@ Mark a tab dirty and closing it prompts first:
 useLayoutStore.getState().setTabDirty(tabId, true);
 ```
 
-The confirmation goes through `useModalStore`, so mount `<ConnectedModal />`
-near your root for the prompt to appear.
+The confirmation goes through `useModalStore`, whose host `ShellLayout` mounts
+for you — as it does the keyboard shortcuts and the command palette. Inside the
+tab, `useTab().setDirty(true)` does the same without knowing the tab's id.
 
 ## Full example
 

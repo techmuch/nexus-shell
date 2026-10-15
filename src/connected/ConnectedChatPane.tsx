@@ -64,8 +64,8 @@ export const ConnectedChatPane = ({ onSend, ...props }: ConnectedChatPaneProps) 
       });
     try {
       const result = handler(text, chatReplyApi);
-      if (result && typeof (result as Promise<void>).catch === 'function') {
-        (result as Promise<void>).catch(fail);
+      if (result && typeof (result as Promise<unknown>).catch === 'function') {
+        (result as Promise<unknown>).catch(fail);
       }
     } catch (e) {
       fail(e);

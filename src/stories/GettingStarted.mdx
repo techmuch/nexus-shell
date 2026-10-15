@@ -53,7 +53,7 @@ import {
   ShellLayout,
   componentRegistry,
   initializeShell,
-  useLayoutStore,
+  workspace,
 } from 'nexus-shell';
 import 'nexus-shell/style.css';
 
@@ -69,7 +69,7 @@ initializeShell({
     {
       id: 'file.save',
       label: 'File: Save',
-      keybinding: 'Control+s',
+      keybinding: 'Mod+S',
       execute: () => save(),
     },
   ],
@@ -80,7 +80,7 @@ initializeShell({
 });
 
 // Open something on startup.
-useLayoutStore.getState().addTab('editor', 'App.tsx');
+workspace.open('editor', { title: 'App.tsx' });
 
 createRoot(document.getElementById('root')!).render(
   <ShellLayout title={<AppTitle title="Acme Studio" icon={<Boxes size={16} />} />} />,
@@ -102,7 +102,7 @@ Add capability by registering it. None of these change the layout.
 
 ```ts
 componentRegistry.register('settings', SettingsView);
-useLayoutStore.getState().addTab('settings', 'Settings');
+workspace.open('settings', { title: 'Settings' });
 ```
 
 ### An action, with a hotkey and a menu entry
