@@ -82,12 +82,12 @@ export const FilesSidebar = () => {
 
   const handleActivate = (node: ITreeNode) => {
     if (!node.isBranch && node.label.endsWith('.map')) {
-      addTab('dialogue-map', node.label, { mapId: node.id });
+      addTab('dialogue-map', node.label, { mapId: node.id }, { reuseKey: `map:${node.id}` });
     } else if (node.isBranch) {
       addTab('project-properties', `${node.label} Properties`, {
         projectId: node.id,
         projectName: node.label,
-      });
+      }, { reuseKey: `project:${node.id}` });
     }
   };
 

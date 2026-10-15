@@ -12,7 +12,8 @@ import { ConnectedPane } from '../../../src/connected/ConnectedPane';
 import { ProjectPropertiesWidget } from './ProjectPropertiesWidget';
 import { ConnectedMenuBar } from '../../../src/connected/ConnectedMenuBar';
 import { useThemeStore } from '../../../src/core/services/ThemeService';
-import { useLayoutStore, dialogueMappingLayoutJson } from '../../../src/core/services/LayoutService';
+import { useLayoutStore } from '../../../src/core/services/LayoutService';
+import { dialogueMappingLayoutJson } from './layouts';
 import { 
   Settings, 
   Circle

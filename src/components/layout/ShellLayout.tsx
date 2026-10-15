@@ -15,12 +15,15 @@ import { ConnectedPaneRail } from '../../connected/ConnectedPaneRail';
 import { ConnectedMenuBar } from '../../connected/ConnectedMenuBar';
 import { ConnectedPane } from '../../connected/ConnectedPane';
 import { ConnectedStatusBar } from '../../connected/ConnectedStatusBar';
+import { ConnectedModal } from '../../connected/ConnectedModal';
+import { ConnectedCommandPalette } from '../../connected/ConnectedCommandPalette';
+import { useKeyboardShortcuts } from '../../core/services/KeyboardService';
 import { PaneHostProvider } from './PaneHost';
 
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import { menuRegistry, type IMenuItemConfig } from '../../core/registry/MenuRegistry';
 import { useChatStore, type ISlashCommandConfig } from '../../core/services/ChatService';
-import { useLayoutStore } from '../../core/services/LayoutService';
+import { useLayoutStore, REUSE_KEY_CONFIG } from '../../core/services/LayoutService';
 import { useModalStore } from '../../core/services/ModalStoreService';
 import { setPanels, type IPanel } from '../../core/services/PaneService';
 import {
@@ -80,6 +83,20 @@ export interface ShellLayoutProps {
    * profile on the server, say — instead of, or alongside, `localStorage`.
    */
   onLayoutChange?: (layout: IJsonModel) => void;
+  /**
+   * Bind registered commands' keybindings to the window. Defaults to `true`.
+   * Without it, every shortcut the menus advertise does nothing.
+   */
+  keyboardShortcuts?: boolean;
+  /**
+   * Mount the modal host that `useModalStore` dialogs render into. Defaults to
+   * `true`. The shell's own dirty-tab confirmation depends on it.
+   */
+  modal?: boolean;
+  /**
+   * Mount the command palette (`Cmd/Ctrl+Shift+P`). Defaults to `true`.
+   */
+  commandPalette?: boolean;
 }
 
 /**
@@ -140,7 +157,11 @@ export const ShellLayout = ({
   initialLayoutJson,
   disableLocalStorage = false,
   onLayoutChange,
+  keyboardShortcuts = true,
+  modal = true,
+  commandPalette = true,
 }: ShellLayoutProps) => {
+  useKeyboardShortcuts(keyboardShortcuts);
   const { model, setModel, initLayout, isTabDirty, setTabDirty } = useLayoutStore();
   const theme = useThemeStore((s) => s.theme);
   const setSlashCommands = useChatStore((s) => s.setSlashCommands);
@@ -176,7 +197,8 @@ export const ShellLayout = ({
   const factory = (node: TabNode) => {
     try {
       const componentId = node.getComponent();
-      const config = node.getConfig() || {};
+      // The reuse key is the shell's bookkeeping, not the component's prop.
+      const { [REUSE_KEY_CONFIG]: _reuseKey, ...config } = node.getConfig() || {};
       const RegisteredComponent = componentId
         ? componentRegistry.get(componentId)
         : undefined;
@@ -256,6 +278,8 @@ export const ShellLayout = ({
         <ConnectedPaneRail side="right" />
       </div>
       <ConnectedStatusBar />
+      {modal && <ConnectedModal />}
+      {commandPalette && <ConnectedCommandPalette />}
     </div>
   );
 };

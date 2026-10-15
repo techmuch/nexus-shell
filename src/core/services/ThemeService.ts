@@ -4,6 +4,7 @@ import {
   themeClass,
   type BundledThemeId,
 } from '../../lib/themes';
+import { readStored, writeStored, STORAGE_KEYS } from '../../lib/storage';
 
 /**
  * A theme id.
@@ -19,7 +20,7 @@ interface ThemeState {
   setTheme: (theme: ThemeType) => void;
 }
 
-const STORAGE_KEY = 'nexus-shell-theme';
+const STORAGE_KEY = STORAGE_KEYS.theme;
 
 /**
  * Swap the theme class on `<html>`.
@@ -30,7 +31,10 @@ const STORAGE_KEY = 'nexus-shell-theme';
  * context menus, the command palette — inherits it as well.
  */
 const applyTheme = (theme: ThemeType) => {
-  const root = window.document.documentElement;
+  // No document during SSR or in a DOM-less test; the class is applied on the
+  // first `setTheme` in a real browser instead.
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
 
   const stale = [
     ...BUNDLED_THEME_CLASSES,
@@ -41,7 +45,7 @@ const applyTheme = (theme: ThemeType) => {
 };
 
 export const useThemeStore = create<ThemeState>((set) => {
-  const savedTheme = localStorage.getItem(STORAGE_KEY) as ThemeType | null;
+  const savedTheme = readStored(STORAGE_KEY) as ThemeType | null;
   const initialTheme = savedTheme || 'light';
 
   applyTheme(initialTheme);
@@ -49,7 +53,7 @@ export const useThemeStore = create<ThemeState>((set) => {
   return {
     theme: initialTheme,
     setTheme: (theme) => {
-      localStorage.setItem(STORAGE_KEY, theme);
+      writeStored(STORAGE_KEY, theme);
       applyTheme(theme);
       set({ theme });
     },

@@ -81,7 +81,8 @@ export const togglePanel = (id: string): boolean => {
   }
 
   if (componentRegistry.get(id)) {
-    // A tab, then. `addTab` focuses an existing one rather than duplicating it.
+    // A tab, then. `addTab` focuses an existing one rather than duplicating it
+    // (its reuse key defaults to the component id).
     useLayoutStore.getState().addTab(id);
     return true;
   }

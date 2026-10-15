@@ -95,7 +95,7 @@ const FileExplorer = () => {
       // Opening a file is just another tab.
       onActivate={(node) =>
         !node.isBranch &&
-        useLayoutStore.getState().addTab('editor', node.label, { file: node.label })
+        useLayoutStore.getState().addTab('editor', node.label, { file: node.label }, { reuseKey: `file:${node.label}` })
       }
     />
   );
@@ -123,7 +123,8 @@ initializeShell({
       id: 'file.new',
       label: 'File: New File',
       keybinding: 'Control+n',
-      execute: () => useLayoutStore.getState().addTab('editor', 'untitled'),
+      // `reuseKey: null` — every new file is its own tab.
+      execute: () => useLayoutStore.getState().addTab('editor', 'untitled', undefined, { reuseKey: null }),
     },
     {
       id: 'app.ping',

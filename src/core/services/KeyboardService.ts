@@ -1,24 +1,41 @@
 import { useEffect } from 'react';
 import { commandRegistry } from '../registry/CommandRegistry';
 
-export const useKeyboardShortcuts = () => {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check if any registered command has a matching keybinding
-      const commands = commandRegistry.getCommands();
-      
-      for (const command of commands) {
-        if (command.keybinding && isMatch(event, command.keybinding)) {
-          event.preventDefault();
-          command.execute();
-          break;
-        }
-      }
-    };
+/** Dispatch a key event to the first command bound to it. */
+const handleKeyDown = (event: KeyboardEvent) => {
+  for (const command of commandRegistry.getCommands()) {
+    if (command.keybinding && isMatch(event, command.keybinding)) {
+      event.preventDefault();
+      command.execute();
+      break;
+    }
+  }
+};
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+/**
+ * How many mounted hooks want shortcuts. One window listener serves them all,
+ * so mounting the hook twice — `ShellLayout` does it, and apps written for
+ * earlier releases do it too — never runs a command twice.
+ */
+let mounted = 0;
+
+/**
+ * Bind every registered command's `keybinding` to the window.
+ *
+ * `ShellLayout` mounts this itself (opt out with `keyboardShortcuts={false}`).
+ * Mount it yourself only when you render the shell's parts without
+ * `ShellLayout`. Mounting it more than once is harmless.
+ */
+export const useKeyboardShortcuts = (enabled = true) => {
+  useEffect(() => {
+    if (!enabled) return;
+    if (mounted === 0) window.addEventListener('keydown', handleKeyDown);
+    mounted += 1;
+    return () => {
+      mounted -= 1;
+      if (mounted === 0) window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [enabled]);
 };
 
 /**

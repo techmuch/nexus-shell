@@ -1,4 +1,5 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
+import { readStored, writeStored, STORAGE_KEYS } from '../../lib/storage';
 import { LucideIcon } from 'lucide-react';
 import type { PaneSide } from '../../components/widgets/SidebarPane';
 
@@ -48,39 +49,6 @@ export interface PaneState {
 export type PaneStore = UseBoundStore<StoreApi<PaneState>>;
 
 /**
- * Persistence that survives having no `localStorage`.
- *
- * Stores are created at module scope, so these run on import — before any
- * component renders, and in environments that have no DOM at all. Touching
- * `localStorage` unguarded there throws and takes the whole import down with
- * it, which breaks server-side rendering and any test file that has not set up
- * jsdom. The pane simply starts closed instead.
- *
- * The try/catch is not redundant with the `typeof` check: Safari's private mode
- * and browsers with site data blocked expose `localStorage` but throw on
- * access.
- */
-const readStored = (key: string): string | null => {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-
-const writeStored = (key: string, value: string | null): void => {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    if (value === null) window.localStorage.removeItem(key);
-    else window.localStorage.setItem(key, value);
-  } catch {
-    // Storage is unavailable or full. The pane still works for this session;
-    // it just will not be remembered across reloads.
-  }
-};
-
-/**
  * A pane store bound to one storage key.
  *
  * Exported so an application with a docked region the shell doesn't provide
@@ -127,9 +95,9 @@ export const createPaneStore = (storageKey: string): PaneStore =>
     };
   });
 
-export const useLeftPaneStore = createPaneStore('nexus-shell-pane-left');
-export const useRightPaneStore = createPaneStore('nexus-shell-pane-right');
-export const useBottomPaneStore = createPaneStore('nexus-shell-pane-bottom');
+export const useLeftPaneStore = createPaneStore(STORAGE_KEYS.leftPane);
+export const useRightPaneStore = createPaneStore(STORAGE_KEYS.rightPane);
+export const useBottomPaneStore = createPaneStore(STORAGE_KEYS.bottomPane);
 
 const STORES: Record<PaneSide, PaneStore> = {
   left: useLeftPaneStore,

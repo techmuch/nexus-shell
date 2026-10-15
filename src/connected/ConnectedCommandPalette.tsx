@@ -4,6 +4,7 @@ import {
   type CommandPaletteProps,
 } from '../components/widgets/CommandPalette';
 import { commandRegistry, type ICommand } from '../core/registry/CommandRegistry';
+import { useSingleton } from '../lib/singleton';
 
 export type ConnectedCommandPaletteProps = Omit<
   CommandPaletteProps<ICommand>,
@@ -28,9 +29,12 @@ export const ConnectedCommandPalette = ({
   ...props
 }: ConnectedCommandPaletteProps) => {
   const [open, setOpen] = useState(false);
+  // `ShellLayout` mounts a palette itself; an app's own copy must not toggle a
+  // second one on the same keystroke.
+  const live = useSingleton('nexus.commandPalette');
 
   useEffect(() => {
-    if (shortcutKey === null) return;
+    if (shortcutKey === null || !live) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         (e.metaKey || e.ctrlKey) &&
@@ -43,7 +47,9 @@ export const ConnectedCommandPalette = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [shortcutKey]);
+  }, [shortcutKey, live]);
+
+  if (!live) return null;
 
   return (
     <CommandPalette<ICommand>

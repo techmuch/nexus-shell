@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { readStoredJson, writeStored, STORAGE_KEYS } from '../../lib/storage';
 
 export interface UserProfileState {
   name: string;
@@ -11,47 +12,35 @@ export interface UserProfileState {
   clearCustomAvatar: () => void;
 }
 
-const STORAGE_KEY = 'nexus-shell-user-profile';
+const STORAGE_KEY = STORAGE_KEYS.userProfile;
 
-const DEFAULT_PROFILE = {
-  name: 'David Tech',
-  role: 'Shell Architect',
-  email: 'david@techmuch.io',
+/**
+ * Deliberately anonymous. This is what `ConnectedUserProfile` shows before the
+ * application says who is signed in, so it must not look like anybody real.
+ */
+export const DEFAULT_USER_PROFILE = {
+  name: 'Guest',
+  role: '',
+  email: '',
   avatarUrl: '',
   customAvatar: '',
 };
 
 export const useUserProfileStore = create<UserProfileState>((set) => {
-  let initialProfile = { ...DEFAULT_PROFILE };
-  
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        initialProfile = { ...DEFAULT_PROFILE, ...JSON.parse(saved) };
-      }
-    } catch (e) {
-      console.error('Failed to parse saved user profile:', e);
-    }
-  }
+  const saved = readStoredJson<Partial<typeof DEFAULT_USER_PROFILE>>(STORAGE_KEY);
+  const initialProfile = { ...DEFAULT_USER_PROFILE, ...(saved ?? {}) };
 
   const saveToStorage = (nextState: UserProfileState) => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            name: nextState.name,
-            role: nextState.role,
-            email: nextState.email,
-            avatarUrl: nextState.avatarUrl,
-            customAvatar: nextState.customAvatar,
-          })
-        );
-      } catch (e) {
-        console.error('Failed to save user profile:', e);
-      }
-    }
+    writeStored(
+      STORAGE_KEY,
+      JSON.stringify({
+        name: nextState.name,
+        role: nextState.role,
+        email: nextState.email,
+        avatarUrl: nextState.avatarUrl,
+        customAvatar: nextState.customAvatar,
+      }),
+    );
   };
 
   return {

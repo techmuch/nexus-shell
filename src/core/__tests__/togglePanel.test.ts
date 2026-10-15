@@ -62,7 +62,7 @@ describe('togglePanel', () => {
   });
 
   it('opens a registered tab when the id is not a panel', () => {
-    const addTab = vi.spyOn(useLayoutStore.getState(), 'addTab').mockImplementation(() => {});
+    const addTab = vi.spyOn(useLayoutStore.getState(), 'addTab').mockImplementation(() => null);
     componentRegistry.register('terminal-tab', () => null);
 
     expect(togglePanel('terminal-tab')).toBe(true);
