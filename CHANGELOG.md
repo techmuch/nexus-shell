@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Accessibility
+
+Also released for 0.2 as 0.2.14.
+
+- `StatusBar` is a labelled `<footer>` landmark and no longer `role="status"`, which made every change in the bar a live announcement (and is not an allowed role on a footer). An item that must be announced can carry its own live region.
+- `UserProfile`'s avatar image is decorative (`alt=""`): it is inside a button with its own label, beside the name when shown.
+- `ShellLayout` wraps the workspace — the tab strip and the tabs' content — in `<main>`.
+
 ## 0.3.0
 
 Driven by a review of how [InboxQL](docs/inboxql-integration-analysis.md) — the

@@ -135,7 +135,9 @@ export const UserProfile = ({
 
   const avatar = (size: number) =>
     avatarUrl ? (
-      <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+      // Decorative: the picture sits inside a button with its own label, and
+      // beside the name when that is shown, so naming it again only repeats.
+      <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
     ) : (
       <User size={size} className="text-muted-foreground" />
     );
