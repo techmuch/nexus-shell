@@ -100,8 +100,12 @@ export const StatusBar = ({
   };
 
   return (
+    // A footer, which is already a landmark (contentinfo) a screen reader can
+    // jump to. Not role="status": that made the whole bar a live region, so
+    // every change in it — a sync state, a count, a clock — was read aloud
+    // over whatever the person was doing, and the role is not allowed on a
+    // footer. An item that must be announced can carry its own live region.
     <footer
-      role="status"
       aria-label={ariaLabel}
       className={cn(
         'h-6 bg-primary text-primary-foreground text-[11px] flex items-center justify-between px-1 select-none shrink-0 border-t border-white/5',

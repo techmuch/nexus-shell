@@ -235,7 +235,10 @@ export const ShellLayout = ({
       <div className="flex-1 flex overflow-hidden">
         <ConnectedPaneRail side="left" />
         <ConnectedPane side="left" />
-        <div className="flex-1 flex flex-col min-w-0 bg-card">
+        {/* The workspace is the page's main landmark: its tab strip and the
+            tabs' content are what the menu bar, the panes and the status bar
+            surround, and a screen reader jumps here with one key. */}
+        <main className="flex-1 flex flex-col min-w-0 bg-card">
           <div className="flex-1 relative h-full w-full">
             <Layout
               model={layoutModel || model}
@@ -251,7 +254,7 @@ export const ShellLayout = ({
           {/* The bottom drawer sits inside the workspace column, so it spans the
               docking area only — not the full window under the side panes. */}
           <ConnectedPane side="bottom" />
-        </div>
+        </main>
         <ConnectedPane side="right" />
         <ConnectedPaneRail side="right" />
       </div>

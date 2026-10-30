@@ -12,6 +12,7 @@ import { StatusBar } from '../StatusBar';
 import { TerminalPane } from '../TerminalPane';
 import { ThemeSwitcher } from '../ThemeSwitcher';
 import { TreeWidget, type ITreeNode } from '../TreeWidget';
+import { UserProfile } from '../UserProfile';
 
 /**
  * These tests exist to protect the property that makes this a library rather
@@ -45,7 +46,7 @@ describe('StatusBar', () => {
         ]}
       />,
     );
-    const bar = screen.getByRole('status');
+    const bar = screen.getByRole('contentinfo', { name: 'Status Bar' });
     expect(bar.textContent).toBe('HighLow');
   });
 
@@ -75,7 +76,29 @@ describe('StatusBar', () => {
 
   it('renders nothing but the landmark when empty', () => {
     render(<StatusBar />);
-    expect(screen.getByRole('status').textContent).toBe('');
+    expect(screen.getByRole('contentinfo', { name: 'Status Bar' }).textContent).toBe('');
+  });
+
+  it('is a landmark, not a live region that reads every change aloud', () => {
+    render(<StatusBar widgets={[{ id: 'sync', label: 'Sync: Idle', alignment: 'left' }]} />);
+    const bar = screen.getByRole('contentinfo', { name: 'Status Bar' });
+    expect(bar.tagName).toBe('FOOTER');
+    expect(bar).not.toHaveAttribute('role');
+    expect(bar).not.toHaveAttribute('aria-live');
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+describe('UserProfile', () => {
+  it('treats the avatar as decoration inside its labelled button', () => {
+    const { container } = render(
+      <UserProfile profile={{ name: 'Ada Lovelace', role: 'Admin', avatarUrl: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' }} />,
+    );
+    const img = container.querySelector('img')!;
+    expect(img).toHaveAttribute('alt', '');
+    // The name is still said once, as text beside the picture.
+    expect(screen.getByRole('button', { name: 'User Profile Menu' })).toBeInTheDocument();
+    expect(screen.getAllByText('Ada Lovelace')).toHaveLength(1);
   });
 });
 
