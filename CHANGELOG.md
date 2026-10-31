@@ -9,6 +9,7 @@ Also released for 0.2 as 0.2.14.
 - `StatusBar` is a labelled `<footer>` landmark and no longer `role="status"`, which made every change in the bar a live announcement (and is not an allowed role on a footer). An item that must be announced can carry its own live region.
 - `UserProfile`'s avatar image is decorative (`alt=""`): it is inside a button with its own label, beside the name when shown.
 - `ShellLayout` wraps the workspace — the tab strip and the tabs' content — in `<main>`.
+- `MenuBar` menus open and close as state rather than on hover: they close when an item is chosen, on Escape, Tab or a click elsewhere, and they work from the keyboard (Enter, Space, arrows, Home, End; ← → between menus; → ← for submenus). Also released for 0.2 as 0.2.15.
 
 ## 0.3.0
 
