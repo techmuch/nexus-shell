@@ -1,15 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.3.1
 
-### Accessibility
+### Accessibility & Navigation
 
-Also released for 0.2 as 0.2.14.
+Also released for 0.2 as 0.2.14 and 0.2.15.
 
 - `StatusBar` is a labelled `<footer>` landmark and no longer `role="status"`, which made every change in the bar a live announcement (and is not an allowed role on a footer). An item that must be announced can carry its own live region.
 - `UserProfile`'s avatar image is decorative (`alt=""`): it is inside a button with its own label, beside the name when shown.
 - `ShellLayout` wraps the workspace — the tab strip and the tabs' content — in `<main>`.
-- `MenuBar` menus open and close as state rather than on hover: they close when an item is chosen, on Escape, Tab or a click elsewhere, and they work from the keyboard (Enter, Space, arrows, Home, End; ← → between menus; → ← for submenus). Also released for 0.2 as 0.2.15.
+- `MenuBar` menus open and close as state rather than on hover: they close when an item is chosen, on Escape, Tab or a click elsewhere, and they work from the keyboard (Enter, Space, arrows, Home, End; ← → between menus; → ← for submenus).
+
+### Layout & Theming
+
+Also released for 0.2 as 0.2.16.
+
+- `layoutFromJson` / layout loading auto-hides empty dock borders (`borderEnableAutoHide: true`), preventing an empty 30px blank strip down the edge of apps. Applied to stored layouts as well; an app that wants the strip can specify `borderEnableAutoHide: false`.
+- In `theme-light`, `--primary` and `--ring` are updated to indigo (`243 75% 55%`) to match the dark theme's hue at a light depth and achieve accessible WCAG AA contrast (7.4:1).
 
 ## 0.3.0
 

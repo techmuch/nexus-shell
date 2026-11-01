@@ -82,8 +82,12 @@
   --card-foreground: 222.2 84% 4.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
+  /* Indigo, the dark theme's hue at a light theme's depth. Near-black made
+     Light a different app from Dark: a black Compose button, a black selected
+     folder. 55% lightness clears AA both ways with room: white on it 7.4:1,
+     it as text on white 7.4:1, on a 20% tint of itself 5.3:1. */
+  --primary: 243 75% 55%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222.2 47.4% 11.2%;
   --muted: 210 40% 96.1%;
@@ -94,7 +98,7 @@
   --destructive-foreground: 210 40% 98%;
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
+  --ring: 243 75% 55%; /* Matches primary, as in Dark */
 }
 
 .theme-dark {

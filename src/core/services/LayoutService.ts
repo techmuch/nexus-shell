@@ -177,16 +177,29 @@ const writeLayout = (key: string, model: Model, options: LayoutOptions) => {
   writeStored(key, JSON.stringify(envelope));
 }
 
+/**
+ * A model from JSON, with empty borders hidden.
+ *
+ * The default layout has a left border for tabs to be docked into, and with
+ * nothing docked it still drew a 30px blank strip down the edge of every app.
+ * Auto-hide removes it while it is empty; a tab dragged to the edge docks as
+ * before. Applied to stored layouts too, since those carry the border and
+ * not the setting — an app that wants the strip says so with
+ * `borderEnableAutoHide: false`.
+ */
+export const layoutFromJson = (json: IJsonModel): Model =>
+  Model.fromJson({ ...json, global: { borderEnableAutoHide: true, ...(json.global ?? {}) } });
+
 /** Parse a layout, falling back to `fallback` when it is malformed. */
 const modelFrom = (json: IJsonModel | null | undefined, fallback: IJsonModel = defaultLayout): Model => {
   if (json) {
     try {
-      return Model.fromJson(json);
+      return layoutFromJson(json);
     } catch (e) {
       console.warn("Failed to parse layout, using default", e);
     }
   }
-  return Model.fromJson(fallback);
+  return layoutFromJson(fallback);
 }
 
 /** The reuse key a tab answers to. Aliased component ids resolve first. */
