@@ -113,6 +113,19 @@ export const dialogueMapperMenus = {
 
 const DEFAULT_STORAGE_KEY = 'nexus-shell-layout';
 
+/**
+ * A model from JSON, with empty borders hidden.
+ *
+ * The default layout has a left border for tabs to be docked into, and with
+ * nothing docked it still drew a 30px blank strip down the edge of every app.
+ * Auto-hide removes it while it is empty; a tab dragged to the edge docks as
+ * before. Applied to stored layouts too, since those carry the border and
+ * not the setting — an app that wants the strip says so with
+ * `borderEnableAutoHide: false`.
+ */
+export const layoutFromJson = (json: IJsonModel): Model =>
+  Model.fromJson({ ...json, global: { borderEnableAutoHide: true, ...(json.global ?? {}) } });
+
 export const useLayoutStore = create<LayoutState>((set, get) => {
   let initialModel: Model;
   
@@ -121,7 +134,7 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
       const savedLayout = localStorage.getItem(DEFAULT_STORAGE_KEY);
       if (savedLayout) {
         const json = JSON.parse(savedLayout);
-        initialModel = Model.fromJson(json);
+        initialModel = layoutFromJson(json);
 
         // V1 Migration: Purge old standalone dialogue-mapper sidebars
         const componentsToRemove = new Set(['dialogue-library', 'argument-inspector']);
@@ -139,14 +152,14 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
           initialModel.doAction(Actions.deleteTab(id));
         });
       } else {
-        initialModel = Model.fromJson(defaultLayout);
+        initialModel = layoutFromJson(defaultLayout);
       }
     } catch (e) {
       console.warn("Failed to load layout from storage, using default", e);
-      initialModel = Model.fromJson(defaultLayout);
+      initialModel = layoutFromJson(defaultLayout);
     }
   } else {
-    initialModel = Model.fromJson(defaultLayout);
+    initialModel = layoutFromJson(defaultLayout);
   }
 
   return {
@@ -158,13 +171,13 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
       let modelToUse: Model;
       if (json && Object.keys(json).length > 0) {
         try {
-          modelToUse = Model.fromJson(json);
+          modelToUse = layoutFromJson(json);
         } catch (e) {
           console.warn("Failed to parse init layout json, using default", e);
-          modelToUse = Model.fromJson(defaultLayout);
+          modelToUse = layoutFromJson(defaultLayout);
         }
       } else {
-        modelToUse = Model.fromJson(defaultLayout);
+        modelToUse = layoutFromJson(defaultLayout);
       }
       set({ model: modelToUse, disableLocalStorage: disableStorage || false });
     },
@@ -185,16 +198,16 @@ export const useLayoutStore = create<LayoutState>((set, get) => {
         try {
           const saved = localStorage.getItem(key);
           if (saved) {
-            model = Model.fromJson(JSON.parse(saved));
+            model = layoutFromJson(JSON.parse(saved));
           } else {
-            model = Model.fromJson(fallbackLayout || defaultLayout);
+            model = layoutFromJson(fallbackLayout || defaultLayout);
           }
         } catch (e) {
           console.warn("Failed to load layout from storage for key", key, e);
-          model = Model.fromJson(fallbackLayout || defaultLayout);
+          model = layoutFromJson(fallbackLayout || defaultLayout);
         }
       } else {
-        model = Model.fromJson(fallbackLayout || defaultLayout);
+        model = layoutFromJson(fallbackLayout || defaultLayout);
       }
       set({ storageKey: key, model });
     },
